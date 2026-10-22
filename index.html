@@ -93,12 +93,44 @@ button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
 .ring{position:relative; width:110px; height:110px; flex:none}
 .ring svg{transform:rotate(-90deg); display:block}
 .ring-label{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1}
+.ring-label b.pet{cursor:pointer; width:100%; height:100%; display:flex; align-items:center; justify-content:center}
+.ring:has(.pet) .ring-label{inset:12px; background:#FFF1DE; border-radius:50%}
+.pet-f.l0 svg{filter:saturate(.7)}
+.pet-f{filter:none !important; opacity:1 !important}
+.pet-f.hello .pet-svg{animation:hello 1.1s ease-out}
+.pet-f.hop .pet-svg{animation:hop .9s ease-out}
+.pet-svg{overflow:visible; animation:idle 3.2s ease-in-out infinite; transform-origin:50% 100%}
+.pet-chomp{animation:chomp .3s ease-in-out infinite alternate; transform-origin:60px 86px}
+.pet-hearts{animation:rise 1.6s ease-in-out infinite}
+.pet-eyes{animation:blink 4s infinite; transform-origin:60px 62px}
+.fly{position:absolute; left:50%; top:-6px; font-size:26px; animation:fly .9s ease-in forwards}
+@keyframes idle{50%{transform:translateY(-3px) scale(1.01,.99)}}
+@keyframes hello{0%{transform:translateY(24px) scale(.6)}50%{transform:translateY(-12px) scale(1.08)}70%{transform:translateY(0) scale(1.04,.94)}100%{transform:none}}
+@keyframes hop{0%,100%{transform:none}20%{transform:translateY(-16px) rotate(-6deg)}40%{transform:translateY(0) scale(1.08,.9)}60%{transform:translateY(-12px) rotate(6deg)}80%{transform:translateY(0)}}
+@keyframes chomp{to{transform:scaleY(.4)}}
+@keyframes rise{50%{transform:translateY(-4px)}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes fly{0%{transform:translate(-50%,-20px) scale(1.2); opacity:1}100%{transform:translate(-50%,44px) scale(.4); opacity:0}}
+.ring-label b.pet .pet-f{display:block; line-height:0; margin-top:4px}
+.ring-label b.pet .pet-f svg{width:76px; height:80px}
+.pet-f{transition:transform .2s}
+.pet-f.l0{filter:grayscale(.85); opacity:.65}
+.pet-f.l3{animation:petb 1.6s ease-in-out infinite}
+@keyframes petb{50%{transform:translateY(-4px) scale(1.06)}}
+.bigcnt{display:flex; align-items:baseline; gap:6px; margin-top:6px; color:var(--accent)}
+.bigcnt b{font-family:var(--font-round); font-weight:900; font-size:56px; line-height:1}
+.bigcnt i{font-style:normal; font-weight:900; font-size:30px; color:var(--ink-2)}
+.bigcnt span{font-weight:900; font-size:20px; color:var(--ink-2)}
+.feed{display:flex; flex-wrap:wrap; gap:3px; margin:6px 0 2px; font-size:19px; line-height:1}
+.feed i{font-style:normal}
+.feed i.eat{opacity:.25; filter:grayscale(1); transform:scale(.7)}
+.petmsg{font-size:13.5px; font-weight:800; color:var(--ink-2); margin-top:4px}
 .ring-label b{font-family:var(--font-round); font-weight:900; font-size:26px}
 .ring-label span{font-size:10.5px; color:var(--ink-3); font-weight:700}
 .hero-main h1{font-family:var(--font-round); font-weight:900; font-size:21px}
 .hero-sub{color:var(--ink-2); font-size:13.5px; margin-top:3px}
 .hero-meta{display:flex; gap:7px; flex-wrap:wrap; margin-top:11px}
-.weekstrip{display:flex; gap:6px; margin-top:14px}
+.weekstrip{display:none !important;display:flex; gap:6px; margin-top:14px}
 .wday{flex:1; text-align:center}
 .wday .dot{height:34px; border-radius:9px; background:var(--track); display:flex; align-items:flex-end;
   justify-content:center; overflow:hidden; border:1px solid transparent}
@@ -280,6 +312,11 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .testhero-top{background:var(--s-bg,var(--crit-bg)); color:var(--ink); border-bottom:3px solid var(--s,var(--crit)); padding:9px 15px; font-weight:900; font-size:14px;
   display:flex; gap:10px; align-items:center; flex-wrap:wrap}
 .testhero-body{padding:13px 16px}
+.cheer{margin-top:12px; padding:14px 16px; border-radius:16px; background:#FFE9C7; border:3px solid #F4A259; font-weight:900; font-size:19px; line-height:1.5; color:#8A4B0F}
+.cheer small{display:block; font-size:13.5px; font-weight:700; margin-top:3px; color:#9A6A3A}
+.th-adv{margin-top:12px; border-top:2px dashed rgba(0,0,0,.12); padding-top:8px}
+.th-adv summary{font-weight:900; cursor:pointer; font-size:14.5px; padding:6px 0}
+.th-adv .adv{margin-top:8px}
 .th-focus{font-size:17px; font-weight:900; line-height:1.55; margin-top:5px}
 .th-focus .hl{background:var(--redo-bg); color:var(--redo-ink); padding:3px 9px; border-radius:7px; display:inline-block; margin:2px 0}
 .stepbar{display:flex; gap:5px; align-items:center; font-size:11px; color:var(--ink-3); font-weight:700; margin-top:9px; flex-wrap:wrap}
@@ -430,6 +467,8 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .advice-fold .fold-body p{margin:3px 0 8px; font-size:14.5px; line-height:1.8}
 .advice-fold{background:var(--card)}
 .fx-goal{display:inline-flex; align-items:baseline; gap:5px; background:var(--accent); color:var(--paper); border-radius:12px; padding:6px 16px; font-weight:900; font-size:17px}
+.fx-ar{border:0; background:rgba(255,255,255,.28); color:inherit; border-radius:10px; width:44px; height:44px; font-size:18px; font-weight:900; margin:0 8px}
+.fx-goal{align-items:center}
 .fx-goal b{font-family:var(--font-round); font-size:34px; line-height:1}
 .fx-clock{display:flex; flex-direction:column; align-items:center; gap:10px}
 .glass-row{display:grid; grid-template-columns:128px minmax(0,1fr); gap:14px; align-items:center; width:100%}
@@ -497,7 +536,7 @@ html{color-scheme:light only}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v33</em></span></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v38</em></span></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題</button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1010,6 +1049,13 @@ async function boot(){
   if (local.scores) SCORES = {review:{}, pub:{}, ...local.scores};
   if (importPast()){ const o = lsRead(); o.scores = SCORES; lsWrite(o); }
   render();
+  if (CAL[TODAY]?.lessons?.length || DATA.units.some(u => u.test === TODAY)){
+    NAVLOCK = true; try { showTab("test"); } finally { NAVLOCK = false; }
+    try { history.replaceState({aibou: 1, tab: "test", focus: null}, ""); } catch {}
+  }
+  try { history.scrollRestoration = "manual"; } catch {}
+  const top0 = () => { try { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch {} };
+  top0(); requestAnimationFrame(top0); setTimeout(top0, 150); setTimeout(top0, 600); window.addEventListener("load", top0, {once: true});
   const db = API_URL
     ? await makeApiDb(API_URL, ok => setSync(ok, ok ? "家族で共有中（スプレッドシート）" : "通信できません。記録はこの端末に残しています"))
     : await (window.claude?.use?.("db") ?? Promise.resolve(null));
@@ -1114,7 +1160,7 @@ function buildPlan(){
       let sp = rvByDate[prev];
       if (!sp){ sp = []; slotsFor(prev).filter(s => s.rv).forEach(s => sp.push(...reviewPicks(prev, s, usedRv))); rvByDate[prev] = sp; }
       const ym = groups.find(g => g.slot.assign === "全教科");
-      if (ym) sp.forEach(t => { TASKMAP[t.k] = t; ym.tasks.push(t); ym.used += t.min; });
+      if (ym) sp.forEach(t => { TASKMAP[t.k] = t; ym.tasks.push({...t, spill: true}); ym.used += t.min; });
     }
     const ready = pool.filter(t => !placed.has(t.k) && target[t.k] <= date && (t.saki === "○" || t.lesson <= date))
                       .sort((a,b) => a.due.localeCompare(b.due) || target[a.k].localeCompare(target[b.k]) || sortTasks(a,b));
@@ -1134,7 +1180,7 @@ function buildPlan(){
           if (placed.has(t.k)) continue;
           if (pass === 0 && !slotMatches(g.slot, t)) continue;
           if (pass === 1 && g.slot.assign !== "全教科") continue;
-          if (g.used && g.used + t.min > g.slot.min) continue;
+          if (pass === 1 && g.used && g.used + t.min > g.slot.min) continue;
           g.tasks.push(t); g.used += t.min; placed.add(t.k);
         }
       }
@@ -1303,7 +1349,7 @@ function taskCard(t, opts = {}){
   const u = unitOf(t.u);
   const running = !!runOf(t.k);
   const n = el("div", `task s-${t.s}${done ? " is-done" : ""}${pass ? " is-pass" : ""}${redo ? " is-redo" : ""}${opts.catchup ? " is-catchup" : ""}${running ? " is-running" : ""}`);
-  const chips = [`<span class="chip num goal">目安 ${t.min}分</span>`];
+  const chips = [];
   if (onTest(t)) chips.push(`<span class="star">★ テストに出る ${esc(testLabel(t))}</span>`);
   if (t.rep > 1 && t.mat !== "漢字のひろば") chips.push(`<span class="chip">${t.rep}回目</span>`);
   if (running) chips.push(`<span class="chip must">とちゅう ${clock(elapsed(runOf(t.k)))}</span>`);
@@ -1372,11 +1418,17 @@ function taskCard(t, opts = {}){
 /* ---------- 今日 ---------- */
 function nowHM(){ const d = new Date(); return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
 
+const TEST_ADV = new Set(), TEST_CLOSED = new Set();
 function renderTests(){
   const th = document.getElementById("testHero");
   th.innerHTML = "";
   const soon = DATA.units.filter(u => u.test >= TODAY && u.lesson <= TODAY)
     .sort((a,b) => a.test.localeCompare(b.test));
+  const todayT = soon.filter(u => u.test === TODAY);
+  if (todayT.length){
+    const subs = [...new Set(todayT.map(u => u.subject))].join("・");
+    th.appendChild(el("div", "cheer", `今日は${esc(subs)}の復習テストの日！ ファイト！！<small>ここまでやってきたことを出し切ろう。わからない問題は飛ばして、できるところから。</small>`));
+  }
   soon.forEach(u => {
     const ts = TASKS.filter(t => t.u === u.key);
     const dn = ts.filter(t => isDone(t.k)).length;
@@ -1395,7 +1447,11 @@ function renderTests(){
         <div class="th-focus">出るところ：${u.focus ? `<span class="hl">${esc(u.focus)}</span>` : "指定なし。習ったところ全体を復習しよう"}</div>
         ${wrongs.length ? `<div class="nc-test" style="margin-top:11px">テスト前に見直すところ（まちがえた問題）<b>${
           wrongs.map(t => `${esc(t.mat)}${t.part && t.part!=="（なし）" ? " "+esc(t.part) : ""} ${wrongOf(t.k)}問`).join("／")}</b></div>` : ""}
+        ${(u.point || u.advice) ? `<details class="th-adv"${(u.test === TODAY && !TEST_CLOSED.has(u.key)) || TEST_ADV.has(u.key) ? " open" : ""} data-u="${esc(u.key)}"><summary>先生のポイント</summary>
+          ${u.point ? `<div class="adv adv-learn"><b>📘 この単元で学ぶこと</b><p>${esc(u.point)}</p></div>` : ""}
+          ${u.advice ? `<div class="adv adv-tip"><b>💡 勉強のコツ</b><p>${esc(u.advice)}</p></div>` : ""}</details>` : ""}
       </div>`;
+    box.querySelectorAll("details.th-adv").forEach(d => d.addEventListener("toggle", () => { if (d.open) TEST_ADV.add(d.dataset.u); else { TEST_ADV.delete(d.dataset.u); TEST_CLOSED.add(d.dataset.u); } }));
     th.appendChild(box);
   });
   if (!soon.length) th.appendChild(el("div","empty","今、テスト待ちの単元はありません。"));
@@ -1424,13 +1480,14 @@ function renderOtherDay(plan){
   const full = past && tasks.length > 0;
   arc.style.strokeDashoffset = String(full ? 0 : 2 * Math.PI * 47);
   arc.style.stroke = "var(--good)"; arc.style.opacity = full ? "1" : "0";
+  document.getElementById("ringPct").className = "num"; document.getElementById("ringPct").onclick = null;
   document.getElementById("ringPct").textContent = past ? `${tasks.length}個` : `${total}分`;
   document.getElementById("ringSub").textContent = past ? "できた" : "予定";
   let line;
   if (past) line = tasks.length ? `${tasks.length}個できた` + (sec ? `・${fmtSec(sec)}` : "") : (vd < START ? "記録の開始前の日です" : "この日の記録はありません");
   else if (off) line = "この日はお休みの予定です";
   else if (!total) line = "この日の宿題の予定はありません";
-  else line = `予定 ${tasks.length}個・${fmtMin(total)}`;
+  else line = `予定 ${tasks.length}個`;
   document.getElementById("heroTitle").textContent = line;
   document.getElementById("heroSub").innerHTML =
     `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）・${cal?.lessons?.length ? cal.lessons.join("・")+"の授業" : "塾はお休み"}`
@@ -1482,23 +1539,92 @@ function renderOtherDay(plan){
   host.appendChild(sec1);
 }
 
+
+/* ---- 十二支キャラ（SVG。頭が大きいやわらかい絵柄） ---- */
+const ANI = [
+ {c:"#C9CED8", back:'<circle cx="26" cy="34" r="17" fill="#C9CED8"/><circle cx="26" cy="34" r="10" fill="#FFB8C8"/><circle cx="94" cy="34" r="17" fill="#C9CED8"/><circle cx="94" cy="34" r="10" fill="#FFB8C8"/>', front:'<ellipse cx="60" cy="74" rx="14" ry="10" fill="#fff"/><path d="M22 70 L38 72 M22 78 L38 76 M98 70 L82 72 M98 78 L82 76" stroke="#8A8F9C" stroke-width="1.6" stroke-linecap="round"/>', nose:"#FF8FA6"},
+ {c:"#FFFFFF", back:'<path d="M24 38 Q14 18 26 20 Q34 22 34 34Z" fill="#F2E4C8"/><path d="M96 38 Q106 18 94 20 Q86 22 86 34Z" fill="#F2E4C8"/><ellipse cx="17" cy="52" rx="13" ry="8" fill="#fff" stroke="#E6DDD0" stroke-width="2" transform="rotate(-20 17 52)"/><ellipse cx="103" cy="52" rx="13" ry="8" fill="#fff" stroke="#E6DDD0" stroke-width="2" transform="rotate(20 103 52)"/>', front:'<path d="M36 30 Q52 18 66 30 Q60 46 42 44Z" fill="#4A4350"/><ellipse cx="60" cy="78" rx="22" ry="14" fill="#FFC9D4"/><circle cx="52" cy="78" r="2.6" fill="#B06A7C"/><circle cx="68" cy="78" r="2.6" fill="#B06A7C"/>', nose:null},
+ {c:"#FFAE4C", back:'<circle cx="28" cy="32" r="14" fill="#FFAE4C"/><circle cx="28" cy="32" r="7" fill="#FFE2B8"/><circle cx="92" cy="32" r="14" fill="#FFAE4C"/><circle cx="92" cy="32" r="7" fill="#FFE2B8"/>', front:'<path d="M60 26 V38 M48 28 L51 38 M72 28 L69 38 M20 62 L32 64 M20 72 L31 70 M100 62 L88 64 M100 72 L89 70" stroke="#5B3A20" stroke-width="4" stroke-linecap="round"/><ellipse cx="60" cy="76" rx="15" ry="10" fill="#FFF1D6"/>', nose:"#E0607A"},
+ {c:"#FFF4F6", back:'<ellipse cx="42" cy="18" rx="10" ry="28" fill="#FFF4F6" transform="rotate(-8 42 18)"/><ellipse cx="42" cy="18" rx="5" ry="20" fill="#FFB8CC" transform="rotate(-8 42 18)"/><ellipse cx="78" cy="18" rx="10" ry="28" fill="#FFF4F6" transform="rotate(8 78 18)"/><ellipse cx="78" cy="18" rx="5" ry="20" fill="#FFB8CC" transform="rotate(8 78 18)"/>', front:'', nose:"#FF8FA6"},
+ {c:"#7FD6B5", back:'<path d="M30 34 L24 12 L42 26Z" fill="#FFD36B"/><path d="M90 34 L96 12 L78 26Z" fill="#FFD36B"/><circle cx="60" cy="26" r="0"/><circle cx="26" cy="44" r="12" fill="#7FD6B5"/><circle cx="94" cy="44" r="12" fill="#7FD6B5"/>', front:'<path d="M50 28 q10 -10 20 0" stroke="#4FB38E" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="60" cy="78" rx="18" ry="11" fill="#D9F6E8"/><path d="M22 76 q-14 4 -14 16 M98 76 q14 4 14 16" stroke="#FFD36B" stroke-width="3" fill="none" stroke-linecap="round"/>', nose:"#4FB38E"},
+ {c:"#A8DC72", back:'', front:'<path d="M40 30 q20 -14 40 0 q-10 10 -20 8 q-10 2 -20 -8Z" fill="#8CC85A"/><circle cx="46" cy="36" r="3" fill="#FFE066"/><circle cx="60" cy="31" r="3" fill="#FFE066"/><circle cx="74" cy="36" r="3" fill="#FFE066"/><ellipse cx="60" cy="80" rx="16" ry="9" fill="#EAF8D2"/><path d="M60 92 v10 l-4 5 M60 102 l4 5" stroke="#FF5E78" stroke-width="3" fill="none" stroke-linecap="round"/>', nose:null},
+ {c:"#C98A57", back:'<path d="M32 36 L26 10 L48 28Z" fill="#C98A57"/><path d="M88 36 L94 10 L72 28Z" fill="#C98A57"/><path d="M60 22 q-26 -4 -32 24 q4 -20 32 -18 q28 -2 32 18 q-6 -28 -32 -24Z" fill="#6B3F22"/>', front:'<path d="M54 24 q6 14 -2 24 q12 -2 16 -24Z" fill="#fff"/><ellipse cx="60" cy="80" rx="20" ry="13" fill="#E9C09A"/><circle cx="52" cy="80" r="2.6" fill="#7A4A2C"/><circle cx="68" cy="80" r="2.6" fill="#7A4A2C"/>', nose:null},
+ {c:"#FFE9DA", back:'<circle cx="30" cy="40" r="18" fill="#fff" stroke="#EEDFD3" stroke-width="2"/><circle cx="90" cy="40" r="18" fill="#fff" stroke="#EEDFD3" stroke-width="2"/><circle cx="60" cy="28" r="22" fill="#fff" stroke="#EEDFD3" stroke-width="2"/><circle cx="22" cy="62" r="12" fill="#5C5560"/><circle cx="98" cy="62" r="12" fill="#5C5560"/>', front:'<circle cx="40" cy="30" r="12" fill="#fff"/><circle cx="60" cy="24" r="13" fill="#fff"/><circle cx="80" cy="30" r="12" fill="#fff"/>', nose:"#E88AA0"},
+ {c:"#B98458", back:'<circle cx="18" cy="66" r="14" fill="#B98458"/><circle cx="18" cy="66" r="8" fill="#FFD9BC"/><circle cx="102" cy="66" r="14" fill="#B98458"/><circle cx="102" cy="66" r="8" fill="#FFD9BC"/>', front:'<path d="M36 52 q24 -14 48 0 q8 16 -4 30 q-20 14 -40 0 q-12 -14 -4 -30Z" fill="#FFE2C8"/><ellipse cx="60" cy="80" rx="12" ry="7" fill="#F6C9A6"/>', nose:null},
+ {c:"#FFFFFF", back:'<path d="M42 30 q-4 -20 6 -18 q4 -8 12 -2 q8 -6 12 2 q10 -2 6 18Z" fill="#FF5E5E"/>', front:'<path d="M54 74 L66 74 L60 90Z" fill="#FFB02E"/><path d="M26 74 q-10 -4 -8 10" stroke="#E9E2D8" stroke-width="3" fill="none"/>', nose:null, wattle:'<ellipse cx="60" cy="92" rx="4" ry="6" fill="#FF5E5E"/>'},
+ {c:"#F6D9AE", back:'<path d="M22 28 q-16 18 -8 44 q16 0 22 -26Z" fill="#B27C4A"/><path d="M98 28 q16 18 8 44 q-16 0 -22 -26Z" fill="#B27C4A"/>', front:'<circle cx="40" cy="48" r="8" fill="#B27C4A" opacity=".0"/><ellipse cx="60" cy="78" rx="18" ry="12" fill="#fff"/>', nose:"#4A3A33"},
+ {c:"#C69A78", back:'<path d="M28 38 L22 16 L46 30Z" fill="#9C6F4F"/><path d="M92 38 L98 16 L74 30Z" fill="#9C6F4F"/>', front:'<ellipse cx="60" cy="78" rx="20" ry="14" fill="#F5B7A0"/><ellipse cx="53" cy="79" rx="3" ry="4" fill="#8A4A3A"/><ellipse cx="67" cy="79" rx="3" ry="4" fill="#8A4A3A"/><path d="M40 86 q-6 -6 -2 -12 M80 86 q6 -6 2 -12" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/>', nose:null}
+];
+function petSVG(i, mood){
+  const a = ANI[i];
+  const eyes = mood === "sleepy" ? '<path d="M38 62 q7 6 14 0 M68 62 q7 6 14 0" stroke="#3B2F3A" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+    : (mood === "happy" || mood === "eat") ? '<path d="M38 66 q7 -10 14 0 M68 66 q7 -10 14 0" stroke="#3B2F3A" stroke-width="3.6" fill="none" stroke-linecap="round"/>'
+    : '<g class="pet-eyes"><ellipse cx="45" cy="62" rx="7" ry="8.5" fill="#3B2F3A"/><ellipse cx="75" cy="62" rx="7" ry="8.5" fill="#3B2F3A"/><circle cx="47.5" cy="58.5" r="3" fill="#fff"/><circle cx="77.5" cy="58.5" r="3" fill="#fff"/><circle cx="43" cy="65" r="1.4" fill="#fff"/><circle cx="73" cy="65" r="1.4" fill="#fff"/></g>';
+  const mouth = mood === "eat" ? '<ellipse class="pet-chomp" cx="60" cy="86" rx="6" ry="5.5" fill="#B84A5E"/><ellipse cx="60" cy="88" rx="3.4" ry="2.4" fill="#FF8FA6"/>'
+    : mood === "sleepy" ? '<path d="M56 85 q4 3 8 0" stroke="#3B2F3A" stroke-width="2.6" fill="none" stroke-linecap="round"/><text x="88" y="38" font-size="14" fill="#8A8FB0" font-weight="900">z</text><text x="98" y="26" font-size="11" fill="#8A8FB0" font-weight="900">z</text>'
+    : '<path d="M52 83 q8 9 16 0" stroke="#3B2F3A" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  const nose = a.nose ? `<ellipse cx="60" cy="74" rx="4.4" ry="3.2" fill="${a.nose}"/>` : "";
+  const hearts = mood === "happy" || mood === "eat" ? '<g class="pet-hearts"><text x="12" y="30" font-size="16" fill="#FF6F91">♥</text><text x="96" y="22" font-size="13" fill="#FF8FA6">♥</text></g>' : "";
+  return `<svg class="pet-svg" viewBox="0 0 120 124" width="104" height="108" aria-hidden="true">
+    <ellipse cx="60" cy="118" rx="26" ry="5" fill="#000" opacity=".08"/>
+    <g class="pet-body">${a.back}
+    <ellipse cx="60" cy="106" rx="24" ry="16" fill="${a.c}" stroke="rgba(0,0,0,.07)" stroke-width="1.5"/>
+    <ellipse cx="60" cy="63" rx="42" ry="38" fill="${a.c}" stroke="rgba(0,0,0,.07)" stroke-width="1.5"/>
+    ${a.front}${a.wattle || ""}${eyes}${nose}
+    <ellipse cx="33" cy="76" rx="7" ry="4.4" fill="#FF8FA6" opacity=".55"/><ellipse cx="87" cy="76" rx="7" ry="4.4" fill="#FF8FA6" opacity=".55"/>
+    ${mouth}</g>${hearts}</svg>`;
+}
+window.__petSVG = petSVG;
+let PET_PREV = null, PET_EAT_UNTIL = 0, PET_HELLO = true;
+const ZODIAC = [["子","🐭","🧀"],["丑","🐮","🌾"],["寅","🐯","🍖"],["卯","🐰","🥕"],["辰","🐲","🍑"],["巳","🐍","🥚"],["午","🐴","🍎"],["未","🐑","🍃"],["申","🐵","🍌"],["酉","🐔","🌽"],["戌","🐶","🦴"],["亥","🐗","🍠"]];
+/* 今月の仲良し度：宿題の達成率（7割）＋復習テストが平均よりどうか（3割）。今日えさをあげるほど、その場で元気になる */
+function petState(doneN, total){
+  const mo = TODAY.slice(0, 7), m0 = mo + "-01", from = m0 > START ? m0 : START;
+  let due = 0, dn = 0;
+  TASKS.forEach(t => { if (t.due >= from && t.due <= TODAY){ due++; if (isDone(t.k)) dn++; } });
+  const hw = due ? dn / due : null;
+  const gaps = Object.values(SCORES.review || {}).filter(r => r.at && r.at.startsWith(mo) && r.avg != null).map(r => r.score - r.avg);
+  const ts = gaps.length ? Math.max(0, Math.min(1, (gaps.reduce((a, b) => a + b, 0) / gaps.length + 20) / 40)) : null;
+  const fr = hw == null ? (ts ?? 0.3) : ts == null ? hw : hw * .7 + ts * .3;
+  const z = ZODIAC[parseInt(TODAY.slice(5, 7), 10) - 1], full = total && doneN >= total;
+  const lvl = fr >= .8 ? 3 : fr >= .55 ? 2 : fr >= .3 ? 1 : 0;
+  const lv = full ? Math.max(lvl, 2) : lvl;
+  const idx = parseInt(TODAY.slice(5, 7), 10) - 1;
+  const eating = Date.now() < PET_EAT_UNTIL;
+  const mood = eating ? "eat" : lv === 0 && !doneN ? "sleepy" : (lv >= 2 || full) ? "happy" : "normal";
+  const face = petSVG(idx, mood);
+  const tt = DATA.units.filter(u => u.test === TODAY).map(u => u.subject);
+  const msg = (tt.length && !(total && doneN >= total)) ? `今日は${[...new Set(tt)].join("・")}の復習テスト！ファイト！！` : !total ? `${z[0]}の子は おやすみ中` : full ? `ぜんぶ たべたよ！ありがとう${lv >= 3 ? "、だいすき！" : "！"}`
+    : doneN ? `もぐもぐ… あと${total - doneN}こ ほしいな` : lv === 0 ? "はじめまして… おなかすいたな" : lv >= 3 ? "まってたよ！ごはんちょうだい" : "きょうの ごはん まってるよ";
+  const pc = Math.round(fr * 100);
+  return {face, lv, mood, food: z[2], msg, detail: `${z[0]}の月（${parseInt(TODAY.slice(5, 7), 10)}月）なかよし度 ${pc}%：宿題 ${hw == null ? "-" : Math.round(hw * 100) + "%"}（${dn}/${due}）・今月のテスト ${gaps.length ? "平均との差 " + (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(0) + "点" : "まだなし"}`};
+}
 function renderToday(plan){
   document.getElementById("unitCards").parentElement.hidden = false;
   if (DOFF !== 0) return renderOtherDay(plan);
   const today = plan.byDate[TODAY] || [];
-  let total = 0, doneMin = 0, undone = [];
+  let total = 0, doneMin = 0, doneN = 0, undone = [];
   today.forEach(g => g.tasks.forEach(t => {
-    total += t.min;
-    if (isDone(t.k)) doneMin += t.min; else undone.push({t, g});
+    total += 1;
+    if (isDone(t.k)){ doneMin += t.min; doneN += 1; } else undone.push({t, g});
   }));
-  const pct = total ? Math.round(doneMin / total * 100) : 0;
+  const pct = total ? Math.round(doneN / total * 100) : 0;
   const C = 2 * Math.PI * 47;
   const arc = document.getElementById("ringArc");
   arc.style.strokeDashoffset = String(C * (1 - pct / 100));
   arc.style.stroke = pct >= 100 ? "var(--good)" : "var(--accent)";
   arc.style.opacity = pct === 0 ? "0" : "1";
-  document.getElementById("ringPct").textContent = pct + "%";
-  document.getElementById("ringSub").textContent = total ? `${doneMin}/${total}分` : "予定なし";
+  const P = petState(doneN, total);
+  const rp = document.getElementById("ringPct");
+  rp.className = "num pet";
+  const grew = PET_PREV != null && doneN > PET_PREV; PET_PREV = doneN;
+  if (grew){ PET_EAT_UNTIL = Date.now() + 1800; setTimeout(() => { try { if (DOFF === 0) renderToday(plan); } catch {} }, 1900); }
+  const P2 = grew ? petState(doneN, total) : P;
+  if (!grew && Date.now() < PET_EAT_UNTIL && rp.querySelector(".pet-f.hop")) { PET_HELLO = false; } else
+  rp.innerHTML = `<span class="pet-f l${P2.lv} ${grew ? "hop" : PET_HELLO ? "hello" : ""}">${P2.face}</span>${grew ? `<span class="fly">${P2.food}</span>` : ""}`;
+  PET_HELLO = false;
+  rp.onclick = () => toast(P.detail);
+  document.getElementById("ringSub").textContent = "";
 
   const d = parse(TODAY), cal = CAL[TODAY], off = isOffDay(TODAY);
   const hm = nowHM();
@@ -1514,10 +1640,12 @@ function renderToday(plan){
   else line = "今日残りを進めよう";
   document.getElementById("heroTitle").textContent = line;
 
+  window.__petMsg = P.msg;
   const leftMin = undone.reduce((a, x) => a + x.t.min, 0);
   document.getElementById("heroSub").innerHTML =
     `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）・${cal?.lessons?.length ? cal.lessons.join("・")+"の授業" : "塾はお休み"}`
-    + (undone.length ? `<div class="status-sub"><b>残り ${undone.length}個・${fmtMin(leftMin)}</b></div>` : "");
+    + `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>こ たべた</span>` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => `<i class="${i < doneN ? "eat" : ""}">${i < doneN ? "✔" : P.food}</i>`).join("")}</div>`
+    + `<div class="petmsg">${esc(P.msg)}</div>`;
 
   const meta = document.getElementById("heroMeta");
   meta.innerHTML = "";
@@ -1525,8 +1653,6 @@ function renderToday(plan){
   if (st) meta.appendChild(el("span","streak",`<b class="num">${st}</b>日続けてがんばっている`));
   if (off) meta.appendChild(el("span","chip redo","旅行・用事でお休み"));
   if (today.some(g => g.rest)) meta.appendChild(el("span","chip",`休みの日の予定（${esc(cal?.holiday || cal?.kbn || "休み")}）`));
-  if (plan.catchup.length)
-    meta.appendChild(el("span","chip redo",`前の分 ${plan.catchup.length}個`));
   const nextTest = DATA.units.filter(u => u.test >= TODAY && u.lesson <= TODAY)
                              .sort((a,b) => a.test.localeCompare(b.test))[0];
   if (nextTest) meta.appendChild(el("span","chip",
@@ -1568,7 +1694,7 @@ function renderToday(plan){
     host.appendChild(el("div","empty","今日の予定はありません。ゆっくり休んでね。"));
   } else if (!first){
     const box = el("div","nc-done",
-      `<b>今日の分は全部終わりました</b><span class="note">${fmtMin(doneMin)}がんばりました。お家の人に丸つけしてもらおう。</span>`);
+      `<b>今日の分は全部終わりました</b><span class="note">${doneN}個がんばりました。お家の人に丸つけしてもらおう。</span>`);
     host.appendChild(box);
   } else {
     const t = first.t, u = unitOf(t.u), st = taskState(t.k) || {};
@@ -1576,7 +1702,7 @@ function renderToday(plan){
     const dleft = diffDays(TODAY, t.due);
     // 枠の時間がもう過ぎている（前の分・朝の枠など）ときは「今やろう」と出す。見出しの時刻と食い違わないように。
     const slotPast = OFFSET === 0 && first.g.slot.end <= hm;
-    const chips = [`<span class="chip num goal">目安 ${t.min}分</span>`,
+    const chips = [
       slotPast ? `<span class="chip redo">今やろう</span>`
                : `<span class="chip">${esc(first.g.slot.start)}–${esc(first.g.slot.end)} ${esc(first.g.slot.name)}</span>`];
     if (st.skip && !st.skip.ok) chips.push(`<span class="chip redo">やらない相談中</span>`);
@@ -1752,7 +1878,6 @@ function renderSkips(){
       <div class="task-sub">${taskSub(t)}</div>
       <div class="task-foot"><span class="chip redo">理由：${esc(k.reason || "")}</span>
         <span class="chip num">相談 ${fmtMD(k.at)}</span>
-        <span class="chip num goal">目安 ${t.min}分</span>
         ${u ? `<span class="chip num">復習テスト ${fmtMD(u.test)}</span>` : ""}
         ${onTest(t) ? `<span class="chip must">テストに出る ${esc(testLabel(t))}</span>` : ""}</div>`;
     const ok = el("button", "btn primary sm", "見送りにする（やらない）");
@@ -1812,8 +1937,7 @@ function renderCheck(plan){
     card.innerHTML = `
       <div class="task-top"><span class="subj">${t.s}</span><span class="task-title">${taskTitle(t)}</span></div>
       <div class="task-sub">${taskSub(t)}</div>
-      <div class="task-foot"><span class="chip num goal">目安 ${t.min}分</span>
-        ${typeof taskState(t.k).sec === "number" ? `<span class="chip num ${taskState(t.k).sec > t.min*90 ? "redo" : "good"}">実際 ${fmtSec(taskState(t.k).sec)}</span>` : `<span class="chip">時間の記録なし</span>`}
+      <div class="task-foot">${typeof taskState(t.k).sec === "number" ? `<span class="chip num">かかった ${fmtSec(taskState(t.k).sec)}</span>` : `<span class="chip">時間の記録なし</span>`}
         ${onTest(t) ? `<span class="chip must">テストに出る ${esc(testLabel(t))}</span>` : ""}
         ${t.retry ? `<span class="chip redo">解き直し</span>` : t.review ? `<span class="chip">週末の復習</span>` : `<span class="chip">${t.rep}回目</span>`}
         <span class="chip num">完了 ${fmtMD(taskState(t.k).done)}</span>
@@ -2247,8 +2371,9 @@ const resumeTimer = k => saveTask(k, {run: {start: Date.now(), acc: runOf(k)?.ac
 function endTimer(k){
   const sec = Math.round(elapsed(runOf(k)));
   const st = taskState(k) || {};
-  FOCUS_END = {k, sec};
-  saveTask(k, {done: TODAY, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), {d: TODAY, sec}], run: null});
+  const set = setMinOf(TASKMAP[k] || {k});
+  FOCUS_END = {k, sec, set};
+  saveTask(k, {done: TODAY, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), {d: TODAY, sec, set}], run: null});
 }
 /* ---- 先生のポイント（折りたたみ）---- */
 let ADV_OPEN = false;
@@ -2313,9 +2438,11 @@ const HG = (() => {
     topLevel: remain => at(T, remain, true),      // 上に残っている砂（体積の割合）の表面の高さ
     botLevel: fall => at(B, fall, true) };        // 下にたまった砂の表面の高さ（下から数える）
 })();
+const HG_DEF = 8;
+const setMinOf = t => { const m = PROG[t.k]?.setMin; return typeof m === "number" && m >= 1 ? m : HG_DEF; };
 function paintSand(t, e, running){
   const g = document.getElementById("hg"); if (!g) return;
-  const total = t.min * 60, f = Math.min(1, Math.floor(e) / total);   // 1秒ごとに進める
+  const total = setMinOf(t) * 60, f = Math.min(1, Math.floor(e) / total);   // 1秒ごとに進める
   g.classList.toggle("over", e > total);
   const top = document.getElementById("hgTop"), bot = document.getElementById("hgBot"), st = document.getElementById("hgStream");
   const ys = f >= 1 ? 70 : HG.topLevel(1 - f), yc = Math.min(70, ys + 3.5 * Math.sin(Math.PI * f));
@@ -2326,11 +2453,11 @@ function paintSand(t, e, running){
 }
 function paintClock(t, e, running){
   if (!document.getElementById("hg")) return;
-  const total = t.min * 60, over = e > total;
+  const total = setMinOf(t) * 60, over = e > total;
   paintSand(t, e, running);
   document.getElementById("fxTime").innerHTML = clockHTML(clock(e));
   const left = document.getElementById("fxLeft");
-  left.innerHTML = over ? `目安を ${clockHTML(clock(e - total))} 過ぎました` : `残り ${clockHTML(clock(total - e))}`;
+  left.innerHTML = over ? `セットした時間を ${clockHTML(clock(e - total))} 過ぎました` : `残り ${clockHTML(clock(total - e))}`;
   left.classList.toggle("over", over);
   const N = Math.ceil(total / 30), idx = Math.floor(e / 30);
   const bx = document.getElementById("beads");
@@ -2369,7 +2496,7 @@ function renderFocus(){
     : (u && u.focus ? `<div class="fx-notest">この宿題そのものは「テストに出る」指定ではありません。${fmtMD(u.test)}の復習テストに出るのは <b>${esc(u.focus)}</b> です。</div>` : "");
   const redo = (isRedo(t.k) ? `<div class="redoband">お直し${st.reason ? "：" + esc(st.reason) : ""}${wrongOf(t.k) ? `（まちがえ ${wrongOf(t.k)}問）` : ""}　まちがえたところをもう一度</div>` : "") + commentBand(st);
   const clockCard = (running, label) => `<div class="fx-clock">
-      <div class="fx-goal">目安 <b>${t.min}</b>分</div>
+      <div class="fx-goal"><button type="button" class="fx-ar" id="fxDn" aria-label="1分へらす">▼</button><span>砂時計 <b>${setMinOf(t)}</b>分</span><button type="button" class="fx-ar" id="fxUp" aria-label="1分ふやす">▲</button></div>
       <div class="glass-row">${glassSVG()}
         <div class="fx-readout"><div class="fx-timerow"><div class="fx-time num${running ? "" : " paused"}" id="fxTime">0:00</div><span class="fx-unitlab">経過</span></div>
           <div class="fx-left" id="fxLeft"></div>
@@ -2378,9 +2505,9 @@ function renderFocus(){
       <div class="bead-legend">1コマ＝30秒</div></div>`;
   let main;
   if (FOCUS_END && FOCUS_END.k === t.k){
-    const over = FOCUS_END.sec > t.min * 60;
+    const setM = FOCUS_END.set || setMinOf(t), over = FOCUS_END.sec > setM * 60;
     main = `<div class="fx-done"><b>おつかれさま！</b>
-        <div style="font-size:15px;margin-top:6px">かかった時間 <b style="display:inline;font-size:20px">${fmtSec(FOCUS_END.sec)}</b>（目安 ${t.min}分）</div>
+        <div style="font-size:15px;margin-top:6px">かかった時間 <b style="display:inline;font-size:20px">${fmtSec(FOCUS_END.sec)}</b>（セット ${setM}分）</div>
         <div class="note" style="margin-top:6px">${over ? "じっくりできたね。" : "いいペース！"}お家の人に丸つけしてもらおう。</div></div>
       <button class="fx-btn resume" id="fxOk" type="button">閉じる</button>`;
   } else if (!r){
@@ -2402,6 +2529,8 @@ function renderFocus(){
   if (document.getElementById("hg")) paintClock(t, r ? elapsed(r) : 0, !!(r && r.start));
   const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
   on("fxClose", closeFocus); on("fxOk", closeFocus);
+  const adj = d => { const m = Math.max(1, Math.min(60, setMinOf(t) + d)); saveTask(t.k, {setMin: m}); };
+  on("fxUp", () => adj(1)); on("fxDn", () => adj(-1));
   on("fxStart", () => startTimer(t.k));
   on("fxPause", () => pauseTimer(t.k));
   on("fxResume", () => resumeTimer(t.k));
@@ -2453,16 +2582,16 @@ function renderPlan(plan){
   const grp = {};
   TASKS.forEach(t => (taskState(t.k)?.secLog || []).forEach(x => {
     const key = `${t.s}｜${t.mat}${t.part ? " " + partLabel(t.part) : ""}${t.retry ? "（解き直し）" : ""}`;
-    (grp[key] ||= {s: t.s, n: 0, sec: 0, plan: t.min}).n++; grp[key].sec += x.sec;
+    (grp[key] ||= {s: t.s, n: 0, sec: 0, plan: t.min, set: 0, ns: 0}).n++; grp[key].sec += x.sec; if (x.set){ grp[key].set += x.set; grp[key].ns++; }
   }));
   const keys = Object.keys(grp).sort((a,b) => SUBJ_ORDER[grp[a].s]-SUBJ_ORDER[grp[b].s] || a.localeCompare(b));
   document.getElementById("timeStats").innerHTML = keys.length
-    ? `<thead><tr><th>教材</th><th class="n">回数</th><th class="n">目安</th><th class="n">実際の平均</th><th>見立て</th></tr></thead><tbody>${keys.map(k => {
+    ? `<thead><tr><th>教材</th><th class="n">回数</th><th class="n">目安</th><th class="n">セット平均</th><th class="n">実際の平均</th><th>見立て</th></tr></thead><tbody>${keys.map(k => {
         const g = grp[k], avg = g.sec / g.n / 60, r = avg / g.plan;
         const v = g.n < 3 ? `<span class="note">記録が3回たまると判定</span>`
           : r > 1.3 ? `<span class="delta-dn">目安より長い。${Math.round(avg)}分に直すと実態に合います</span>`
           : r < .7 ? `<span class="delta-up">目安より短い（${Math.round(avg)}分）</span>` : `<span class="note">ほぼ目安どおり</span>`;
-        return `<tr><td>${esc(k)}</td><td class="n">${g.n}</td><td class="n">${g.plan}分</td><td class="n"><b>${avg.toFixed(1)}分</b></td><td>${v}</td></tr>`;
+        return `<tr><td>${esc(k)}</td><td class="n">${g.n}</td><td class="n">${g.plan}分</td><td class="n">${g.ns ? (g.set / g.ns).toFixed(1) + "分" : "-"}</td><td class="n"><b>${avg.toFixed(1)}分</b></td><td>${v}</td></tr>`;
       }).join("")}</tbody>`
     : `<tbody><tr><td class="note">まだ記録がありません。「今日」で宿題を「始める」→「終わり！」とすると、ここに教材ごとの平均時間がたまります。</td></tr></tbody>`;
   document.getElementById("timeNote").textContent = "一時中断していた時間は入りません。目安とずれが大きい教材は、スプレッドシートの教材マスター「基本1回(分)」を直してください。";
@@ -2526,10 +2655,10 @@ function renderPlan(plan){
   for (let i = 0; i < 14; i++){
     const date = addDays(TODAY, i);
     const gs = plan.byDate[date] || [];
-    const tot = gs.reduce((a,g) => a + g.used, 0);
+    const tot = gs.reduce((a,g) => a + g.tasks.filter(t => !t.spill).reduce((b, t) => b + t.min, 0), 0);
     const cap = gs.reduce((a,g) => a + g.slot.min, 0);
     const per = {};
-    gs.forEach(g => g.tasks.forEach(t => { per[t.s] = (per[t.s]||0) + t.min; }));
+    gs.forEach(g => g.tasks.filter(t => !t.spill).forEach(t => { per[t.s] = (per[t.s]||0) + t.min; }));
     const inner = Object.keys(SUBJ_ORDER).filter(s => per[s])
       .map(s => `<span class="mini s-${s}" style="color:var(--s);background:var(--s-bg)">${s} ${per[s]}分</span>`).join("");
     const cal = CAL[date];
