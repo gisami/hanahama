@@ -176,7 +176,13 @@ button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
 .task.is-done{opacity:.62}
 .task.is-done .done-btn{background:var(--good-bg); border-color:var(--good); color:var(--good)}
 .task.is-done .task-title{text-decoration:line-through; text-decoration-color:var(--ink-3)}
-.task.is-redo{border-color:var(--redo); border-width:1.5px}
+.task.is-redo{border:3px solid #E08A00; background:#FFF6DD}
+.task.is-redo .stripe{background:#E08A00}
+.nextcard:has(.redobig){border:3px solid #E08A00}
+.redobig{margin-top:9px; background:#E08A00; color:#fff; border-radius:9px; padding:8px 11px; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; font-size:13px; font-weight:700; line-height:1.5}
+.redobig b{font-size:16px; font-weight:900}
+.redobig .rno em{font-style:normal; font-size:19px; font-weight:900; background:#fff; color:#8a4b00; border-radius:6px; padding:0 8px}
+.redobig .rtail{flex-basis:100%; font-size:12.5px; opacity:.95}
 .task.is-pass{opacity:.62}
 .task.is-pass .done-btn{background:var(--good); border-color:var(--good); color:#fff}
 .task.is-catchup{border-style:dashed; border-color:var(--redo)}
@@ -455,6 +461,8 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .dback{border:1px solid var(--accent); background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:3px 12px; font-weight:700; font-size:12px; margin-top:3px}
 .dback[hidden]{display:none}
 .reason[aria-pressed="true"]{border-color:var(--redo); background:var(--redo-bg); color:var(--redo-ink)}
+.rvitem{font-size:14px; font-weight:700; color:var(--ink); line-height:1.7}
+.wnoin{width:100%; border:1.5px solid var(--line-2); border-radius:10px; padding:9px 11px; font:inherit; font-size:15px; background:var(--paper); color:var(--ink); margin-top:4px}
 .cmtband{margin-top:9px; background:var(--accent-soft); border-radius:8px; padding:7px 10px; font-size:13px; line-height:1.6; color:var(--ink)}
 .cmtband b{display:block; font-size:11px; color:var(--accent); letter-spacing:.06em}
 .cmtwrap{margin-top:10px}
@@ -462,6 +470,17 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
   background:var(--paper); color:var(--ink); resize:vertical; margin-top:4px}
 .mt{display:inline-block; background:var(--m); color:var(--mi); font-weight:900; font-size:13.5px; padding:1px 9px; border-radius:7px; margin-right:5px; line-height:1.5}
 .pt{display:inline-block; background:#fff; color:var(--ink); border:1.5px solid var(--line-2); font-weight:800; font-size:13px; padding:0 8px; border-radius:7px; margin-right:5px; line-height:1.5}
+.zonehead{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:11px 16px; border-radius:12px; margin:22px 0 12px; color:#fff}
+.zonehead b{font-size:19px; font-weight:900; letter-spacing:.04em}
+.zonehead span{font-size:12.5px; font-weight:700; opacity:.92}
+.zonehead.today{background:#3A3E8F}
+.zone-cu{margin-top:34px; border:3px solid var(--crit); border-radius:16px; background:#FFF1F0; overflow:hidden}
+.zone-cu .zonehead{background:var(--crit); border-radius:0; margin:0}
+.zone-cu .zonehead b{font-size:20px}
+.zone-cu .zc-body{padding:12px 12px 4px}
+.zone-cu .zc-note{font-size:13px; line-height:1.7; color:var(--ink-2); margin:2px 2px 12px}
+.zone-cu .task{background:#fff}
+.tabs .badge.warn{background:var(--redo); color:#3a2a00}
 /* v6 */
 .task{background:var(--card-2)}
 .task .stripe{width:9px}
@@ -550,9 +569,9 @@ html{color-scheme:light only}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v57</em></span></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v61</em></span></div>
     <div class="tabs" role="tablist">
-      <button role="tab" id="tab-today" aria-selected="true">宿題</button>
+      <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
       <button role="tab" id="tab-review" aria-selected="false">振返り<span class="badge" id="badgeReview" hidden></span></button>
       <button role="tab" id="tab-check" aria-selected="false">丸つけ<span class="badge" id="badgeCheck" hidden></span><svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
@@ -586,6 +605,7 @@ html{color-scheme:light only}
     </div>
   </section>
 
+  <div class="zonehead today" id="zoneToday"><b>今日の宿題</b><span>ここから下が、今日やる分です</span></div>
   <div id="nextUp"></div>
 
   <div id="restToday"></div>
@@ -634,6 +654,12 @@ html{color-scheme:light only}
     <div id="skipList" class="stack"></div>
   </section>
 
+  <section id="cuSec" hidden style="margin-bottom:24px">
+    <div class="eyebrow">積み残しの整理（お家の人が決めます）</div>
+    <div class="note" style="margin:-2px 0 10px">「対象外にする」は予定から外します（見送り扱い・あとで戻せます）。「やったことにする」は、やった記録だけ付けて丸つけはしません。</div>
+    <div id="cuList" class="stack"></div>
+  </section>
+
   <div class="eyebrow">丸つけ待ち（娘が「できた」を押したもの）</div>
   <div id="waitList" class="stack"></div>
 
@@ -645,11 +671,6 @@ html{color-scheme:light only}
   <section style="margin-top:26px">
     <div class="eyebrow">お直し中（やり直しの時間に自動で入ります）</div>
     <div id="redoList" class="stack"></div>
-  </section>
-
-  <section style="margin-top:26px">
-    <div class="eyebrow">お家の方へ（今週の単元のアドバイス）</div>
-    <div id="adviceList" class="stack"></div>
   </section>
 
   <section style="margin-top:26px">
@@ -933,6 +954,7 @@ function lsRead(){ try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}")
 function lsWrite(o){ try { localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch {} }
 /* 同じ枠・同じ教材の宿題は1枚のカードにまとめる（例題＋標準問題 など）。まとめたカードの状態は、中身の宿題から計算する */
 let GROUPS = {};
+let CU_OPEN = true, CATCH_N = 0;
 function groupState(k){
   const ms = GROUPS[k].map(m => PROG[m.k] || {}), own = PROG[k] || {};
   const all = f => ms.every(f), some = f => ms.some(f);
@@ -957,13 +979,30 @@ const RV_MIN = {理科:60, 社会:30, 国語:60, 算数:60};
 const RV_NOTE = {理科:"レベル1〜3", 社会:"基本問題", 国語:"みち・とも 標準問題", 算数:"練習問題"};
 const RV_RE = /^(.+?)-復習-(\d{4}-\d\d-\d\d)$/;
 let RV_PLAN = {};
+/* 復習の中身：その単元の「必修」と、国語は漢字のひろばのページ（番号・ページつき） */
+const RVDATA = {"算001":[{"s":"算数","mat":"算数のとも","part":"テ","rng":"","mark":"6"},{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"3, 5-1"}],"算002":[{"s":"算数","mat":"算数のとも","part":"テ","rng":"","mark":"6"},{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"2-2, 4"}],"算003":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 3, 4"}],"算004":[{"s":"算数","mat":"算数のとも","part":"テ","rng":"","mark":"3"},{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1-1, 1-2, 1-3"}],"算005":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"2, 3-1, 5-1"}],"算006":[{"s":"算数","mat":"算数のとも","part":"テ","rng":"","mark":"2"},{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1-1, 3"}],"算007":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1-1, 3-2, 3-4"}],"算008":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"2-1, 3, 5"}],"算009":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜4"}],"算010":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜4"}],"算011":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜5"}],"算012":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜4"}],"算013":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜3"}],"算014":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜3"}],"算015":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜3"}],"算016":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2"}],"算017":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2"}],"算018":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2"}],"算019":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2"}],"算020":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2"}],"算021":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜4"}],"算022":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜4"}],"算023":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2, 3"}],"算024":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2"}],"算025":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜6"}],"算026":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜5"}],"算027":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1〜4"}],"算028":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2, 3"}],"算029":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2, 3"}],"算030":[{"s":"算数","mat":"算数のとも","part":"練","rng":"","mark":"1, 2, 3"}],"国001":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"1"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(1)(2)(3)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.2〜P.7","mark":""}],"国002":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"(1)"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(2)(4)(5)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.8〜P.11","mark":""}],"国003":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"(2)(4)(5)"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(1)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.12〜P.15","mark":""}],"国004":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"(1)"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(2)(3)(4)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.16〜P.19","mark":""}],"国005":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"(1)"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(3)(4)(5)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.20, P.21","mark":""}],"国006":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"(2)(4)"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(4)(7)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.22, P.23","mark":""}],"国007":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"2"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"3・4"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.24〜P.27","mark":""}],"国008":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"1・2"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"2"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.28〜P.31","mark":""}],"国009":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"2"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"1・2・5"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.32〜P.35","mark":""}],"国010":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"3"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"1・4"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.36, P.37","mark":""}],"国011":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.38, P.39","mark":""}],"国012":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.40〜P.43","mark":""}],"国013":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.44〜P.47","mark":""}],"国014":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.48〜P.51","mark":""}],"国015":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.52, P.53","mark":""}],"国016":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.54, P.55","mark":""}],"国017":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"(4)(5)"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"(2)(4)(7)"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.56〜P.59","mark":""}],"国018":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"2・3・4"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"2"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.60〜P.63","mark":""}],"国019":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"3"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"1・2"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.64〜P.67","mark":""}],"国020":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"3・4"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"1・2・4"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.68, P.69","mark":""}],"国021":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"2"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"2・3・4"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.70, P.71","mark":""}],"国022":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"2・3"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"1・2"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.72〜P.75","mark":""}],"国023":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"1・2・3"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"1・3"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.76〜P.79","mark":""}],"国024":[{"s":"国語","mat":"国語のとも","part":"例題","rng":"","mark":"2・3"},{"s":"国語","mat":"国語のとも","part":"標準問題","rng":"","mark":"3・4"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.80〜P.83","mark":""}],"国025":[{"s":"国語","mat":"国語のみち","part":"","rng":"標準問題","mark":"必修"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.84, P.85","mark":""}],"国026":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.86, P.87","mark":""}],"国027":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.88〜P.91","mark":""}],"国028":[{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.92〜P.95","mark":""}],"国029":[{"s":"国語","mat":"国語のみち","part":"","rng":"標準問題","mark":"必修"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.96〜P.99","mark":""}],"国030":[{"s":"国語","mat":"国語のみち","part":"","rng":"標準問題","mark":"必修"},{"s":"国語","mat":"漢字のひろば","part":"","rng":"P.100, P.101","mark":""}],"理001":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理002":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理003":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理004":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理005":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理006":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理007":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理008":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理009":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理010":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理011":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理012":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理013":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理014":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理015":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理016":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理017":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理018":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理019":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理020":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理021":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理022":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理023":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理024":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理025":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理026":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理027":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理028":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理029":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"理030":[{"s":"理科","mat":"サイエンス","part":"レベル1","rng":"","mark":"必修"}],"社001":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社002":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社003":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社004":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社005":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社006":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社007":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社008":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社009":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社010":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社011":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社012":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社013":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社014":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社015":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社016":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社017":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社018":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社019":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社020":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社021":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社022":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社023":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社024":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社025":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社026":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社027":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社028":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社029":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}],"社030":[{"s":"社会","mat":"マスター社会小4","part":"","rng":"基本問題","mark":"必修"}]};
+function reviewItems(ru){
+  const out = [];
+  const src = DATA.tasks.some(t => t.u === ru) ? DATA.tasks.filter(t => t.u === ru && (t.rep || 1) === 1) : (RVDATA[ru] || []);
+  src.filter(t => t.mat !== "計算テキスト").forEach(t => {
+    const mk = (t.mark || "").trim();
+    if (t.mat === "漢字のひろば"){ if (t.rng) out.push({t, txt: `漢字のひろば ${t.rng}（読み・書きの再チェック）`}); return; }
+    if (!mk || mk === "選択") return;
+    const nm = t.mat + (t.part && t.part !== "（なし）" ? " " + partLabel(t.part) : (t.rng ? " " + String(t.rng).split("\n")[0] : ""));
+    const what = mk === "必修" || mk === "全問" ? "必修（全部）" : (t.s === "算数" && t.part === "練" ? `必修 ${mk}` : `${mk}`);
+    out.push({t, txt: `${nm}：${what}`});
+  });
+  out.sort((a, b) => ((MAT_ORDER[a.t.mat] ?? 9) - (MAT_ORDER[b.t.mat] ?? 9)) || String(a.t.part).localeCompare(String(b.t.part)));
+  return out.map(x => x.txt);
+}
 function mkReview(ru, date){
   const u = REVUNITS.find(x => x.key === ru); if (!u) return null;
   const r = SCORES.review[ru] || {};
   const wr = DATA.tasks.filter(t => t.u === ru).reduce((a, t) => a + (PROG[t.k]?.wrong || 0), 0);
   const why = r.score == null ? "" : `復習テスト ${r.score}点` + (r.avg != null ? `（平均 ${r.avg}点より ${r.score - r.avg >= 0 ? "+" : "−"}${Math.abs(Math.round((r.score - r.avg) * 10) / 10)}点）` : "")
             + (wr ? `・宿題での間違え ${wr}問` : "");
-  return {k: `${ru}-復習-${date}`, u: "復習", ru, s: u.subject, mat: "復習", part: "", rep: 1, rng: RV_NOTE[u.subject], mark: "",
+  const items = reviewItems(ru);
+  return {k: `${ru}-復習-${date}`, u: "復習", ru, s: u.subject, mat: "復習", part: "", rep: 1, rng: (items.length ? items.join(" ／ ") : RV_NOTE[u.subject]), items, mark: "",
           min: RV_MIN[u.subject], lesson: date, due: date, saki: "○", review: true, why};
 }
 function reviewedMap(){
@@ -1202,7 +1241,7 @@ function cycleUnit(subj, date, slot){
   if (!best || !best.test) return null;
   return (date < best.test || (date === best.test && !after)) ? best : null;
 }
-let SCHED = {};   // 宿題ごとの「やる日」（決まった枠の日）
+let SCHED = {}, SLOTOF = {};   // 宿題ごとの「やる日」（決まった枠の日）
 const wdOf = d => WD[parse(d).getDay()];
 function clusterTasks(list, extra = () => ""){
   const out = [], idx = {};
@@ -1222,13 +1261,24 @@ function mkGroup(ms){
   const sd = ms.map(m => SCHED[m.k]).filter(Boolean).sort()[0]; if (sd) SCHED[k] = sd;
   return g;
 }
+function slotOfTask(t, vd){
+  const ss = slotsFor(vd);
+  if (t.review) return ss.find(s => s.rv && s.assign === t.s) || ss.find(s => s.assign === "全教科") || null;
+  if (t.retry) return ss.find(s => s.assign === "お直し") || null;
+  const sl = SLOTOF[t.k]; if (sl){ const m = ss.find(x => x.id === sl.id); if (m) return m; }
+  if (t.pin){
+    if (t.at){ const m = ss.find(x => x.day + x.start === t.at || x.id === t.at); if (m) return m; }
+    return ss.find(x => !x.rv && x.assign !== "お直し" && x.assign !== "全教科" && assignMatches(x.assign, t) && ruleMatches(x.rule, t)) || ss.find(x => x.assign === "計算・漢字") || null;
+  }
+  return null;
+}
 function buildPlan(){
   GROUPS = {};
   const byU = {};
   TASKS.forEach(t => (byU[t.u] ||= []).push(t));
   const HOR = Math.max(14, diffDays(TODAY, addDays(REAL_TODAY, DOFF)) + 1);
   const LAST = addDays(TODAY, HOR - 1);
-  SCHED = {};
+  SCHED = {}; SLOTOF = {};
   const slotList = {};   // date -> slot.id -> 宿題
   for (let d = addDays(START, -21); d <= LAST; d = addDays(d, 1)){
     for (const s of slotsFor(d)){
@@ -1241,7 +1291,7 @@ function buildPlan(){
         (byU[u.key] || []).forEach(t => {
           if (t.pin || t.retry || t.review || !tp.pick(t)) return;
           list.push(t);
-          if (!tp.finish && !SCHED[t.k]) SCHED[t.k] = d;
+          if (!tp.finish && !SCHED[t.k]){ SCHED[t.k] = d; SLOTOF[t.k] = s; }
         });
       }
       (slotList[d] ||= {})[s.id] = list;
@@ -1262,8 +1312,8 @@ function buildPlan(){
     const rvHere = [];
     for (const g of groups){
       if (!g.slot.rv) continue;
-      if (date > TODAY){ g.later = true; continue; }   // 先の日の復習単元は、その日に開いたときに決める
-      reviewPicks(date, g.slot, usedRv).forEach(t => { TASKMAP[t.k] = t; put(g, t); rvHere.push(t); });
+      // 先の日の復習単元は、いまの成績で選んだ「予定」。アプリを開くたびに選び直す
+      reviewPicks(date, g.slot, usedRv).forEach(t0 => { const t = date > TODAY ? {...t0, tentative: true} : t0; TASKMAP[t.k] = t; put(g, t); rvHere.push(t); });
     }
     rvByDate[date] = rvHere;
     // 土曜に終わらなかった復習は日曜の予備の時間にやってよい。月曜には消える（やったことにはしない）
@@ -1298,11 +1348,10 @@ function buildPlan(){
       const subs = tp ? tp.s : (key === "金19:30" ? ["国語"] : null);
       if (!subs) continue;
       g.fill = true;
-      if (date > TODAY){ g.later = true; continue; }
       const cand = subs.flatMap(sub => reviewPicks(date, {assign: sub}, new Set(usedRv), 1));
       const gap = t => { const r = SCORES.review[t.ru] || {}; return r.avg != null ? r.score - r.avg : (r.score ?? 70) - 70; };
       const pick = cand.sort((x, y) => gap(x) - gap(y))[0];   // 理科・社会の枠は、2教科のうち悪いほうの1単元
-      if (pick){ usedRv.add(pick.ru); TASKMAP[pick.k] = pick; put(g, pick); }
+      if (pick){ usedRv.add(pick.ru); const pk = date > TODAY ? {...pick, tentative: true} : pick; TASKMAP[pk.k] = pk; put(g, pk); }
     }
     // お直しの時間：丸つけで「お直し」になったもの（今日）と、7日後の解き直し
     const redoG = groups.find(g => g.slot.assign === "お直し");
@@ -1519,7 +1568,7 @@ function kanjiSpreads(list){
 function taskRange(t){ return t.rng || ""; }
 function taskTitle(t){
   if (t.review){ const ru = REVUNITS.find(x => x.key === t.ru); const nm = ru && ru.name && ru.name !== "復習テスト" ? " " + esc(ru.name) : "";
-    return `<span class="mt" style="--m:#3B3F52;--mi:#fff">復習</span><span class="pt">${esc(t.s)}</span> <span style="color:var(--ink-3);font-weight:500">No.${ru ? ru.lec : ""}${nm}</span>`; }
+    return `<span class="mt" style="--m:#3B3F52;--mi:#fff">復習</span><span class="pt">${t.s === "国語" ? "必修・漢字" : "必修"}</span> <span style="color:var(--ink-3);font-weight:500">No.${ru ? ru.lec : ""}${nm}</span>`; }
   const u = unitOf(t.u);
   const part = t.part && t.part !== "（なし）" ? ` ${partLabel(t.part)}` : "";
   const pp = part.trim();
@@ -1528,9 +1577,19 @@ function taskTitle(t){
 const MAT_COL = {"算数のとも":["#E3E0FA","#352A8C"],"計算テキスト":["#CFEFEC","#0B5A54"],"国語のとも":["#FBDCE6","#8A1B41"],"国語のみち":["#FFEDB0","#745300"],
   "漢字のひろば":["#EBDCCB","#66401F"],"漢字対策":["#EBDCCB","#66401F"],"漢字対策1":["#EBDCCB","#66401F"],"サイエンス":["#DDF0B8","#445C0C"],"小学理科学習辞典":["#E2E5EA","#3E4553"],
   "マスター社会小4":["#CFE8F8","#0B4B76"],"教科書・授業ノート":["#EBD7F6","#582879"],"復習":["#3B3F52","#FFFFFF"],"_":["#E2E5EA","#3E4553"]};
+/* お直し：間違えた問題がどこか、すぐわかるようにする */
+function redoBanner(t, tail){
+  const src = t.retry ? (PROG[t.retryOf] || {}) : (taskState(t.k) || {});
+  const n = t.retry ? t.wrongs : (src.wrong || 0);
+  const no = (src.wrongNo || "").trim();
+  const reason = !t.retry && src.reason ? esc(src.reason) : "";
+  return `<div class="redobig"><b>🔁 お直し</b>${no ? `<span class="rno">間違えた問題：<em>${esc(no)}</em></span>` : (n ? `<span class="rno">間違えた問題が ${esc(String(n))}問</span>` : "")}${reason ? `<span class="rwhy">理由：${reason}</span>` : ""}<span class="rtail">${tail}</span></div>`;
+}
 function taskSub(t){
   const bits = [];
-  if (t.review){ bits.push(esc(t.rng)); if (t.why) bits.push(esc(t.why)); return bits.join(" ／ "); }
+  if (t.review){
+    const body = (t.items && t.items.length) ? t.items.map(x => `<div class="rvitem">・${esc(x)}</div>`).join("") : esc(t.rng);
+    return body + (t.why ? `<div class="note" style="margin-top:3px">${esc(t.why)}</div>` : ""); }
   if (t.retry) bits.push(`前に間違えた ${t.wrongs}問だけ もう一度`);
   const r = taskRange(t); if (r) bits.push(esc(r));
   const u = unitOf(t.u); if (u) bits.push(esc(uname(u)));
@@ -1547,8 +1606,10 @@ function taskCard(t, opts = {}){
   const done = isDone(t.k), redo = isRedo(t.k), pass = isPass(t.k);
   const u = unitOf(t.u);
   const running = !!runOf(t.k);
-  const n = el("div", `task s-${t.s}${done ? " is-done" : ""}${pass ? " is-pass" : ""}${redo ? " is-redo" : ""}${opts.catchup ? " is-catchup" : ""}${running ? " is-running" : ""}`);
+  const n = el("div", `task s-${t.s}${done ? " is-done" : ""}${pass ? " is-pass" : ""}${(redo || t.retry) ? " is-redo" : ""}${opts.catchup ? " is-catchup" : ""}${running ? " is-running" : ""}`);
   const chips = [];
+  if (opts.pre) chips.push(...opts.pre);
+  if (t.tentative) chips.push(`<span class="chip">予定（成績が入ると変わります）</span>`);
   if (t.prep) chips.push(`<span class="chip must">復習テスト対策</span>`);
   if (onTest(t)) chips.push(`<span class="star">★ テストに出る ${esc(testLabel(t))}</span>`);
   if ((t.rep > 1 || t.mat === "計算テキスト") && t.mat !== "漢字のひろば") chips.push(`<span class="chip">${t.rep}回目</span>`);
@@ -1574,7 +1635,7 @@ function taskCard(t, opts = {}){
       <div class="task-top"><span class="subj">${t.s}</span><span class="task-title">${taskTitle(t)}</span></div>
       <div class="task-sub">${taskSub(t)}</div>
       <div class="task-foot">${chips.join("")}</div>
-      ${redo ? `<div class="redoband">お直し${st.reason ? "：" + esc(st.reason) : ""}${opts.past ? "" : "　もう一度やって「できた」を押そう"}</div>` : ""}
+      ${(redo || t.retry) ? redoBanner(t, opts.past ? "" : "もう一度やって「できた」を押そう") : ""}
       ${commentBand(st)}
     </div>
     <div class="task-act"></div>`;
@@ -1670,7 +1731,9 @@ function renderOtherDay(plan){
   const vd = addDays(REAL_TODAY, DOFF), past = DOFF < 0, d = parse(vd), cal = CAL[vd], off = isOffDay(vd);
   document.getElementById("unitCards").parentElement.hidden = true;
   let tasks = [], groups = [], total = 0, sec = 0;
+  let PL = [];
   if (past){
+    PL = vd < START ? [] : ALLTASKS.filter(t => (SCHED[t.k] === vd && !t.review) || taskState(t.k)?.done === vd);
     tasks = TASKS.filter(t => taskState(t.k)?.done === vd);
     tasks.forEach(t => { total += t.min; const s = taskState(t.k)?.sec; if (typeof s === "number") sec += s; });
   } else {
@@ -1685,7 +1748,7 @@ function renderOtherDay(plan){
   document.getElementById("ringPct").textContent = past ? `${tasks.length}個` : `${total}分`;
   document.getElementById("ringSub").textContent = past ? "できた" : "予定";
   let line;
-  if (past) line = tasks.length ? `${tasks.length}個できた` + (sec ? `・${fmtSec(sec)}` : "") : (vd < START ? "記録の開始前の日です" : "この日の記録はありません");
+  if (past) line = vd < START ? "記録の開始前の日です" : PL.length ? `予定 ${PL.length}個のうち ${tasks.length}個できた` + (sec ? `・${fmtSec(sec)}` : "") : "この日の予定・記録はありません";
   else if (off) line = "この日はお休みの予定です";
   else if (!total) line = "この日の宿題の予定はありません";
   else line = `予定 ${tasks.length}個`;
@@ -1701,28 +1764,31 @@ function renderOtherDay(plan){
   document.getElementById("weekStrip").innerHTML = "";
   const host = document.getElementById("nextUp"); host.innerHTML = "";
   document.getElementById("restToday").innerHTML = ""; document.getElementById("catchup").innerHTML = "";
-  const sec1 = el("section", null, `<div class="eyebrow" style="margin-top:20px">${past ? "この日にできた宿題" : "この日の予定"}</div>`);
+  const sec1 = el("section", null, `<div class="eyebrow" style="margin-top:20px">${past ? "この日の計画と結果" : "この日の予定"}</div>`);
   if (past){
-    if (!tasks.length) sec1.appendChild(el("div","empty", vd < START ? "ここから前は、記録の開始前です。" : "この日に「できた」を押した宿題はありません。"));
-    tasks.forEach(t => sec1.appendChild(taskCard(t, {readonly:true, past:true})));
-    if (vd >= START){
-      const mine = new Set(tasks.map(t => t.k));
-      const notYet = ALLTASKS.filter(t => !mine.has(t.k) && t.lesson <= vd && t.due >= vd
-        && !(taskState(t.k)?.done && taskState(t.k).done <= vd)).sort(sortTasks);
-      if (notYet.length){
-        const det = el("details","fold");
-        det.open = !tasks.length;
-        det.innerHTML = `<summary>この日、まだ終わっていなかった宿題 ${notYet.length}個</summary>`;
-        const body = el("div","fold-body");
-        body.appendChild(el("p","note","締切前で、その日の終わりまでに「できた」になっていなかった宿題です。"));
-        notYet.forEach(t => {
-          const st = taskState(t.k);
-          const late = (t.due === vd ? "この日が締切・" : "")
-            + (st?.skip?.ok ? `見送り（${fmtMD(st.skip.ok)}に承認）` : st?.done ? `後で ${fmtMD(st.done)} にやった` : "まだやっていない");
-          body.appendChild(taskCard(t, {readonly:true, past:true, lateNote: late}));
+    if (!PL.length) sec1.appendChild(el("div","empty", vd < START ? "ここから前は、記録の開始前です。" : "この日に予定されていた宿題も、できた宿題もありません。"));
+    else {
+      const sk = t => slotOfTask(t, vd);
+      const items = clusterTasks(PL.slice().sort(sortTasks), t => (sk(t)?.id || ""));
+      const bySlot = new Map();
+      items.forEach(t => { const m = t.group ? t.group[0] : t, sl = sk(m); const id = sl ? sl.id : "-"; if (!bySlot.has(id)) bySlot.set(id, {sl, list: []}); bySlot.get(id).list.push(t); });
+      [...bySlot.values()].sort((x, y) => (x.sl?.start || "99") .localeCompare(y.sl?.start || "99")).forEach(({sl, list}) => {
+        sec1.appendChild(el("div","slot-head", sl ? `<span class="slot-time num">${esc(sl.start)}–${esc(sl.end)}</span><span class="slot-name">${esc(sl.name)}</span>` : `<span class="slot-name">時間の枠なし</span>`));
+        list.forEach(t => {
+          const st = taskState(t.k) || {}, ms = t.group || [t];
+          const dn = ms.filter(m => taskState(m.k)?.done).length, pre = [];
+          let late = "";
+          if (st.skip?.ok) late = `見送り（${fmtMD(st.skip.ok)}に承認）`;
+          else if (st.done === vd) pre.push(`<span class="chip good">✓ この日できた</span>`);
+          else if (st.done && st.done < vd) late = `先に ${fmtMD(st.done)} にやった`;
+          else if (st.done) late = `この日はできず、${fmtMD(st.done)} にやった`;
+          else if (dn) late = `${dn}/${ms.length}個だけできた`;
+          else late = "この日はできなかった（まだやっていない）";
+          const sdt = SCHED[t.k];
+          if (st.done === vd && sdt && sdt !== vd) pre.push(`<span class="chip">予定は ${fmtMD(sdt)}（${wdOf(sdt)}）の分</span>`);
+          sec1.appendChild(taskCard(t, {readonly:true, past:true, lateNote: late, pre}));
         });
-        det.appendChild(body); sec1.appendChild(det);
-      }
+      });
     }
   } else if (off){
     sec1.appendChild(el("div","empty","お休みの日です。この日の宿題は「積み残し」に出ます。"));
@@ -1923,7 +1989,7 @@ function renderToday(plan){
         ${taskRange(t) ? `<div class="nc-range">${esc(taskRange(t))}</div>` : ""}
         <div class="nc-range" style="font-size:13.5px;font-weight:500;color:var(--ink-3)">${esc(uname(u))}</div>
         <div class="nc-chips">${chips.join("")}</div>
-        ${isRedo(t.k) ? `<div class="redoband">お直し${st.reason ? "：" + esc(st.reason) : ""}${wrongOf(t.k) ? `（間違え ${wrongOf(t.k)}問）` : ""}　もう一度やろう</div>` : ""}
+        ${(isRedo(t.k) || t.retry) ? redoBanner(t, "間違えたところをもう一度やろう") : ""}
         ${commentBand(st)}
         ${onTest(t) && u ? `<div class="nc-test">${fmtMD(u.test)}の復習テストに出るところ<b>${esc(testLabel(t))}</b></div>` : ""}
         ${adviceFold(u)}
@@ -2012,17 +2078,21 @@ function renderToday(plan){
   const cu = document.getElementById("catchup");
   cu.innerHTML = "";
   if (plan.catchup.length){
-    const mins = plan.catchup.reduce((a,t) => a + t.min, 0);
-    const det = el("details","fold");
-    det.style.borderColor = "var(--redo)";
     const oldest = SCHED[plan.catchup[0].k];
-    det.innerHTML = `<summary style="color:var(--redo-ink)">積み残し ${plan.catchup.length}個（いちばん古いのは ${fmtMD(oldest)}（${wdOf(oldest)}）の分・${diffDays(oldest, TODAY)}日たった）</summary>`;
-    const body = el("div","fold-body");
-    body.appendChild(el("p","note","決まった日にやれなかった宿題です。古い順に並んでいます。ほかの枠に自動で入れることはしないので、日曜の予備の時間などでやろう。"));
+    const det = el("details","zone-cu");
+    det.open = CU_OPEN;
+    det.ontoggle = () => { CU_OPEN = det.open; };
+    const sm = el("summary","zonehead");
+    sm.style.cursor = "pointer"; sm.style.listStyle = "none";
+    sm.innerHTML = `<b>⚠ 積み残し ${plan.catchup.length}個</b><span>今日の分ではありません。いちばん古いのは ${fmtMD(oldest)}（${wdOf(oldest)}）の分・${diffDays(oldest, TODAY)}日たった　${det.open ? "▼" : "▶"}</span>`;
+    det.appendChild(sm);
+    const body = el("div","zc-body");
+    body.appendChild(el("p","zc-note","決まった日にやれなかった宿題です（古い順）。ほかの枠に自動では入りません。日曜の予備の時間などで、できるときにやろう。やらないことにする・やったことにするのは、お家の人が「丸つけ」タブで決めます。"));
     plan.catchup.forEach(t => body.appendChild(taskCard(t, {catchup:true, compact:true})));
     det.appendChild(body);
     cu.appendChild(det);
   }
+  document.getElementById("zoneToday").firstElementChild.textContent = OFFSET === 0 ? "今日の宿題" : `${fmtMD(TODAY)}（${wdOf(TODAY)}）の宿題`;
 
   // ===== 単元ごとの進み具合 =====
   const uc = document.getElementById("unitCards");
@@ -2105,19 +2175,49 @@ function renderSkips(){
     det.appendChild(body); list.appendChild(det);
   }
 }
+function renderCatchupAdmin(plan){
+  const sec = document.getElementById("cuSec"), list = document.getElementById("cuList");
+  list.innerHTML = "";
+  sec.hidden = !plan.catchup.length;
+  if (!plan.catchup.length) return;
+  const bulk = el("div","row"); bulk.style.cssText = "gap:8px;flex-wrap:wrap;margin-bottom:10px";
+  const allOff = el("button","btn sm",`${plan.catchup.length}個ぜんぶ対象外にする`);
+  allOff.onclick = async () => {
+    if (!await ask(`積み残し ${plan.catchup.length}個を、すべて対象外（見送り）にします。よろしいですか？`, "ぜんぶ対象外にする")) return;
+    plan.catchup.forEach(t => saveTask(t.k, {skip: {reason: "お家の人が対象外にした", at: TODAY, ok: TODAY}}));
+  };
+  bulk.appendChild(allOff); list.appendChild(bulk);
+  plan.catchup.forEach(t => {
+    const sd = SCHED[t.k];
+    const card = el("div", `card s-${t.s}`);
+    card.style.cssText = "padding:12px 14px; border-left:9px solid var(--s)";
+    card.innerHTML = `<div class="task-top"><span class="subj">${t.s}</span><span class="task-title">${taskTitle(t)}</span></div>
+      <div class="task-sub">${taskSub(t)}</div>
+      <div class="task-foot"><span class="chip redo">${fmtMD(sd)}（${wdOf(sd)}）の分・${diffDays(sd, TODAY)}日たった</span></div>`;
+    const off = el("button","btn sm","対象外にする");
+    off.onclick = () => saveTask(t.k, {skip: {reason: "お家の人が対象外にした", at: TODAY, ok: TODAY}});
+    const dn = el("button","btn primary sm","やったことにする");
+    dn.onclick = () => saveTask(t.k, {done: sd, judge: "合格", judgeAt: TODAY, wrong: 0, byParent: true});
+    const row = el("div","judge-row"); row.append(dn, off); card.appendChild(row);
+    list.appendChild(card);
+  });
+}
 function updateBadge(){
   const n = TASKS.filter(t => { const s = taskState(t.k); return s && s.done && !s.judge; }).length
           + ALLTASKS.filter(t => { const k = skipOf(t.k); return k && !k.ok; }).length;
   const b = document.getElementById("badgeCheck");
   b.textContent = n > 99 ? "99+" : String(n); b.hidden = n === 0;
   b.setAttribute("aria-label", `丸つけ・相談の待ち ${n}件`);
+  const bt = document.getElementById("badgeToday"), cn = (typeof CATCH_N === "number") ? CATCH_N : 0;
+  bt.textContent = cn > 99 ? "99+" : String(cn); bt.hidden = cn === 0; bt.classList.add("warn");
+  bt.setAttribute("aria-label", `積み残し ${cn}個`);
   const p = pendingUnits().length, rb = document.getElementById("badgeReview");
   rb.textContent = p > 99 ? "99+" : String(p); rb.hidden = p === 0;
   rb.setAttribute("aria-label", `点数・平均点の入力待ち ${p}件`);
 }
 setInterval(() => { try { updateBadge(); } catch {} }, 30000);
 function renderCheck(plan){
-  renderSkips();
+  renderSkips(); renderCatchupAdmin(plan);
   const waiting = TASKS.filter(t => { const s = taskState(t.k); return s && s.done && !s.judge; });
   const redos = TASKS.filter(t => isRedo(t.k));
   const passed = TASKS.filter(t => isPass(t.k));
@@ -2154,9 +2254,12 @@ function renderCheck(plan){
     cm.rows = 2; cm.placeholder = "例：途中式を書くと、ミスが減るよ"; cm.value = taskState(t.k)?.comment || "";
     const cmWrap = el("div","cmtwrap",`<div class="note" style="font-weight:700">コメント（娘さんにも見えます）</div>`); cmWrap.appendChild(cm);
     const cmt = () => cm.value.trim();
+    const wno = el("input"); wno.type = "text"; wno.placeholder = "間違えた問題の番号（例：3, 5）"; wno.value = taskState(t.k)?.wrongNo || "";
+    wno.className = "wnoin";
+    const wnoWrap = el("div","cmtwrap",`<div class="note" style="font-weight:700">間違えた問題の番号（お直しのときに娘さんの画面に出ます）</div>`); wnoWrap.appendChild(wno);
 
     const ok = el("button","btn primary sm","合格にする");
-    ok.onclick = () => saveTask(t.k, {judge:"合格", judgeAt:TODAY, wrong: wrong ?? 0, comment: cmt()});
+    ok.onclick = () => saveTask(t.k, {judge:"合格", judgeAt:TODAY, wrong: wrong ?? 0, wrongNo: wno.value.trim() || null, comment: cmt()});
 
     let wrong = wrongOf(t.k);
     const wrap = el("div","wrongrow", `<span style="font-size:12.5px;font-weight:700;color:var(--ink-3)">間違えた数</span>`);
@@ -2177,14 +2280,14 @@ function renderCheck(plan){
     const showReasons = () => { reasons.hidden = false; ng.textContent = "この内容でお直しにする"; };
     ng.onclick = () => {
       if (reasons.hidden){ showReasons(); return; }
-      saveTask(t.k, {judge:"お直し", judgeAt:TODAY, reason:[...picked].join("・"), comment: cmt(),
+      saveTask(t.k, {judge:"お直し", judgeAt:TODAY, reason:[...picked].join("・"), comment: cmt(), wrongNo: wno.value.trim() || null,
                      wrong: wrong ?? null, redo:(taskState(t.k)?.redo||0)+1});
     };
     const undo = el("button","btn ghost sm","「できた」を取り消す");
     undo.onclick = () => saveTask(t.k, {done:null, judge:null});
     const row = el("div","judge-row");
     row.append(ok, ng, undo);
-    card.append(wrap, reasons, cmWrap, row);
+    card.append(wrap, wnoWrap, reasons, cmWrap, row);
     wl.appendChild(card);
   });
 
@@ -2211,22 +2314,6 @@ function renderCheck(plan){
   rl.innerHTML = "";
   if (!redos.length) rl.appendChild(el("div","empty","お直し中のものはありません。"));
   redos.sort(sortTasks).forEach(t => rl.appendChild(taskCard(t, {compact:true})));
-
-  const al = document.getElementById("adviceList");
-  al.innerHTML = "";
-  const liveU = DATA.units.filter(u => u.lesson <= TODAY && diffDays(TODAY, u.due) >= -3 && u.advice)
-    .sort((a,b) => a.due.localeCompare(b.due)).slice(0, 4);
-  if (!liveU.length) al.appendChild(el("div","empty","表示できるアドバイスがありません。"));
-  liveU.forEach(u => {
-    const c = el("div", `card s-${u.subject}`);
-    c.style.cssText = "padding:13px 15px; border-left:4px solid var(--s)";
-    c.innerHTML = `<div class="row" style="gap:7px;flex-wrap:wrap;margin-bottom:5px">
-        <span class="subj">${esc(u.subject)}</span><span class="chip num">No.${u.lec}</span>
-        <b style="font-size:13.5px">${esc(uname(u))}</b></div>
-      ${u.point ? `<div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:4px">授業：${esc(u.point)}</div>` : ""}
-      <div style="font-size:13px;color:var(--ink-2);line-height:1.65">${esc(u.advice)}</div>`;
-    al.appendChild(c);
-  });
 
   const horizon = addDays(TODAY, 14);
   const rows = ["算数","国語","理科","社会"].map(s => {
@@ -2707,7 +2794,7 @@ function renderFocus(){
         <div class="fx-test-b"><span class="big">${esc(testLabel(t))}</span>
         <div class="sub">特にていねいに。間違えたところは、後で「解き直し」に出てきます。${u.focus ? `<br>この単元でテストに出るところ：<b>${esc(u.focus)}</b>` : ""}</div></div></div>`
     : (u && u.focus ? `<div class="fx-notest">この宿題そのものは「テストに出る」指定ではありません。${fmtMD(u.test)}の復習テストに出るのは <b>${esc(u.focus)}</b> です。</div>` : "");
-  const redo = (isRedo(t.k) ? `<div class="redoband">お直し${st.reason ? "：" + esc(st.reason) : ""}${wrongOf(t.k) ? `（間違え ${wrongOf(t.k)}問）` : ""}　間違えたところをもう一度</div>` : "") + commentBand(st);
+  const redo = ((isRedo(t.k) || t.retry) ? redoBanner(t, "間違えたところをもう一度") : "") + commentBand(st);
   const clockCard = (running, label) => `<div class="fx-clock">
       <div class="fx-goal"><button type="button" class="fx-ar" id="fxDn" aria-label="1分へらす">▼</button><span>砂時計 <b>${setMinOf(t)}</b>分</span><button type="button" class="fx-ar" id="fxUp" aria-label="1分ふやす">▲</button></div>
       <div class="glass-row">${glassSVG()}
@@ -2737,7 +2824,7 @@ function renderFocus(){
         <button class="fx-btn end" id="fxEnd" type="button">終わり！</button></div>
       <button class="fx-link" id="fxCancel" type="button">記録しないでやめる</button>`;
   }
-  box.innerHTML = head + test + redo + main + adviceFold(u);
+  box.innerHTML = head + redo + test + adviceFold(u) + main;
   bindAdv(box);
   if (document.getElementById("hg")) paintClock(t, r ? elapsed(r) : 0, !!(r && r.start));
   const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
@@ -2908,6 +2995,7 @@ function render(){
   bar.hidden = OFFSET === 0;
   if (OFFSET) bar.textContent = `見本表示：${fmtMD(TODAY)}（${OFFSET}日後）として表示しています。記録は変わりません。`;
   const plan = buildPlan();
+  CATCH_N = plan.catchup.length;
   renderDateBar(); renderToday(plan); renderTests(); renderCheck(plan); renderPlan(plan); renderReview(); updateBadge();
   if (FOCUS_K && !document.getElementById("focus").hidden) renderFocus();
 }
