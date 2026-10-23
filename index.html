@@ -460,6 +460,8 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .cmtwrap{margin-top:10px}
 .cmtwrap textarea{width:100%; font-family:inherit; font-size:14px; padding:8px 10px; border-radius:9px; border:1px solid var(--line-2);
   background:var(--paper); color:var(--ink); resize:vertical; margin-top:4px}
+.mt{display:inline-block; background:var(--m); color:var(--mi); font-weight:900; font-size:13.5px; padding:1px 9px; border-radius:7px; margin-right:5px; line-height:1.5}
+.pt{display:inline-block; background:#fff; color:var(--ink); border:1.5px solid var(--line-2); font-weight:800; font-size:13px; padding:0 8px; border-radius:7px; margin-right:5px; line-height:1.5}
 /* v6 */
 .task{background:var(--card-2)}
 .task .stripe{width:9px}
@@ -548,7 +550,7 @@ html{color-scheme:light only}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v52</em></span></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v57</em></span></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題</button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -733,8 +735,7 @@ html{color-scheme:light only}
     </div>
     <div class="offchips" id="offChips"></div>
     <p class="note" style="margin-top:9px">
-      休みにした日は学習時間が0になり、その日にやる予定だった宿題は<b>自動で前の日までに前倒し</b>されます（締切は動かないため）。
-      授業がまだの単元は前倒しできないので、間に合わないものがあれば下の表に警告が出ます。
+      休みにした日は学習時間が0になり、その日の宿題は<b>前倒しせず</b>、「積み残し」として何日分かがわかる形で出ます。
     </p>
   </section>
 
@@ -930,7 +931,22 @@ const PUBS = [["635","2026-02-08"],["636","2026-03-08"],["637","2026-04-12"],["6
 
 function lsRead(){ try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch { return {}; } }
 function lsWrite(o){ try { localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch {} }
-const taskState = k => PROG[k] || null;
+/* 同じ枠・同じ教材の宿題は1枚のカードにまとめる（例題＋標準問題 など）。まとめたカードの状態は、中身の宿題から計算する */
+let GROUPS = {};
+function groupState(k){
+  const ms = GROUPS[k].map(m => PROG[m.k] || {}), own = PROG[k] || {};
+  const all = f => ms.every(f), some = f => ms.some(f);
+  const st = {run: own.run, setMin: own.setMin};
+  if (all(m => m.done)) st.done = ms.map(m => m.done).sort().pop();
+  if (st.done) st.judge = all(m => m.judge === "合格") ? "合格" : some(m => m.judge === "お直し") ? "お直し" : null;
+  const secs = ms.filter(m => typeof m.sec === "number"); if (secs.length) st.sec = secs.reduce((a, m) => a + m.sec, 0);
+  const wr = ms.filter(m => typeof m.wrong === "number"); if (wr.length) st.wrong = wr.reduce((a, m) => a + m.wrong, 0);
+  if (all(m => m.skip)) st.skip = ms[0].skip;
+  st.reason = ms.map(m => m.reason).filter(Boolean).join("・") || undefined;
+  st.comment = ms.map(m => m.comment).filter(Boolean).join(" ／ ") || undefined;
+  return st;
+}
+const taskState = k => GROUPS[k] ? groupState(k) : (PROG[k] || null);
 const isDone = k => { const s = taskState(k); return !!(s && s.done && s.judge !== "お直し"); };
 const isRedo = k => taskState(k)?.judge === "お直し";
 const isPass = k => taskState(k)?.judge === "合格";
@@ -956,11 +972,11 @@ function reviewedMap(){
   return m;
 }
 /* その枠で復習する単元：まだ復習していない単元のうち、復習テストで悪かった順。やった単元は次の週は除く */
-function reviewPicks(date, slot, used){
+function reviewPicks(date, slot, used, n = 2){
   const sub = slot.assign, reviewed = reviewedMap();
   const sticky = Object.keys(PROG).map(k => k.match(RV_RE)).filter(x => x && x[2] === date && PROG[x[0]]?.done && REVUNITS.find(u => u.key === x[1])?.subject === sub);
   sticky.forEach(x => used.add(x[1]));
-  const need = Math.max(0, 2 - sticky.length);
+  const need = Math.max(0, n - sticky.length);
   const cand = REVUNITS.filter(u => u.subject === sub && u.test <= addDays(date, -3) && SCORES.review[u.key]?.score != null && !used.has(u.key))
     .map(u => { const r = SCORES.review[u.key]; return {u, gap: r.avg != null ? r.score - r.avg : r.score - 70, last: reviewed.get(u.key) || ""}; })
     .sort((a, b) => (a.last ? 1 : 0) - (b.last ? 1 : 0) || a.last.localeCompare(b.last) || a.gap - b.gap);
@@ -974,7 +990,23 @@ const textbookTasks = () => DATA.units.filter(u => u.subject === "社会" && u.l
 
 async function saveTask(k, patch){
   const unit = unitKeyOf(k);
-  if (patch.clear) delete PROG[k]; else PROG[k] = {...(PROG[k]||{}), ...patch};
+  const ms = GROUPS[k];
+  if (ms && !patch.clear){
+    const own = {}, rest = {};
+    Object.keys(patch).forEach(x => ((x === "run" || x === "setMin") ? own : rest)[x] = patch[x]);
+    if (Object.keys(own).length) PROG[k] = {...(PROG[k] || {}), ...own};
+    if (Object.keys(rest).length){
+      const notDone = ms.filter(m => !(PROG[m.k]?.done));
+      const targets = rest.done && notDone.length ? notDone : ms;   // 「できた」は、まだの分だけに付ける
+      const per = typeof rest.sec === "number" ? Math.round(rest.sec / targets.length) : undefined;
+      targets.forEach(m => {
+        const p = {...rest};
+        if (per !== undefined) p.sec = per;
+        if (rest.secLog){ const last = rest.secLog[rest.secLog.length - 1]; p.secLog = [...(PROG[m.k]?.secLog || []), {...last, sec: per ?? last.sec}]; }
+        PROG[m.k] = {...(PROG[m.k] || {}), ...p};
+      });
+    }
+  } else if (patch.clear) delete PROG[k]; else PROG[k] = {...(PROG[k]||{}), ...patch};
   render();
   if (DB && unit){
     const body = {};
@@ -1137,116 +1169,168 @@ function sortTasks(a,b){
   return a.due.localeCompare(b.due) || (SUBJ_ORDER[a.s]-SUBJ_ORDER[b.s])
       || ((MAT_ORDER[a.mat]??9)-(MAT_ORDER[b.mat]??9)) || a.part.localeCompare(b.part) || (a.rep-b.rep);
 }
-/* 授業日〜締切日のうち「休みでない日」に均等に散らす＝旅行があれば自動で前倒し */
-function targetDates(pool){
-  const groups = {};
-  pool.forEach(t => { (groups[t.u+"|"+t.mat+"|"+t.part] ||= []).push(t); });
-  const target = {}, impossible = new Set();
-  Object.values(groups).forEach(list => {
-    list.sort((a,b) => a.rep-b.rep);
-    const t0 = list[0];
-    const start = t0.lesson > TODAY ? t0.lesson : TODAY;
-    const avail = [];
-    for (let d = start; d <= t0.due; d = addDays(d,1))
-      if (!isOffDay(d) && slotsFor(d).length) avail.push(d);
-    if (!avail.length){
-      list.forEach(t => { target[t.k] = start; impossible.add(t.k); });
-      return;
-    }
-    list.forEach((t,i) => { target[t.k] = avail[Math.min(avail.length-1, Math.floor(i*avail.length/list.length))]; });
-  });
-  return {target, impossible};
+/* ===== 宿題の割りふり（v53）=====
+   浜学園のサイクル：授業 → 次の授業の冒頭で復習テスト。
+   各枠は「手書きの週の表」どおり、その時点で復習テスト待ちの単元（直近の授業の単元）の決まった宿題だけを出す。
+   ・次の単元の先食い、時間が余ったからの前倒し、入りきらないからの繰り越しはしない。
+   ・決まった枠でやれなかった宿題は「積み残し」として、いつの分か・何日たったかを付けて別に出す。 */
+const CLASS_START = "17:00";   // 塾の授業は17時から。授業日の17時より前の枠は、まだ前の単元（今日テストの単元）
+const isLv = t => /^レベル[123]$/.test(t.part || "");
+const isMaster = t => t.s === "社会" && t.mat === "マスター社会小4";
+const RS = ["理科","社会"];
+const CYCLE = {
+  "月02": {s:["国語"], name:"国語のとも 応用・みち 標準", pick: t => (t.mat === "国語のとも" && t.part === "応用問題") || t.mat === "国語のみち"},
+  "月03": {s:RS, name:"理科 レベル1〜3・社会 基本問題の2回目", pick: t => (t.s === "理科" && isLv(t) && t.rep === 2) || (isMaster(t) && t.rep === 2)},
+  "火05": {s:["算数"], name:"算数の必修（練習問題 3回目・次の授業の前）", pick: t => t.mat === "算数のとも" && t.part === "練" && t.rep === 3},
+  "火06": {s:["算数"], name:"算数のとも テーマ・練習問題 1回目", pick: t => t.mat === "算数のとも" && (t.part === "テ" || (t.part === "練" && t.rep === 1))},
+  "水09": {s:RS, name:"理科・社会 テストに出る必修（3回目）", pick: t => (t.s === "理科" && t.part === "レベル1" && t.rep === 3) || (isMaster(t) && t.rep === 3)},
+  "木12": {s:RS, name:"理科 要点ノート・社会 教科書と授業ノート", pick: t => (t.s === "理科" && t.part === "要点") || (t.s === "社会" && t.mat === "教科書・授業ノート")},
+  "金13": {s:["算数"], name:"算数の必修（練習問題 2回目）", pick: t => t.mat === "算数のとも" && t.part === "練" && t.rep === 2},
+  "金15": {s:RS, name:"理科 レベル1〜3・社会 基本問題の1回目", pick: t => (t.s === "理科" && isLv(t) && t.rep === 1) || (isMaster(t) && t.rep === 1)},
+  "土17": {s:["国語"], name:"国語のとも 例題・標準問題", pick: t => t.mat === "国語のとも" && (t.part === "例題" || t.part === "標準問題")},
+};
+const CYCLE_AT = {"月16:00":"月02","月19:30":"月03","火15:35":"火05","火20:30":"火06","水19:30":"水09","木21:30":"木12","金15:00":"金13","金16:00":"金15","土20:30":"土17"};
+const tmplOf = s => CYCLE[s.id] || CYCLE[CYCLE_AT[s.day + s.start]] || null;
+/* その枠の時点で「復習テスト待ち」の単元（直近の授業の単元）。テストが終わったあとは無し */
+function cycleUnit(subj, date, slot){
+  const after = (slot.start || "") >= CLASS_START;
+  let best = null;
+  for (const u of DATA.units){
+    if (u.subject !== subj || !u.lesson) continue;
+    if (u.lesson < date || (u.lesson === date && after)) { if (!best || u.lesson > best.lesson) best = u; }
+  }
+  if (!best || !best.test) return null;
+  return (date < best.test || (date === best.test && !after)) ? best : null;
 }
-function laterRuleSlot(t, date){
-  for (let d = addDays(date, 1); d <= t.due; d = addDays(d, 1))
-    if (slotsFor(d).some(s => !s.rv && s.rule && slotMatches(s, t))) return true;
-  return false;
+let SCHED = {};   // 宿題ごとの「やる日」（決まった枠の日）
+const wdOf = d => WD[parse(d).getDay()];
+function clusterTasks(list, extra = () => ""){
+  const out = [], idx = {};
+  for (const t of list){
+    if (t.review || t.retry || t.group || t.spill){ out.push(t); continue; }
+    const key = [t.u, t.mat, t.rep, t.prep ? 1 : 0, t.pin || "", extra(t)].join("|");
+    if (idx[key] == null){ idx[key] = out.length; out.push([t]); } else out[idx[key]].push(t);
+  }
+  return out.map(x => !Array.isArray(x) ? x : x.length > 1 ? mkGroup(x) : x[0]);
 }
-function laterSlot(t, date){
-  for (let d = addDays(date, 1); d <= t.due; d = addDays(d, 1))
-    if (slotsFor(d).some(s => !s.rv && s.assign !== "お直し" && s.assign !== "全教科" && slotMatches(s, t))) return true;
-  return false;
+function mkGroup(ms){
+  const k = ms.map(m => m.k).join("&");
+  const uniq = a => [...new Set(a.filter(Boolean))];
+  const g = {...ms[0], k, group: ms, part: uniq(ms.map(m => partLabel(m.part))).join("・"), rng: uniq(ms.map(m => m.rng)).join(" ／ "),
+    mark: "", min: ms.reduce((a, m) => a + (m.min || 0), 0), due: ms.map(m => m.due).sort()[0]};
+  GROUPS[k] = ms; TASKMAP[k] = g;
+  const sd = ms.map(m => SCHED[m.k]).filter(Boolean).sort()[0]; if (sd) SCHED[k] = sd;
+  return g;
 }
 function buildPlan(){
-  const pending = TASKS.filter(t => !isDone(t.k)).sort(sortTasks);
-  const catchup = pending.filter(t => t.due < TODAY);
-  const pool = pending.filter(t => t.due >= TODAY);
-  const {target, impossible} = targetDates(pool);
-  pool.forEach(t => { if (t.pin) target[t.k] = t.pin; });
-  const placed = new Set();
-  const byDate = {}, rvByDate = {}, usedRv = new Set();
-  const LAST = addDays(TODAY, 13);
+  GROUPS = {};
+  const byU = {};
+  TASKS.forEach(t => (byU[t.u] ||= []).push(t));
   const HOR = Math.max(14, diffDays(TODAY, addDays(REAL_TODAY, DOFF)) + 1);
-
+  const LAST = addDays(TODAY, HOR - 1);
+  SCHED = {};
+  const slotList = {};   // date -> slot.id -> 宿題
+  for (let d = addDays(START, -21); d <= LAST; d = addDays(d, 1)){
+    for (const s of slotsFor(d)){
+      const tp = tmplOf(s); if (!tp) continue;
+      const list = [];
+      for (const subj of tp.s){
+        const u = cycleUnit(subj, d, s); if (!u) continue;
+        if (tp.testDay && d !== u.test) continue;
+        if (tp.preTest && d !== addDays(u.test, -1)) continue;
+        (byU[u.key] || []).forEach(t => {
+          if (t.pin || t.retry || t.review || !tp.pick(t)) return;
+          list.push(t);
+          if (!tp.finish && !SCHED[t.k]) SCHED[t.k] = d;
+        });
+      }
+      (slotList[d] ||= {})[s.id] = list;
+    }
+  }
+  TASKS.forEach(t => {
+    if (t.pin) SCHED[t.k] = t.pin;
+    else if (t.retry) SCHED[t.k] = t.lesson;
+    else if (!SCHED[t.k] && !t.review) SCHED[t.k] = t.due;   // どの枠にも当たらない（休みにした日など）ものは締切日を「やる日」にする
+  });
+  const byDate = {}, rvByDate = {}, usedRv = new Set();
   for (let i = 0; i < HOR; i++){
     const date = addDays(TODAY, i);
     const groups = slotsFor(date).map(s => ({slot:s, tasks:[], used:0}));
-    // 週末の復習枠：悪かった単元を2つずつ割りふる
+    const placed = new Set();
+    const put = (g, t) => { if (placed.has(t.k)) return; g.tasks.push(t); g.used += t.min; placed.add(t.k); };
+    // 週末の復習枠：悪かった単元を2つずつ
     const rvHere = [];
     for (const g of groups){
       if (!g.slot.rv) continue;
-      reviewPicks(date, g.slot, usedRv).forEach(t => { TASKMAP[t.k] = t; g.tasks.push(t); g.used += t.min; rvHere.push(t); });
+      if (date > TODAY){ g.later = true; continue; }   // 先の日の復習単元は、その日に開いたときに決める
+      reviewPicks(date, g.slot, usedRv).forEach(t => { TASKMAP[t.k] = t; put(g, t); rvHere.push(t); });
     }
     rvByDate[date] = rvHere;
-    // 土曜に終わらなかった復習は、日曜の予備の時間にやってよい。日曜をすぎたら消える（やったことにはしない）
-    if (parse(date).getDay() === 0){
+    // 土曜に終わらなかった復習は日曜の予備の時間にやってよい。月曜には消える（やったことにはしない）
+    if (parse(date).getDay() === 0 && date <= TODAY){
       const prev = addDays(date, -1);
       let sp = rvByDate[prev];
       if (!sp){ sp = []; slotsFor(prev).filter(s => s.rv).forEach(s => sp.push(...reviewPicks(prev, s, usedRv))); rvByDate[prev] = sp; }
       const ym = groups.find(g => g.slot.assign === "全教科");
       if (ym) sp.forEach(t => { TASKMAP[t.k] = t; ym.tasks.push({...t, spill: true}); ym.used += t.min; });
     }
-    const ready = pool.filter(t => !placed.has(t.k) && target[t.k] <= date && (t.saki === "○" || t.lesson <= date || t.pin) && (!t.pin || t.pin <= date))
-                      .sort((a,b) => a.due.localeCompare(b.due) || target[a.k].localeCompare(target[b.k]) || sortTasks(a,b));
+    // 決まった枠：その日がやる日の宿題だけ（テスト前の仕上げ枠は、その週でまだ終わっていないもの）
     for (const g of groups){
-      if (g.slot.assign !== "お直し") continue;
-      for (const t of [...catchup.filter(x => isRedo(x.k)), ...ready.filter(x => x.retry), ...catchup, ...ready.filter(x => isRedo(x.k))]){
-        if (placed.has(t.k)) continue;
-        if (taskState(t.k)?.done === date) continue;
-        if (g.used && g.used + t.min > g.slot.min) continue;
-        g.tasks.push(t); g.used += t.min; placed.add(t.k);
+      const tp = tmplOf(g.slot); if (!tp) continue;
+      const fin = tp.finish && date === TODAY;   // 先の日の予定には、終わっていない分の見込みは入れない
+      for (const t of (slotList[date]?.[g.slot.id] || [])){
+        const st = taskState(t.k);
+        if (st?.done && st.done !== date) continue;
+        if (SCHED[t.k] === date || (fin && !isDone(t.k) && SCHED[t.k] <= date)) put(g, t);
       }
     }
-    for (const pass of [0,1]){
-      for (const g of groups){
-        if (g.slot.assign === "お直し") continue;
-        for (const t of ready){
-          if (placed.has(t.k)) continue;
-          if (pass === 0 && !slotMatches(g.slot, t)) continue;
-          if (pass === 1 && g.slot.assign !== "全教科") continue;
-          if (g.slot.assign === "全教科") continue;   // 日曜の予備は「土曜の復習の積み残し」だけ。その週の宿題は入れない   // あとに本来の枠（締切まで）があるなら、予備の時間には入れずにそこを待つ
-          if (pass === 1 && g.used && g.used + t.min > g.slot.min) continue;
-          g.tasks.push(t); g.used += t.min; placed.add(t.k);
-        }
-      }
+    // 日にちが決まっている宿題（朝の計算テキスト・漢字、土曜の漢字の再チェック）
+    TASKS.filter(t => t.pin === date).forEach(t => {
+      const st = taskState(t.k); if (st?.done && st.done !== date) return;
+      const g = t.at ? groups.find(x => x.slot.day + x.slot.start === t.at || x.slot.id === t.at) : groups.find(x => !x.slot.rv && x.slot.assign !== "お直し" && x.slot.assign !== "全教科" && assignMatches(x.slot.assign, t) && ruleMatches(x.slot.rule, t))
+             || groups.find(x => x.slot.assign === "計算・漢字");   // 決まった枠（金19:30 など）が無い日は積み残しになる
+      if (g) put(g, t);
+    });
+    // 授業のない週：ふだん新しい単元の1回目・2回目をやる枠は、振返りで悪かった単元の復習を1単元だけ
+    for (const g of groups){
+      if (g.tasks.length || g.slot.rv) continue;
+      const tp = tmplOf(g.slot), key = g.slot.day + g.slot.start;
+      const subs = tp ? tp.s : (key === "金19:30" ? ["国語"] : null);
+      if (!subs) continue;
+      g.fill = true;
+      if (date > TODAY){ g.later = true; continue; }
+      const cand = subs.flatMap(sub => reviewPicks(date, {assign: sub}, new Set(usedRv), 1));
+      const gap = t => { const r = SCORES.review[t.ru] || {}; return r.avg != null ? r.score - r.avg : (r.score ?? 70) - 70; };
+      const pick = cand.sort((x, y) => gap(x) - gap(y))[0];   // 理科・社会の枠は、2教科のうち悪いほうの1単元
+      if (pick){ usedRv.add(pick.ru); TASKMAP[pick.k] = pick; put(g, pick); }
     }
-    // 教科の合う枠が、今日から締切までもう無い宿題は、今日の最後の枠に回す（日曜の復習には入れない）
-    {
-      const hw = groups.filter(g => g.slot.assign !== "お直し" && g.slot.assign !== "全教科" && !g.slot.rv);
-      const last = hw[hw.length - 1];
-      if (last && date === TODAY) for (const t of ready){
-        if (placed.has(t.k) || laterSlot(t, date)) continue;
-        last.tasks.push(t); last.used += t.min; placed.add(t.k);
-      }
+    // お直しの時間：丸つけで「お直し」になったもの（今日）と、7日後の解き直し
+    const redoG = groups.find(g => g.slot.assign === "お直し");
+    if (redoG){
+      TASKS.filter(t => t.retry && !isDone(t.k) && t.lesson <= date && date <= t.due && !(date > TODAY && t.lesson < date)).forEach(t => put(redoG, t));
+      if (date === TODAY) TASKS.filter(t => isRedo(t.k)).forEach(t => put(redoG, t));
     }
-    // その日に「できた」を押した分は、消えずにその日の枠に残す
-    const doneToday = TASKS.filter(t => taskState(t.k)?.done === date);
-    for (const t of doneToday){
-      let g = (t.review && (groups.find(x => x.slot.rv && x.slot.assign === t.s) || groups.find(x => x.slot.assign === "全教科")))
-           || groups.find(x => x.slot.assign !== "お直し" && slotMatches(x.slot, t))
-           || groups.find(x => x.slot.assign !== "お直し") || groups[0];
-      if (!g) continue;
-      g.tasks.push(t); g.used += t.min;
-    }
-    groups.forEach(g => g.tasks.sort((a,b) => {
+    // その日に「できた」を押した分は、その日の枠に残す
+    TASKS.filter(t => taskState(t.k)?.done === date && !placed.has(t.k)).forEach(t => {
+      const g = (t.review && (groups.find(x => x.slot.rv && x.slot.assign === t.s) || groups.find(x => x.slot.assign === "全教科")))
+        || groups.find(x => tmplOf(x.slot) && (slotList[date]?.[x.slot.id] || []).some(y => y.k === t.k))
+        || groups.find(x => x.slot.assign !== "お直し" && assignMatches(x.slot.assign, t))
+        || groups.find(x => x.slot.assign !== "お直し") || groups[0];
+      if (g) put(g, t);
+    });
+    groups.forEach(g => { g.tasks.sort((a,b) => {
       const da = taskState(a.k)?.done === date ? 0 : 1, db = taskState(b.k)?.done === date ? 0 : 1;
       return da - db || sortTasks(a,b);
-    }));
+    }); g.tasks = clusterTasks(g.tasks); });
     byDate[date] = groups;
   }
-  const unplaced = pool.filter(t => !placed.has(t.k) && t.due <= LAST);
+  const shownToday = new Set(); (byDate[TODAY] || []).forEach(g => g.tasks.forEach(t => shownToday.add(t.k)));
+  const pending = TASKS.filter(t => !isDone(t.k)).sort(sortTasks);
+  // 積み残し：やる日が過ぎたのに終わっていない宿題（今日の枠に出ているものは除く）。古い順
+  const catchup = pending.filter(t => !t.review && SCHED[t.k] && SCHED[t.k] < TODAY && !shownToday.has(t.k))
+    .sort((a,b) => SCHED[a.k].localeCompare(SCHED[b.k]) || sortTasks(a,b));
   RV_PLAN = rvByDate;
-  return {byDate, catchup, unplaced, pending, target, impossible};
+  return {byDate, catchup: clusterTasks(catchup, t => SCHED[t.k]), unplaced: [], pending, target: SCHED, impossible: new Set()};
 }
 
 /* ---------- render helpers ---------- */
@@ -1326,8 +1410,9 @@ function pendingUnits(){
 /* 国語・理科は大単元より小単元のほうが子どもにわかりやすい */
 const uname = u => !u ? "" : (["国語","理科"].includes(u.subject) && u.content ? u.content : u.name);
 const partLabel = p => PART_LABEL[p] || p;
-const onTest = t => !!t.mark && t.mark !== "選択";   // 重要指定（必修・重要）は復習テストに出る
+const onTest = t => t.group ? t.group.some(x => onTest(x)) : (!!t.mark && t.mark !== "選択");   // 重要指定（必修・重要）は復習テストに出る
 function testLabel(t){
+  if (t.group) return [...new Set(t.group.filter(x => onTest(x)).map(x => testLabel(x)))].join(" ／ ");
   if (!onTest(t)) return "";
   if (t.mark === "必修") return `${t.part ? partLabel(t.part) : (t.rng || t.mat)} 全部`;
   if (t.mark === "全問") return `${partLabel(t.part)} 全部`;
@@ -1364,6 +1449,24 @@ function dailyTasks(list){
     Object.values(seen).forEach(ts => { if (!ts.some(x => x.part === "応用問題")){ const b = ts.find(x => x.part === "標準問題") || ts[0];
       list = list.concat([{...b, k: `${b.u}-J応用問題1`, part: "応用問題", rep: 1, rng: "", mark: "", min: 10}]); } });
   }
+  {  // 復習テスト対策。国語：金曜19:30に学習計画表の必修（＋漢字は別に足す）。
+     // 授業のない週をはさむ単元（授業からテストまで2週間）は、ふだんどおり3回目までやったあと、テストの直前に「4回目」として思い出すために必修をもう一度
+    const add = [], two = uu => uu && uu.test && diffDays(uu.lesson, uu.test) > 7;
+    const maxRep = t => Math.max(...list.filter(x => x.u === t.u && x.mat === t.mat && x.part === t.part).map(x => x.rep || 1));
+    list.forEach(t => {
+      const uu = unitOf(t.u); if (!uu || !uu.test) return;
+      if (t.s === "国語" && ["国語のとも","国語のみち"].includes(t.mat) && onTest(t)){
+        add.push({...t, k: t.k + "~T", prep: true, pin: addDays(uu.test, -1), due: addDays(uu.test, -1), at: "金19:30", saki: "○"});
+        if (two(uu)) add.push({...t, k: t.k + "~T1", prep: true, pin: addDays(uu.lesson, 6), due: addDays(uu.lesson, 6), at: "金19:30", saki: "○"});
+      }
+      if (!two(uu) || t.rep !== 1 || !onTest(t)) return;
+      if (t.s === "算数" && t.mat === "算数のとも" && t.part === "練")
+        add.push({...t, k: t.u + "-練4", rep: 4, prep: true, pin: uu.test, due: uu.test, at: "火15:35", saki: "○"});
+      if ((t.s === "理科" && t.part === "レベル1") || (t.s === "社会" && t.mat === "マスター社会小4"))
+        add.push({...t, k: t.k.replace(/\d+$/, "") + "T", rep: maxRep(t) + 1, prep: true, pin: addDays(uu.test, -1), due: addDays(uu.test, -1), at: "水19:30", saki: "○"});
+    });
+    list = list.concat(add.filter(x => !list.some(y => y.k === x.k)));
+  }
   list = list.filter(t => !(t.s === "理科" && ["レベル2", "レベル3"].includes(t.part) && t.rep >= 3));   // 週の表では、レベル1〜3は金(1回目)と月(2回目)だけ。3回目は水の「必修だけ」(レベル1)
   list.forEach(t => {
     if ((t.mat === "漢字のひろば" && pageList(t.rng)) || t.mat === "計算テキスト") (byU[t.mat + "|" + t.u] ||= []).push(t);
@@ -1388,6 +1491,8 @@ function dailyTasks(list){
         sp.push({rng: b ? (num(b) === num(a) + 1 ? `${a}〜${b}` : `${a}・${b}`) : a, min: b ? t0.min * 2 : t0.min});
       }
       const uu = unitOf(t0.u);
+      if (uu && uu.test && diffDays(uu.lesson, uu.test) > 7) out.push({...t0, k: `${t0.u}-漢字対策1`, part: "テスト対策", rep: 1, rng: t0.rng, min: 15, pin: addDays(uu.lesson, 6), due: addDays(uu.lesson, 6), saki: "○", prep: true, at: "金19:30"});
+      if (uu && uu.test) out.push({...t0, k: `${t0.u}-漢字対策`, part: "テスト対策", rep: 1, rng: t0.rng, min: 15, pin: addDays(uu.test, -1), due: addDays(uu.test, -1), saki: "○", prep: true, at: "金19:30"});
       if (uu && uu.test) out.push({...t0, k: `${t0.u}-漢字再`, part: "再チェック", rep: 1, rng: t0.rng, min: 15, pin: uu.test, due: uu.test, saki: "○", recheck: true});
       let n = 0;
       for (let d = addDays(t0.lesson, 1); d <= t0.due; d = addDays(d, 1)){
@@ -1414,11 +1519,15 @@ function kanjiSpreads(list){
 function taskRange(t){ return t.rng || ""; }
 function taskTitle(t){
   if (t.review){ const ru = REVUNITS.find(x => x.key === t.ru); const nm = ru && ru.name && ru.name !== "復習テスト" ? " " + esc(ru.name) : "";
-    return `復習：${esc(t.s)} <span style="color:var(--ink-3);font-weight:500">No.${ru ? ru.lec : ""}${nm}</span>`; }
+    return `<span class="mt" style="--m:#3B3F52;--mi:#fff">復習</span><span class="pt">${esc(t.s)}</span> <span style="color:var(--ink-3);font-weight:500">No.${ru ? ru.lec : ""}${nm}</span>`; }
   const u = unitOf(t.u);
   const part = t.part && t.part !== "（なし）" ? ` ${partLabel(t.part)}` : "";
-  return `${esc(t.mat)}${esc(part)}${t.retry ? ` <span style="color:var(--redo-ink)">解き直し</span>` : ""} <span style="color:var(--ink-3);font-weight:500">No.${u ? u.lec : ""}</span>`;
+  const pp = part.trim();
+  return `<span class="mt" style="--m:${(MAT_COL[t.mat]||MAT_COL["_"])[0]};--mi:${(MAT_COL[t.mat]||MAT_COL["_"])[1]}">${esc(t.mat)}</span>${pp ? `<span class="pt">${esc(pp)}</span>` : ""}${t.retry ? ` <span style="color:var(--redo-ink)">解き直し</span>` : ""} <span style="color:var(--ink-3);font-weight:500">No.${u ? u.lec : ""}</span>`;
 }
+const MAT_COL = {"算数のとも":["#E3E0FA","#352A8C"],"計算テキスト":["#CFEFEC","#0B5A54"],"国語のとも":["#FBDCE6","#8A1B41"],"国語のみち":["#FFEDB0","#745300"],
+  "漢字のひろば":["#EBDCCB","#66401F"],"漢字対策":["#EBDCCB","#66401F"],"漢字対策1":["#EBDCCB","#66401F"],"サイエンス":["#DDF0B8","#445C0C"],"小学理科学習辞典":["#E2E5EA","#3E4553"],
+  "マスター社会小4":["#CFE8F8","#0B4B76"],"教科書・授業ノート":["#EBD7F6","#582879"],"復習":["#3B3F52","#FFFFFF"],"_":["#E2E5EA","#3E4553"]};
 function taskSub(t){
   const bits = [];
   if (t.review){ bits.push(esc(t.rng)); if (t.why) bits.push(esc(t.why)); return bits.join(" ／ "); }
@@ -1440,6 +1549,7 @@ function taskCard(t, opts = {}){
   const running = !!runOf(t.k);
   const n = el("div", `task s-${t.s}${done ? " is-done" : ""}${pass ? " is-pass" : ""}${redo ? " is-redo" : ""}${opts.catchup ? " is-catchup" : ""}${running ? " is-running" : ""}`);
   const chips = [];
+  if (t.prep) chips.push(`<span class="chip must">復習テスト対策</span>`);
   if (onTest(t)) chips.push(`<span class="star">★ テストに出る ${esc(testLabel(t))}</span>`);
   if ((t.rep > 1 || t.mat === "計算テキスト") && t.mat !== "漢字のひろば") chips.push(`<span class="chip">${t.rep}回目</span>`);
   if (running) chips.push(`<span class="chip must">途中 ${clock(elapsed(runOf(t.k)))}</span>`);
@@ -1452,10 +1562,11 @@ function taskCard(t, opts = {}){
   if (wr !== null) chips.push(`<span class="chip ${wr ? "redo" : "good"}">間違え ${wr}問</span>`);
   const dleft = diffDays(TODAY, t.due);
   if (opts.lateNote) chips.push(`<span class="chip redo">${esc(opts.lateNote)}</span>`);
+  const vdate = opts.date || (DOFF ? addDays(REAL_TODAY, DOFF) : TODAY), sd = SCHED[t.k];
+  if (!opts.past && !done && !pass && sd && sd < vdate && !t.review)
+    chips.push(`<span class="chip redo">積み残し：${fmtMD(sd)}（${wdOf(sd)}）の分・${diffDays(sd, vdate)}日たった</span>`);
   if (opts.past){ /* 過去の日の表示では「今日まで」などは出さない */ }
-  else if (opts.catchup) chips.push(`<span class="chip redo">締切を${-dleft}日過ぎ</span>`);
-  else if (dleft === 0) chips.push(`<span class="chip redo">今日まで</span>`);
-  else if (dleft === 1) chips.push(`<span class="chip redo">明日まで</span>`);
+  else if (dleft < 0) chips.push(`<span class="chip crit">締切を${-dleft}日過ぎ</span>`);
 
   n.innerHTML = `
     <div class="stripe"></div>
@@ -1614,18 +1725,19 @@ function renderOtherDay(plan){
       }
     }
   } else if (off){
-    sec1.appendChild(el("div","empty","お休みの日です。宿題は前の日までに前倒しされます。"));
-  } else if (!total){
+    sec1.appendChild(el("div","empty","お休みの日です。この日の宿題は「積み残し」に出ます。"));
+  } else if (!total && !groups.some(g => g.later)){
     sec1.appendChild(el("div","empty","この日に入っている宿題はありません。"));
   } else {
     groups.forEach(g => {
-      if (!g.tasks.length) return;
+      if (!g.tasks.length && !g.later) return;
       sec1.appendChild(el("div","slot-head",`<span class="slot-time num">${esc(g.slot.start)}–${esc(g.slot.end)}</span><span class="slot-name">${esc(g.slot.name)}</span>`
-        + (g.slot.assign === "お直し" ? `<span class="chip redo">やり直し専用</span>` : g.slot.assign ? `<span class="chip">${esc(g.slot.assign)}の時間</span>` : "")));
+        + (g.slot.assign === "お直し" ? `<span class="chip redo">やり直し専用</span>` : (g.slot.rv || g.fill) ? `<span class="chip must">復習（悪かった単元）</span>` : g.slot.assign ? `<span class="chip">${esc(g.slot.assign)}の時間</span>` : "")));
+      if (g.later) sec1.appendChild(el("div","empty",`${g.slot.rv ? "2単元" : "1単元"}。どの単元をやるかは、その日に開いたときに決まります。`));
       g.tasks.forEach(t => sec1.appendChild(taskCard(t)));
     });
   }
-  sec1.appendChild(el("p","note", past ? "過去の日は見るだけの画面です。" : "▶を押すと、今日の分として先に始められます（先食い）。終わると今日の「できた」になります。"));
+  sec1.appendChild(el("p","note", past ? "過去の日は見るだけの画面です。" : "この日の予定です。▶を押すと今日やったことになります。"));
   host.appendChild(sec1);
 }
 
@@ -1780,9 +1892,9 @@ function renderToday(plan){
     bar.onclick = () => openFocus(rk);
     host.appendChild(bar);
   }
-  const first = undone.find(x => diffDays(TODAY, x.t.due) <= 0) || undone[0];
+  const first = undone[0];   // 時間わりの順
   if (off){
-    host.appendChild(el("div","empty","今日はお休みです。宿題は前の日までに前倒ししてあります。"));
+    host.appendChild(el("div","empty","今日はお休みです。"));
   } else if (!total){
     host.appendChild(el("div","empty","今日の予定はありません。ゆっくり休んでね。"));
   } else if (!first){
@@ -1800,8 +1912,6 @@ function renderToday(plan){
                : `<span class="chip">${esc(first.g.slot.start)}–${esc(first.g.slot.end)} ${esc(first.g.slot.name)}</span>`];
     if (st.skip && !st.skip.ok) chips.push(`<span class="chip redo">やらない相談中</span>`);
     if (dleft < 0) chips.push(`<span class="chip redo">締切を過ぎている</span>`);
-    else if (dleft === 0) chips.push(`<span class="chip redo">今日まで</span>`);
-    else if (dleft === 1) chips.push(`<span class="chip redo">明日まで</span>`);
     if ((t.rep > 1 || t.mat === "計算テキスト") && t.mat !== "漢字のひろば") chips.push(`<span class="chip">${t.rep}回目</span>`);
     card.innerHTML = `
       ${onTest(t) ? `<div class="nc-flag">★ ここは復習テストに出ます</div>` : ""}
@@ -1834,7 +1944,7 @@ function renderToday(plan){
 
   // ===== この後やること =====
   const rest0 = undone.filter(x => x !== first);
-  const urgent = rest0.filter(x => diffDays(TODAY, x.t.due) <= 0);
+  const urgent = [];
   if (urgent.length){
     const secU = el("section", null, `<div class="eyebrow" style="margin-top:26px;color:var(--redo-ink)">今日までにやること（${urgent.length}個）</div>`);
     urgent.forEach(({t, g}) => {
@@ -1851,7 +1961,7 @@ function renderToday(plan){
       if (g.slot.id !== curSlot){
         curSlot = g.slot.id;
         const purpose = g.slot.assign === "お直し" ? `<span class="chip redo">やり直し専用</span>`
-          : g.slot.rv ? `<span class="chip must">復習（悪かった単元・2つ）</span>`
+          : g.slot.rv ? `<span class="chip must">復習（悪かった単元・2つ）</span>` : g.fill ? `<span class="chip must">復習（悪かった単元・1つ）</span>`
           : g.slot.assign === "全教科" ? `<span class="chip must">どの教科でもOK</span>`
           : g.slot.assign ? `<span class="chip">${esc(g.slot.assign)}の時間</span>` : "";
         sec.appendChild(el("div","slot-head",
@@ -1905,9 +2015,10 @@ function renderToday(plan){
     const mins = plan.catchup.reduce((a,t) => a + t.min, 0);
     const det = el("details","fold");
     det.style.borderColor = "var(--redo)";
-    det.innerHTML = `<summary style="color:var(--redo-ink)">締切を過ぎた宿題 ${plan.catchup.length}個</summary>`;
+    const oldest = SCHED[plan.catchup[0].k];
+    det.innerHTML = `<summary style="color:var(--redo-ink)">積み残し ${plan.catchup.length}個（いちばん古いのは ${fmtMD(oldest)}（${wdOf(oldest)}）の分・${diffDays(oldest, TODAY)}日たった）</summary>`;
     const body = el("div","fold-body");
-    body.appendChild(el("p","note","締切を過ぎた宿題です。やり直しの時間や日曜の時間で少しずつやろう。上の「次にやること」にも順番に出てきます。"));
+    body.appendChild(el("p","note","決まった日にやれなかった宿題です。古い順に並んでいます。ほかの枠に自動で入れることはしないので、日曜の予備の時間などでやろう。"));
     plan.catchup.forEach(t => body.appendChild(taskCard(t, {catchup:true, compact:true})));
     det.appendChild(body);
     cu.appendChild(det);
@@ -2744,7 +2855,7 @@ function renderPlan(plan){
   // お休み日チップ
   const oc = document.getElementById("offChips");
   oc.innerHTML = "";
-  if (!OFFDAYS.length) oc.appendChild(el("span","note","まだありません。旅行や用事の日を入れると、その分を前倒しします。"));
+  if (!OFFDAYS.length) oc.appendChild(el("span","note","まだありません。旅行や用事の日を入れると、その日の宿題は積み残しとして出ます。"));
   [...OFFDAYS].sort().forEach(d => {
     const c = el("span","offchip", `${fmtMD(d)}（${WD[parse(d).getDay()]}）`);
     const x = el("button",null,"×"); x.setAttribute("aria-label","削除");
@@ -2941,5 +3052,4 @@ document.getElementById("dToday").onclick = () => { DOFF = 0; render(); };
 boot();
 })();
 </script>
-
 </body></html>
