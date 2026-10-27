@@ -571,7 +571,7 @@ html{color-scheme:light only}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v63</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v64</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -668,6 +668,11 @@ html{color-scheme:light only}
   <section style="margin-top:26px">
     <div class="eyebrow">今日つけた分</div>
     <div id="judgedList" class="stack"></div>
+  </section>
+
+  <section style="margin-top:26px">
+    <details class="fold" id="undoFold"><summary>間違えて「できた」を押したとき（最近14日・合格したものも戻せます）</summary>
+      <div class="fold-body"><div id="undoList"></div></div></details>
   </section>
 
   <section style="margin-top:26px">
@@ -1661,7 +1666,8 @@ function taskCard(t, opts = {}){
 
   if (opts.readonly){
     const a0 = n.querySelector(".task-act");
-    if (opts.onMark){ const b = el("button","btn primary sm","やった\nことにする"); b.type = "button"; b.style.cssText = "white-space:pre-line;line-height:1.3;padding:8px 10px"; b.onclick = opts.onMark; a0.appendChild(b); }
+    if (opts.onUndo){ const u2 = el("button","undo","間違えた？もどす"); u2.type = "button"; u2.onclick = opts.onUndo; a0.appendChild(u2); }
+    else if (opts.onMark){ const b = el("button","btn primary sm","やった\nことにする"); b.type = "button"; b.style.cssText = "white-space:pre-line;line-height:1.3;padding:8px 10px"; b.onclick = opts.onMark; a0.appendChild(b); }
     else a0.remove();
     return n; }
   const act = n.querySelector(".task-act");
@@ -1816,7 +1822,9 @@ function renderOtherDay(plan){
           // 週末の復習は月曜に消えて積み残しにならないので、過去の日から、いまやって報告できるようにする（ふつうの宿題は積み残しからやる）
           const doNow = t.review && !st.done && !st.skip?.ok;
           if (doNow) pre.push(`<span class="chip must">いまからやれます（積み残しには出ません）</span>`);
-          sec1.appendChild(taskCard(t, {readonly: !doNow, past:true, lateNote: late, pre}));
+          const undoable = st.done && !isPass(t.k);
+          sec1.appendChild(taskCard(t, {readonly: !doNow, past:true, lateNote: late, pre,
+            onUndo: undoable ? async () => { if (await ask("「できた」を取り消して、まだの状態にもどしますか？", "もどす")) saveTask(t.k, {done: null, judge: null, sec: st.sec ?? null}); } : null}));
         });
       });
     }
@@ -2338,6 +2346,20 @@ function renderCheck(plan){
     back.onclick = () => saveTask(t.k, {judge:null, judgeAt:null, reason:null});
     card.appendChild(back);
     jl.appendChild(card);
+  });
+
+  const ul = document.getElementById("undoList");
+  ul.innerHTML = "";
+  const rec = TASKS.filter(t => { const s0 = taskState(t.k); return s0 && s0.done && s0.done >= addDays(TODAY, -14); })
+    .sort((a, b) => taskState(b.k).done.localeCompare(taskState(a.k).done) || sortTasks(a, b)).slice(0, 60);
+  if (!rec.length) ul.appendChild(el("div","empty","最近「できた」になった宿題はありません。"));
+  rec.forEach(t => {
+    const s0 = taskState(t.k);
+    const row = el("div","row", `<span class="subj s-${t.s}">${t.s}</span><span style="flex:1;min-width:0;font-size:13px">${taskTitle(t)}　<span class="note">${fmtMD(s0.done)}・${s0.judge === "合格" ? "合格" : s0.judge === "お直し" ? "お直し" : "丸つけ待ち"}</span></span>`);
+    const bk = el("button","btn ghost sm","もどす"); bk.type = "button";
+    bk.onclick = async () => { if (await ask("「できた」を取り消して、まだの状態にもどします。丸つけの結果も消えます。よろしいですか？", "もどす")) saveTask(t.k, {done: null, judge: null, judgeAt: null, reason: null, wrong: null, wrongNo: null, sec: s0.sec ?? null}); };
+    row.appendChild(bk); row.style.margin = "8px 0";
+    ul.appendChild(row);
   });
 
   const rl = document.getElementById("redoList");
