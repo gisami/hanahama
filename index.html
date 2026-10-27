@@ -44,7 +44,9 @@ button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
   background:color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter:blur(12px); border-bottom:1px solid var(--line)}
 .topbar-in{max-width:1120px; margin:0 auto; padding:10px 16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
-.brand{display:flex; align-items:baseline; gap:9px; margin-right:auto}
+.brand{display:flex; align-items:baseline; gap:9px; margin-right:auto; flex:1 1 auto}
+.refresh{margin-left:auto; border:1.5px solid var(--line-2); background:var(--card); color:var(--ink); border-radius:999px; padding:5px 13px; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; align-self:center}
+.refresh:active{transform:scale(.96)}
 .brand b{font-family:var(--font-round); font-weight:900; font-size:17px}
 .brand span{font-size:11px; color:var(--ink-3); letter-spacing:.08em}
 .tabs{display:flex; gap:4px; background:var(--card-2); padding:4px; border-radius:12px}
@@ -569,7 +571,7 @@ html{color-scheme:light only}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v61</em></span></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v63</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -875,7 +877,8 @@ const diffDays = (a,b) => Math.round((parse(b)-parse(a))/86400000);
 const fmtMD = s => { const d=parse(s); return `${d.getMonth()+1}/${d.getDate()}`; };
 const fmtMin = m => m>=60 ? `${Math.floor(m/60)}時間${m%60?m%60+"分":""}` : `${m}分`;
 
-const REAL_TODAY = (() => { const t = iso(new Date()); return t < DATA.reset ? DATA.reset : t; })();
+const todayStr = () => { const t = iso(new Date()); return t < DATA.reset ? DATA.reset : t; };
+let REAL_TODAY = todayStr();
 let OFFSET = 0;
 let DOFF = 0;   // 宿題タブで見ている日（今日からの日数。マイナスは過去）
 let TODAY = REAL_TODAY;
@@ -925,6 +928,7 @@ async function makeApiDb(url, status){
   setInterval(() => { if (!document.hidden) sync(); }, 15000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
   window.addEventListener("online", sync);
+  window.__aibouSync = sync;
   return {
     doc: p => ({
       set: async data => { docs[p] = JSON.parse(JSON.stringify(data)); dirty.add(p); persist(); notify(); sync(); },
@@ -1005,14 +1009,14 @@ function mkReview(ru, date){
   return {k: `${ru}-復習-${date}`, u: "復習", ru, s: u.subject, mat: "復習", part: "", rep: 1, rng: (items.length ? items.join(" ／ ") : RV_NOTE[u.subject]), items, mark: "",
           min: RV_MIN[u.subject], lesson: date, due: date, saki: "○", review: true, why};
 }
-function reviewedMap(){
+function reviewedMap(before){
   const m = new Map();
-  Object.keys(PROG).forEach(k => { const x = k.match(RV_RE); if (x && PROG[k]?.done && (m.get(x[1]) || "") < x[2]) m.set(x[1], x[2]); });
+  Object.keys(PROG).forEach(k => { const x = k.match(RV_RE); if (x && PROG[k]?.done && (!before || x[2] < before) && (m.get(x[1]) || "") < x[2]) m.set(x[1], x[2]); });
   return m;
 }
 /* その枠で復習する単元：まだ復習していない単元のうち、復習テストで悪かった順。やった単元は次の週は除く */
 function reviewPicks(date, slot, used, n = 2){
-  const sub = slot.assign, reviewed = reviewedMap();
+  const sub = slot.assign, reviewed = reviewedMap(date);
   const sticky = Object.keys(PROG).map(k => k.match(RV_RE)).filter(x => x && x[2] === date && PROG[x[0]]?.done && REVUNITS.find(u => u.key === x[1])?.subject === sub);
   sticky.forEach(x => used.add(x[1]));
   const need = Math.max(0, n - sticky.length);
@@ -1136,6 +1140,21 @@ function openInitialTab(){
   try { history.replaceState({aibou: 1, tab: want, focus: null}, ""); } catch {}
   try { window.scrollTo(0, 0); } catch {}
 }
+let REFRESHING = false;
+async function refreshApp(manual){
+  if (REFRESHING) return; REFRESHING = true;
+  const b = document.getElementById("btnRefresh"); if (b) b.textContent = "更新中…";
+  try {
+    const nd = todayStr();
+    if (nd !== REAL_TODAY){ REAL_TODAY = nd; DOFF = 0; OFFSET = 0; }
+    try { if (window.__aibouSync) await Promise.race([window.__aibouSync(), new Promise(r => setTimeout(r, 6000))]); } catch {}
+    render();
+    if (manual) toast("最新の状態にしました");
+  } finally { REFRESHING = false; if (b) b.textContent = "↻ 更新"; }
+}
+document.getElementById("btnRefresh").onclick = () => refreshApp(true);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && todayStr() !== REAL_TODAY) refreshApp(false); });
+setInterval(() => { if (todayStr() !== REAL_TODAY) refreshApp(false); }, 60000);
 async function boot(){
   const local = lsRead();
   if (local.prog) PROG = local.prog;
@@ -1640,7 +1659,11 @@ function taskCard(t, opts = {}){
     </div>
     <div class="task-act"></div>`;
 
-  if (opts.readonly){ n.querySelector(".task-act").remove(); return n; }
+  if (opts.readonly){
+    const a0 = n.querySelector(".task-act");
+    if (opts.onMark){ const b = el("button","btn primary sm","やった\nことにする"); b.type = "button"; b.style.cssText = "white-space:pre-line;line-height:1.3;padding:8px 10px"; b.onclick = opts.onMark; a0.appendChild(b); }
+    else a0.remove();
+    return n; }
   const act = n.querySelector(".task-act");
   if (done || pass){
     const btn = el("button", "done-btn", CHECK);
@@ -1733,7 +1756,11 @@ function renderOtherDay(plan){
   let tasks = [], groups = [], total = 0, sec = 0;
   let PL = [];
   if (past){
-    PL = vd < START ? [] : ALLTASKS.filter(t => (SCHED[t.k] === vd && !t.review) || taskState(t.k)?.done === vd);
+    PL = vd < START ? [] : ALLTASKS.filter(t => (SCHED[t.k] === vd && !t.review) || taskState(t.k)?.done === vd || (t.review && t.k.endsWith("-復習-" + vd)));
+    if (vd >= START){   // 週末の復習：その日にやる予定だった分。積み残しには出さないが、過去の日には出す
+      const used = new Set();
+      slotsFor(vd).filter(sl => sl.rv).forEach(sl => reviewPicks(vd, sl, used).forEach(t => { TASKMAP[t.k] = t; PL.push({...t, pastPlan: true}); }));
+    }
     tasks = TASKS.filter(t => taskState(t.k)?.done === vd);
     tasks.forEach(t => { total += t.min; const s = taskState(t.k)?.sec; if (typeof s === "number") sec += s; });
   } else {
@@ -1786,7 +1813,10 @@ function renderOtherDay(plan){
           else late = "この日はできなかった（まだやっていない）";
           const sdt = SCHED[t.k];
           if (st.done === vd && sdt && sdt !== vd) pre.push(`<span class="chip">予定は ${fmtMD(sdt)}（${wdOf(sdt)}）の分</span>`);
-          sec1.appendChild(taskCard(t, {readonly:true, past:true, lateNote: late, pre}));
+          // 週末の復習は月曜に消えて積み残しにならないので、過去の日から、いまやって報告できるようにする（ふつうの宿題は積み残しからやる）
+          const doNow = t.review && !st.done && !st.skip?.ok;
+          if (doNow) pre.push(`<span class="chip must">いまからやれます（積み残しには出ません）</span>`);
+          sec1.appendChild(taskCard(t, {readonly: !doNow, past:true, lateNote: late, pre}));
         });
       });
     }
