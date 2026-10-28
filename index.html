@@ -571,7 +571,7 @@ html{color-scheme:light only}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v64</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v67</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -634,6 +634,15 @@ html{color-scheme:light only}
   <div class="fchips" id="rvMode"></div>
   <section class="rvcard" id="rvPending" hidden style="border-color:var(--crit)"><h3>点数・平均点の入力待ち</h3>
     <div class="note" style="margin-bottom:4px">テストおつかれさま！ 点数と平均点を入れよう。入れるまで、アプリを開くとここが最初に出ます。わからないときは「忘れた」を押せば大丈夫。</div><div id="rvPendList"></div></section>
+  <section class="rvcard" id="rvImport"><details id="rvImportD"><summary id="rvImportS" style="cursor:pointer;font-weight:800"></summary>
+    <div class="note" style="margin:8px 0">毎月の月初（1〜10日）に、お家の人が前月の成績をまとめて取り込みます。取り込むと、点数とクラス平均が上書きされます（クラス順位もいっしょに記録します）。</div>
+    <ol class="note" style="margin:0 0 10px 18px;padding:0;line-height:1.9">
+      <li>浜学園のマイページで、復習テストの成績の一覧を開く</li>
+      <li>表を最初の行から最後の行まで選んで、コピーする</li>
+      <li>下のボタンで「お家の人モード」を開き、「成績の取り込み」に貼り付ける</li>
+      <li>内容を確認して「この内容で上書きする」を押す</li>
+    </ol>
+    <button class="btn primary sm" id="rvImportGo" type="button">お家の人：成績を取り込む</button></details></section>
   <section class="rvcard" id="rvWeekend"><h3>週末の復習（悪かった単元）</h3><div id="rvWeekendBody"></div></section>
   <div class="tiles" id="rvTiles" style="margin-bottom:14px"></div>
   <section class="rvcard"><h3>復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
@@ -655,6 +664,14 @@ html{color-scheme:light only}
     <div class="eyebrow">「やらない」の相談（お家の人が決めます）</div>
     <div id="skipList" class="stack"></div>
   </section>
+
+  <section id="impSec" style="margin-bottom:24px"><details class="fold" id="impFold"><summary>成績の取り込み（月初に前月分・貼り付けで上書き）</summary>
+    <div class="fold-body">
+      <div class="note" style="margin-bottom:8px">浜学園マイページの成績一覧の表をコピーして、下に貼り付けます（表の見出し行から最後の行まで）。同じテストは、点数とクラス平均が上書きされます。</div>
+      <textarea id="impText" rows="6" placeholder="ここに貼り付け" style="width:100%;border:1.5px solid var(--line-2);border-radius:10px;padding:9px 11px;font:inherit;font-size:13px;background:var(--paper);color:var(--ink)"></textarea>
+      <div class="judge-row"><button class="btn sm" id="impCheck" type="button">内容を確認</button><button class="btn primary sm" id="impApply" type="button" hidden>この内容で上書きする</button></div>
+      <div id="impPreview" style="margin-top:10px"></div>
+    </div></details></section>
 
   <section id="cuSec" hidden style="margin-bottom:24px">
     <div class="eyebrow">積み残しの整理（お家の人が決めます）</div>
@@ -888,6 +905,30 @@ let OFFSET = 0;
 let DOFF = 0;   // 宿題タブで見ている日（今日からの日数。マイナスは過去）
 let TODAY = REAL_TODAY;
 const CAL = Object.fromEntries(DATA.cal.map(c => [c.d, c]));
+/* ---------- スプレッドシートから学習データを足す仕組み ----------
+   「アプリ保存」シートの data/<名前> という行に {units:[…], tasks:[…], cal:[…], dropUnits:[…], dropTasks:[…]} を書くと、
+   index.html を替えなくても、単元・宿題・授業日が差し替わる（key が同じものは上書き、新しい key は追加）。 */
+const SEED0 = {units: DATA.units.slice(), tasks: DATA.tasks.slice(), cal: DATA.cal.slice()};
+let DATADOCS_SIG = "";
+function applyDataDocs(docs){
+  const sig = JSON.stringify(docs);
+  if (sig === DATADOCS_SIG) return false;
+  DATADOCS_SIG = sig;
+  let units = SEED0.units.slice(), tasks = SEED0.tasks.slice(), cal = SEED0.cal.slice();
+  const put = (arr, key, items) => (items || []).forEach(it => { const i = arr.findIndex(x => x[key] === it[key]); if (i >= 0) arr[i] = it; else arr.push(it); });
+  const ids = Object.keys(docs).sort();
+  ids.forEach(id => {
+    const d = docs[id] || {};
+    if (Array.isArray(d.dropUnits)) units = units.filter(u => !d.dropUnits.includes(u.key));
+    if (Array.isArray(d.dropTasks)) tasks = tasks.filter(t => !d.dropTasks.includes(t.k));
+    put(units, "key", d.units); put(tasks, "k", d.tasks); put(cal, "d", d.cal);
+  });
+  DATA.units = units; DATA.tasks = tasks; DATA.cal = cal;
+  Object.keys(CAL).forEach(k => delete CAL[k]);
+  cal.forEach(c => { CAL[c.d] = c; });
+  if (typeof REVUNITS !== "undefined") REVUNITS = mkRevUnits();
+  return true;
+}
 
 /* ---------- GitHub版：Googleスプレッドシート(Apps Script)に保存する仕組み ----------
    Claudeの共有データと同じ形（doc / collection / onSnapshot）で使えるようにした薄い部品。
@@ -1063,6 +1104,64 @@ async function saveTask(k, patch){
     catch(e){ console.warn("save failed", e?.code); toast("保存できませんでした。通信を確認してください"); }
   } else { const o = lsRead(); o.prog = PROG; lsWrite(o); }
 }
+/* ---------- 成績の取り込み（マイページの表を貼り付け） ---------- */
+const PFX = {算数:"算", 国語:"国", 理科:"理", 社会:"社"};
+function parseResults(text){
+  const re = /小\s*4\s*(国語|算数|理科|社会)\s*[A-Za-zＡ-Ｚ]*\s*no\.?\s*(\d+)/gi;
+  const ms = [...text.matchAll(re)], out = [];
+  ms.forEach((m, i) => {
+    const seg = text.slice(m.index + m[0].length, i + 1 < ms.length ? ms[i + 1].index : text.length);
+    const pts = [...seg.matchAll(/(\d+(?:\.\d+)?)\s*点/g)].map(x => +x[1]);
+    const rk = [...seg.matchAll(/(\d+)\s*位\s*\/\s*(\d+)\s*人/g)].map(x => [+x[1], +x[2]]);
+    if (!pts.length) return;
+    out.push({key: PFX[m[1]] + String(+m[2]).padStart(3, "0"), subj: m[1], lec: +m[2], score: pts[0], avg: pts[1], allAvg: pts[2], cr: rk[0], ar: rk[1]});
+  });
+  const seen = new Set();
+  return out.filter(x => !seen.has(x.key) && seen.add(x.key));
+}
+let IMP_ROWS = [];
+function initImport(){
+  const chk = document.getElementById("impCheck"), ap = document.getElementById("impApply"), pv = document.getElementById("impPreview");
+  chk.onclick = () => {
+    IMP_ROWS = parseResults(document.getElementById("impText").value);
+    ap.hidden = !IMP_ROWS.length;
+    if (!IMP_ROWS.length){ pv.innerHTML = `<div class="empty">テストの行が見つかりませんでした。「小4 国語H no.31 …」のような行を含む表を、見出しごとコピーして貼り付けてください。</div>`; return; }
+    const rows = IMP_ROWS.map(x => {
+      const o = SCORES.review[x.key] || {}, same = o.score === x.score && o.avg === x.avg;
+      const tag = o.score == null ? `<span class="chip good">新規</span>` : same ? `<span class="chip">変更なし</span>` : `<span class="chip redo">上書き（${o.score ?? "−"}点／平均${o.avg ?? "−"} → ${x.score}点／平均${x.avg ?? "−"}）</span>`;
+      return `<tr><td>${esc(x.subj)} No.${x.lec}</td><td class="n num">${x.score}点</td><td class="n num">${x.avg ?? "−"}</td><td>${x.cr ? x.cr[0] + "位/" + x.cr[1] + "人" : "−"}</td><td>${tag}</td></tr>`;
+    }).join("");
+    pv.innerHTML = `<div class="note" style="margin-bottom:6px">${IMP_ROWS.length}件を読み取りました。</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>テスト</th><th class="n">点数</th><th class="n">クラス平均</th><th>クラス順位</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  };
+  ap.onclick = async () => {
+    if (!IMP_ROWS.length) return;
+    if (!await ask(`${IMP_ROWS.length}件の点数とクラス平均を上書きします。よろしいですか？`, "上書きする")) return;
+    IMP_ROWS.forEach(x => {
+      const u = REVUNITS.find(v => v.key === x.key), o = SCORES.review[x.key] || {};
+      const n = {...o, score: x.score, at: o.at || (u && u.test) || undefined};
+      if (x.avg != null) n.avg = x.avg;
+      if (x.cr || x.ar || x.allAvg != null) n.rank = {c: x.cr || null, a: x.ar || null, allAvg: x.allAvg ?? null};
+      delete n.avgN; delete n.src;
+      SCORES.review[x.key] = n;
+    });
+    SCORES.lastImport = TODAY;
+    const cnt = IMP_ROWS.length; IMP_ROWS = []; document.getElementById("impText").value = ""; pv.innerHTML = ""; ap.hidden = true;
+    saveScores(); toast(`${cnt}件を取り込みました`);
+  };
+  document.getElementById("rvImportGo").onclick = () => {
+    const go = () => { showTab("check"); const f = document.getElementById("impFold"); f.open = true; setTimeout(() => f.scrollIntoView({block:"start"}), 50); };
+    if (unlocked) go(); else openPin(go);
+  };
+}
+function renderImportCard(){
+  const ym = TODAY.slice(0, 7), day = +TODAY.slice(8, 10);
+  const due = day <= 10 && (SCORES.lastImport || "") < ym + "-01";
+  const pm = new Date(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 2, 1).getMonth() + 1;
+  const card = document.getElementById("rvImport"), d = document.getElementById("rvImportD");
+  card.style.borderColor = due ? "var(--crit)" : "";
+  document.getElementById("rvImportS").textContent = due ? `📥 月初です。${pm}月の成績を取り込もう（お家の人）` : `成績の取り込み（月に1回・お家の人）${SCORES.lastImport ? "　前回 " + fmtMD(SCORES.lastImport) : ""}`;
+  if (due && !d.dataset.shown){ d.open = true; d.dataset.shown = "1"; }
+}
 async function saveScores(){
   render();
   if (DB){
@@ -1185,6 +1284,10 @@ async function boot(){
     snap.docs.forEach(d => Object.assign(next, (d.data()?.tasks) || {}));
     PROG = next; render();
   }, e => { setSync(false, "共有が切れました"); console.warn(e); });
+  DB.collection("data").onSnapshot(snap => {
+    const docs = {}; snap.docs.forEach(d => { docs[d.id] = d.data(); });
+    if (applyDataDocs(docs)) render();
+  }, e => console.warn(e));
   DB.doc("plan/current").onSnapshot(snap => {
     if (!snap.exists) return;
     const d = snap.data() || {};
@@ -1196,7 +1299,7 @@ async function boot(){
   DB.doc("scores/main").onSnapshot(snap => {
     if (!snap.exists){ importPast(); if ((SCORES.imports||[]).length || Object.keys(SCORES.review||{}).length) saveScores(); return; }
     const d = snap.data() || {};
-    SCORES = {review: d.review || {}, pub: d.pub || {}, imports: d.imports || [], month: d.month || {}, skip: d.skip || {}};
+    SCORES = {review: d.review || {}, pub: d.pub || {}, imports: d.imports || [], month: d.month || {}, skip: d.skip || {}, lastImport: d.lastImport};
     if (importPast()){ saveScores(); return; }
     render(); openInitialTab();
   }, e => console.warn(e));
@@ -1446,8 +1549,16 @@ const KOJIN_ID3 = "kojin-2026-07-08", AVG_ID2 = "kojin-avg-official";
 const KOJIN_MONTH2 = {"2026-09": {subj:{社会:{avg:75.3, rank:16}}, soc:{fuku:75.3, kokai:46.0, total:121.3, rank:24}}};
 const KOJIN_MONTH = {"2026-09": {course:"マスターコース", sum:633, rank:19, total:98.6, outOf:200, fuku:63.3, kokai:35.3,
   subj:{国語:{avg:45.0, rank:21}, 算数:{avg:61.2, rank:24}, 理科:{avg:79.0, rank:16}}}};
-const REVUNITS = DATA.units.concat(PAST_TESTS.concat(PAST_TESTS2, PAST_TESTS3).filter(p => !DATA.units.some(u => u.key === p[0]))
+const mkRevUnits = () => DATA.units.concat(PAST_TESTS.concat(PAST_TESTS2, PAST_TESTS3).filter(p => !DATA.units.some(u => u.key === p[0]))
   .map(p => ({key:p[0], subject:p[1], lec:p[2], test:p[3], name:PAST_NAMES[p[0]] || "復習テスト", past:true})));
+let REVUNITS = mkRevUnits();
+/* 10/28 成績表（マイページ）のスクショから：点数とクラス平均を上書き。1回だけ実行（あとで手で直した分は消さない） */
+const RESULTS_ID = "results-2026-10-28";
+const RESULTS_1028 = {"国031":[78,66.1],"社031":[57,84.7],"理031":[82,81.2],"算030":[60,77.6],"国030":[42,58.9],"理030":[76,86.4],"社030":[90,84.1],
+  "国029":[50,63.3],"社029":[78,74.6],"理029":[90,83.4],"算029":[80,79.4],"国028":[42,44.7],"国026":[40,57.1],"社026":[82,78.0],"理026":[61,80.9],
+  "算027":[60,73.8],"国025":[34,69.4],"社025":[81,80.6],"理025":[85,77.4],"算026":[70,71.5],"算025":[68,80.3],"社024":[74,77.4],"理024":[81,83.1],
+  "算024":[60,79.0],"国023":[56,59.8],"社023":[71,75.0],"理023":[71,82.5],"算023":[48,67.0],"国022":[62,71.6],"理022":[76,74.0],"社022":[68,79.2],
+  "算022":[35,55.0],"社021":[61,79.9],"理021":[62,81.3],"算021":[39,51.2],"国020":[84,67.7]};
 function importPast(){
   let changed = false;
   const batch = (id, tests, month) => {
@@ -1469,6 +1580,16 @@ function importPast(){
     Object.keys(AVG_OFFICIAL).forEach(k => { const r = SCORES.review[k];
       if (r && r.score != null && (r.avg == null || r.avgN)){ r.avg = AVG_OFFICIAL[k]; delete r.avgN; } });
     SCORES.imports = [...(SCORES.imports || []), AVG_ID2]; changed = true;
+  }
+  if (!(SCORES.imports || []).includes(RESULTS_ID)){
+    Object.keys(RESULTS_1028).forEach(k => {
+      const u = REVUNITS.find(x => x.key === k);
+      const o = SCORES.review[k] || {};
+      const n = {...o, score: RESULTS_1028[k][0], avg: RESULTS_1028[k][1], at: o.at || (u && u.test) || undefined};
+      delete n.avgN; delete n.src;
+      SCORES.review[k] = n;
+    });
+    SCORES.imports = [...(SCORES.imports || []), RESULTS_ID]; SCORES.lastImport = "2026-10-28"; changed = true;
   }
   return changed;
 }
@@ -2599,6 +2720,7 @@ function renderReview(){
   document.getElementById("rvChart2").innerHTML = lineChart(s2, {min: dv.length ? Math.min(35, Math.floor((Math.min(...dv) - 3) / 5) * 5) : 35, max: dv.length ? Math.max(65, Math.ceil((Math.max(...dv) + 3) / 5) * 5) : 65, step: 5, ref: 50, label:"偏差値の推移", month: RV_MODE === "month", empty:"まだ偏差値がありません", empty2:"入れると、ここに線が出ます（点線は偏差値50）"});
   document.getElementById("rvLeg2").innerHTML = s2.map(x => `<span><i style="--c:var(${x.color})"></i>${x.name}${x.square ? "（■）" : ""}</span>`).join("");
 
+  renderImportCard();
   // 入力待ち
   if (!RV_KEEP){
     const pend = pendingUnits().filter(on), pb = document.getElementById("rvPendList"); pb.innerHTML = "";
@@ -3189,6 +3311,7 @@ document.getElementById("dToday").onclick = () => { DOFF = 0; render(); };
   fix(document.body);
   mo.observe(document.body, {childList:true, characterData:true, subtree:true});
 })();
+initImport();
 boot();
 })();
 </script>
