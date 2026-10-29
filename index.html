@@ -567,11 +567,33 @@ html{color-scheme:light only}
 .score-in3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:6px}
 .score-in3 label{display:flex; flex-direction:column; gap:3px; font-size:11.5px; font-weight:700; color:var(--ink-3)}
 .score-in3 input{width:100%; font-family:inherit; font-size:15px; padding:7px 8px; border-radius:9px; border:1px solid var(--line-2); background:var(--paper); color:var(--ink); text-align:right; font-variant-numeric:tabular-nums}
+
+/* v68: 丸つけ待ちは「完了」にしない／もっとやりたいとき */
+.task.is-done.is-wait{opacity:1; border-color:var(--redo); border-width:1.5px; border-style:dashed}
+.task.is-done.is-wait .task-title{text-decoration:none}
+.task.is-done.is-wait .done-btn{background:var(--redo-bg); border-color:var(--redo); color:var(--redo-ink)}
+.feed i.wait{opacity:1; filter:none; transform:none; font-size:17px}
+.waitchip{display:inline-flex; align-items:center; gap:4px; margin-left:8px; font-size:12.5px; font-weight:900; padding:3px 10px; border-radius:999px; background:var(--redo-bg); color:var(--redo-ink)}
+.nc-wait{background:var(--redo-bg); border:2px dashed var(--redo); border-radius:18px; padding:20px; text-align:center; margin-top:18px}
+.nc-wait b{font-family:var(--font-round); font-weight:900; font-size:20px; color:var(--redo-ink); display:block}
+.nc-wait .note{display:block; margin-top:6px; color:var(--ink-2); font-size:13px}
+.nc-wait button{margin-top:12px}
+.zone-more{margin-top:34px; border:2.5px solid var(--accent); border-radius:18px; background:var(--card); overflow:hidden}
+.zone-more>.zm-head{background:var(--accent); color:var(--paper); padding:11px 16px; font-weight:900; font-size:15px}
+.zone-more>.zm-head small{display:block; font-weight:500; font-size:12px; opacity:.9; margin-top:2px}
+.zm-body{padding:12px 14px 14px; display:flex; flex-direction:column; gap:10px}
+.morecard{border:1px solid var(--line); border-left:9px solid var(--s,var(--ink-3)); border-radius:12px; padding:11px 13px; background:var(--card-2)}
+.morecard .mc-unit{font-family:var(--font-round); font-weight:900; font-size:17px; margin-top:6px; line-height:1.4}
+.morecard .mc-why{font-size:12.5px; color:var(--ink-2); margin-top:2px}
+.morecard ul{margin:8px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
+.morecard li{font-size:14px; font-weight:700; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:5px 10px}
+.morecard li.ng{background:var(--crit-bg); border-color:var(--crit); color:var(--crit-ink)}
+.morecard .mc-others{margin-top:8px; font-size:12px; color:var(--ink-3)}
 </style>
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v67</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v68</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -617,6 +639,11 @@ html{color-scheme:light only}
     <div class="eyebrow">教科ごとの宿題の進み具合</div>
     <div class="note" style="margin:-2px 0 8px">いま取り組んでいる単元の宿題が、何個終わったかを教科ごとに出しています。</div>
     <div class="units" id="unitCards"></div>
+  </section>
+
+  <section class="zone-more" id="moreSec">
+    <div class="zm-head">もっとやりたいとき<small>宿題が全部終わって、時間があるときのおすすめ（4教科）。やらなくてもOK・記録には入りません</small></div>
+    <div class="zm-body" id="moreBox"></div>
   </section>
 </main>
 
@@ -1751,7 +1778,8 @@ function taskCard(t, opts = {}){
   const done = isDone(t.k), redo = isRedo(t.k), pass = isPass(t.k);
   const u = unitOf(t.u);
   const running = !!runOf(t.k);
-  const n = el("div", `task s-${t.s}${done ? " is-done" : ""}${pass ? " is-pass" : ""}${(redo || t.retry) ? " is-redo" : ""}${opts.catchup ? " is-catchup" : ""}${running ? " is-running" : ""}`);
+  const wait = done && !pass && !st.judge;
+  const n = el("div", `task s-${t.s}${wait ? " is-wait" : ""}${done ? " is-done" : ""}${pass ? " is-pass" : ""}${(redo || t.retry) ? " is-redo" : ""}${opts.catchup ? " is-catchup" : ""}${running ? " is-running" : ""}`);
   const chips = [];
   if (opts.pre) chips.push(...opts.pre);
   if (t.tentative) chips.push(`<span class="chip">予定（成績が入ると変わります）</span>`);
@@ -1761,7 +1789,7 @@ function taskCard(t, opts = {}){
   if (running) chips.push(`<span class="chip must">途中 ${clock(elapsed(runOf(t.k)))}</span>`);
   if (pass) chips.push(`<span class="chip good">合格</span>`);
   else if (st.done && st.judge === "お直し") chips.push(`<span class="chip redo">お直し</span>`);
-  else if (st.done) chips.push(`<span class="chip">丸つけ待ち</span>`);
+  else if (st.done) chips.push(`<span class="chip redo">⏳ 丸つけ待ち（まだ完了じゃないよ）</span>`);
   if (st.skip && !st.skip.ok) chips.push(`<span class="chip redo">やらない相談中</span>`);
   if (typeof st.sec === "number") chips.push(`<span class="chip num">かかった ${fmtSec(st.sec)}</span>`);
   const wr = wrongOf(t.k);
@@ -2008,14 +2036,14 @@ const ZODIAC = [["子","🐭","🧀"],["丑","🐮","🌾"],["寅","🐯","🍖"
 function petFr(asOf){
   const mo = asOf.slice(0, 7), m0 = mo + "-01", from = m0 > START ? m0 : START;
   let due = 0, dn = 0;
-  TASKS.forEach(t => { if (t.due >= from && t.due <= asOf){ due++; const st = taskState(t.k); if (st && st.done && st.judge !== "お直し" && st.done <= asOf) dn++; } });
+  TASKS.forEach(t => { if (t.due >= from && t.due <= asOf){ due++; const st = taskState(t.k); if (st && st.done && st.judge === "合格" && st.done <= asOf) dn++; } });
   const hw = due ? dn / due : null;
   const gaps = Object.values(SCORES.review || {}).filter(r => r.at && r.at.startsWith(mo) && r.at <= asOf && r.avg != null).map(r => r.score - r.avg);
   const ts = gaps.length ? Math.max(0, Math.min(1, (gaps.reduce((a, b) => a + b, 0) / gaps.length + 20) / 40)) : null;
   const fr = hw == null ? (ts ?? 0.3) : ts == null ? hw : hw * .7 + ts * .3;
   return {fr, hw, dn, due, gaps};
 }
-function petState(doneN, total){
+function petState(doneN, total, waitN = 0){
   const mo = TODAY.slice(0, 7);
   const {fr, hw, dn, due, gaps} = petFr(TODAY);
   const yd = addDays(TODAY, -1), prev = yd.slice(0, 7) === mo ? petFr(yd).fr : null;
@@ -2029,18 +2057,60 @@ function petState(doneN, total){
   const face = petSVG(idx, mood);
   const tt = DATA.units.filter(u => u.test === TODAY).map(u => u.subject);
   const msg = (tt.length && !(total && doneN >= total)) ? `今日は${[...new Set(tt)].join("・")}の復習テスト！ファイト！！` : !total ? `${z[0]}の子は お休み中` : full ? `全部 食べたよ！ありがとう${lv >= 3 ? "、大好き！" : "！"}`
-    : doneN ? `もぐもぐ… あと${total - doneN}個 ほしいな` : lv === 0 ? "はじめまして… お腹すいたな" : lv >= 3 ? "待ってたよ！ご飯ちょうだい" : "今日のご飯、待ってるよ";
+    : (waitN && doneN + waitN >= total) ? `ぜんぶ やったね！ でも ごはんは 丸つけで合格してから…まだ おあずけ`
+    : doneN ? `もぐもぐ… あと${total - doneN}個 ほしいな${waitN ? "（丸つけ待ち " + waitN + "個）" : ""}` : waitN ? `丸つけ待ち ${waitN}個。合格をもらうと ごはんが食べられるよ` : lv === 0 ? "はじめまして… お腹すいたな" : lv >= 3 ? "待ってたよ！ご飯ちょうだい" : "今日のご飯、待ってるよ";
   const pc = Math.round(fr * 100);
   return {face, lv, mood, pc, delta, food: z[2], msg, detail: `${z[0]}の月（${parseInt(TODAY.slice(5, 7), 10)}月）なかよし度 ${pc}%：宿題 ${hw == null ? "-" : Math.round(hw * 100) + "%"}（${dn}/${due}）・今月のテスト ${gaps.length ? "平均との差 " + (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(0) + "点" : "まだなし"}`};
 }
+
+/* ---------- もっとやりたいとき：点数の悪かった単元から、4教科それぞれのおすすめ ---------- */
+function moreRecs(sub, n = 3){
+  const reviewed = reviewedMap(), recent = addDays(TODAY, -7);
+  const skip = new Set();
+  ((RV_PLAN || {})[TODAY] || []).forEach(t => skip.add(t.ru));
+  Object.keys(PROG).forEach(k => { const x = k.match(RV_RE); if (x && x[2] === TODAY && PROG[k]?.done) skip.add(x[1]); });
+  return REVUNITS.filter(u => u.subject === sub && u.test <= TODAY && SCORES.review[u.key]?.score != null && !skip.has(u.key) && (reviewed.get(u.key) || "") < recent)
+    .map(u => { const r = SCORES.review[u.key]; return {u, r, gap: r.avg != null ? r.score - r.avg : r.score - 70}; })
+    .sort((a, b) => a.gap - b.gap || a.r.score - b.r.score).slice(0, n);
+}
+function moreWrongs(ru){
+  return DATA.tasks.filter(t => t.u === ru).map(t => ({t, s: PROG[t.k]})).filter(x => x.s && (x.s.wrong || 0) > 0)
+    .map(x => `${x.t.mat}${x.t.part && x.t.part !== "（なし）" ? " " + partLabel(x.t.part) : ""}：前に間違えた ${x.s.wrongNo ? x.s.wrongNo + "番" : x.s.wrong + "問"}`);
+}
+function renderMore(){
+  const sec = document.getElementById("moreSec"), box = document.getElementById("moreBox");
+  if (!sec || !box) return;
+  sec.hidden = DOFF !== 0;
+  if (sec.hidden) return;
+  box.innerHTML = "";
+  ["算数","国語","理科","社会"].forEach(sub => {
+    const recs = moreRecs(sub), card = el("div", `morecard s-${sub}`);
+    if (!recs.length){
+      card.innerHTML = `<span class="subj">${sub}</span><div class="mc-why" style="margin-top:6px">おすすめできる単元がまだありません（復習テストの点数が入ると出ます）。</div>`;
+      box.appendChild(card); return;
+    }
+    const {u, r, gap} = recs[0];
+    const items = reviewItems(u.key), wr = moreWrongs(u.key);
+    const diff = r.avg != null ? `（平均 ${r.avg}点より ${gap >= 0 ? "+" : "−"}${Math.abs(Math.round(gap * 10) / 10)}点）` : "";
+    card.innerHTML = `<span class="subj">${sub}</span>
+      <div class="mc-unit">No.${u.lec} ${esc(uname(u))}</div>
+      <div class="mc-why">復習テスト ${r.score}点${diff}・${fmtMD(u.test)}のテスト</div>
+      <ul>${wr.map(x => `<li class="ng">🔁 ${esc(x)}</li>`).join("")}${(items.length ? items : [RV_NOTE[sub]]).map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+      ${recs.length > 1 ? `<div class="mc-others">ほかの候補：${recs.slice(1).map(x => `No.${x.u.lec} ${esc(uname(x.u))}（${x.r.score}点）`).join("、")}</div>` : ""}`;
+    box.appendChild(card);
+  });
+}
 function renderToday(plan){
   document.getElementById("unitCards").parentElement.hidden = true;   // 単元ごとの進み具合は「テスト範囲」タブの宿題数表示だけにした
+  renderMore();
   if (DOFF !== 0) return renderOtherDay(plan);
   const today = plan.byDate[TODAY] || [];
-  let total = 0, doneMin = 0, doneN = 0, undone = [];
+  let total = 0, doneMin = 0, doneN = 0, waitN = 0, undone = [];
   today.forEach(g => g.tasks.forEach(t => {
     total += 1;
-    if (isDone(t.k)){ doneMin += t.min; doneN += 1; } else undone.push({t, g});
+    if (isPass(t.k)){ doneMin += t.min; doneN += 1; }          // 合格してはじめて「食べた」
+    else if (isDone(t.k)){ doneMin += t.min; waitN += 1; }      // 「できた」だけ＝丸つけ待ち（まだ完了ではない）
+    else undone.push({t, g});
   }));
   const pct = total ? Math.round(doneN / total * 100) : 0;
   const C = 2 * Math.PI * 47;
@@ -2048,12 +2118,12 @@ function renderToday(plan){
   arc.style.strokeDashoffset = String(C * (1 - pct / 100));
   arc.style.stroke = pct >= 100 ? "var(--good)" : "var(--accent)";
   arc.style.opacity = pct === 0 ? "0" : "1";
-  const P = petState(doneN, total);
+  const P = petState(doneN, total, waitN);
   const rp = document.getElementById("ringPct");
   rp.className = "num pet";
   const grew = PET_PREV != null && doneN > PET_PREV; PET_PREV = doneN;
   if (grew){ PET_EAT_UNTIL = Date.now() + 1800; setTimeout(() => { try { if (DOFF === 0) renderToday(plan); } catch {} }, 1900); }
-  const P2 = grew ? petState(doneN, total) : P;
+  const P2 = grew ? petState(doneN, total, waitN) : P;
   if (!grew && Date.now() < PET_EAT_UNTIL && rp.querySelector(".pet-f.hop")) { PET_HELLO = false; } else
   rp.innerHTML = `<span class="pet-f l${P2.lv} ${grew ? "hop" : PET_HELLO ? "hello" : ""}">${P2.face}</span>${grew ? `<span class="fly">${P2.food}</span>` : ""}`;
   PET_HELLO = false;
@@ -2067,7 +2137,7 @@ function renderToday(plan){
   let line;
   if (off) line = "今日はお休みの日です";
   else if (!total) line = "今日の予定はありません";
-  else if (!undone.length) line = "今日の分は全部終わりました";
+  else if (!undone.length) line = waitN ? "宿題はできた！ あとは丸つけ待ち" : "今日の分は全部終わりました";
   else if (cur) line = `今は「${cur.slot.name}」の時間`;
   else if (OFFSET === 0 && undone[0].g.slot.end <= hm) line = "今日の宿題をやろう";
   else if (next) line = `次は ${next.slot.start} から「${next.slot.name}」`;
@@ -2078,7 +2148,7 @@ function renderToday(plan){
   const leftMin = undone.reduce((a, x) => a + x.t.min, 0);
   document.getElementById("heroSub").innerHTML =
     `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）・${cal?.lessons?.length ? cal.lessons.join("・")+"の授業" : "塾はお休み"}`
-    + `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>個 食べた</span>` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => `<i class="${i < doneN ? "eat" : ""}">${i < doneN ? "✔" : P.food}</i>`).join("")}</div>`
+    + `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>個 食べた</span>${waitN ? `<span class="waitchip">⏳ 丸つけ待ち ${waitN}個（まだ食べられない）</span>` : ""}` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => i < doneN ? `<i class="eat">✔</i>` : i < doneN + waitN ? `<i class="wait" title="丸つけ待ち">⏳</i>` : `<i>${P.food}</i>`).join("")}</div>`
     + `<div class="petmsg">${esc(P.msg)}</div>`
     + `<div class="pethearts" title="今月のなかよし度">なかよし度 ${"♥".repeat(Math.round(P.pc / 20))}${"♡".repeat(5 - Math.round(P.pc / 20))} <b>${P.pc}%</b>${P.delta == null ? "" : P.delta > 0 ? ` <em class="up">昨日より +${P.delta}</em>` : P.delta < 0 ? ` <em class="dn">昨日より ${P.delta}</em>` : " <em>昨日と同じ</em>"}</div>`;
 
@@ -2096,7 +2166,7 @@ function renderToday(plan){
     const date = addDays(TODAY, i - dow);
     let tot = 0, dn = 0;
     if (date < TODAY) TASKS.forEach(t => { if (taskState(t.k)?.done === date){ dn += t.min; tot += t.min; } });
-    else (plan.byDate[date] || []).forEach(g => g.tasks.forEach(t => { tot += t.min; if (isDone(t.k)) dn += t.min; }));
+    else (plan.byDate[date] || []).forEach(g => g.tasks.forEach(t => { tot += t.min; if (isPass(t.k)) dn += t.min; }));   // 丸つけ待ちは★にしない
     const before = date < START;
     const w = el("div", `wday ${date === TODAY ? "today" : (date > TODAY ? "future" : "")}${isOffDay(date) ? " off" : ""}`);
     const full = tot > 0 && dn >= tot && date <= TODAY;
@@ -2123,8 +2193,17 @@ function renderToday(plan){
   } else if (!total){
     host.appendChild(el("div","empty","今日の予定はありません。ゆっくり休んでね。"));
   } else if (!first){
-    const box = el("div","nc-done",
-      `<b>今日の分は全部終わりました</b><span class="note">${doneN}個がんばりました。お家の人に丸つけしてもらおう。</span>`);
+    let box;
+    if (waitN){
+      box = el("div","nc-wait",
+        `<b>⏳ やることは やった！ まだ「完了」じゃないよ</b><span class="note">${waitN}個が丸つけ待ちです。お家の人に丸つけして、合格をもらったら動物がごはんを食べます。待つあいだ、もっとやりたいときは下の「もっとやりたいとき」から選べるよ。</span>`);
+      const mb = el("button","btn primary sm","もっとやるなら ↓ おすすめを見る"); mb.type = "button";
+      mb.onclick = () => { try { document.getElementById("moreSec").scrollIntoView({behavior:"smooth", block:"start"}); } catch {} };
+      box.appendChild(mb);
+    } else {
+      box = el("div","nc-done",
+        `<b>今日の分は全部終わりました</b><span class="note">${doneN}個 合格！ よくがんばりました。時間があるときは下の「もっとやりたいとき」もどうぞ。</span>`);
+    }
     host.appendChild(box);
   } else {
     const t = first.t, u = unitOf(t.u), st = taskState(t.k) || {};
@@ -2207,9 +2286,11 @@ function renderToday(plan){
   // 終わったもの（折りたたみ）
   const doneList = [];
   today.forEach(g => g.tasks.forEach(t => { if (isDone(t.k)) doneList.push(t); }));
+  doneList.sort((a, b) => (isPass(a.k) ? 1 : 0) - (isPass(b.k) ? 1 : 0));   // 丸つけ待ちを上に
   if (doneList.length){
     const det = el("details","fold");
-    det.innerHTML = `<summary>終わったもの ${doneList.length}個（${fmtMin(doneMin)}）</summary>`;
+    det.open = waitN > 0;
+    det.innerHTML = `<summary>やったもの ${doneList.length}個${waitN ? `（⏳丸つけ待ち ${waitN}個・合格 ${doneN}個）` : `（合格 ${doneN}個）`}</summary>`;
     const body = el("div","fold-body");
     doneList.forEach(t => body.appendChild(taskCard(t, {compact:true})));
     det.appendChild(body);
@@ -2982,7 +3063,7 @@ function renderFocus(){
     const setM = FOCUS_END.set || setMinOf(t), over = FOCUS_END.sec > setM * 60;
     main = `<div class="fx-done"><b>おつかれさま！</b>
         <div style="font-size:15px;margin-top:6px">かかった時間 <b style="display:inline;font-size:20px">${fmtSec(FOCUS_END.sec)}</b>（セット ${setM}分）</div>
-        <div class="note" style="margin-top:6px">${over ? "じっくりできたね。" : "いいペース！"}お家の人に丸つけしてもらおう。</div></div>
+        <div class="note" style="margin-top:6px">${over ? "じっくりできたね。" : "いいペース！"}お家の人に丸つけしてもらおう。<br><b>合格をもらうまでは、まだ「完了」じゃないよ。</b></div></div>
       <button class="fx-btn resume" id="fxOk" type="button">閉じる</button>`;
   } else if (!r){
     main = clockCard(false, "「始める」をおすと時間を計ります") + `
