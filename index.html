@@ -2223,7 +2223,7 @@ function renderToday(plan){
   window.__petMsg = P.msg;
   const leftMin = undone.reduce((a, x) => a + x.t.min, 0);
   document.getElementById("heroSub").innerHTML =
-    `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>個 食べた</span>${waitN ? `<span class="waitchip">⏳ 丸つけ待ち ${waitN}個（まだ食べられない）</span>` : ""}` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => i < doneN ? `<i class="eat">✔</i>` : i < doneN + waitN ? `<i class="wait" title="丸つけ待ち">⏳</i>` : `<i>${P.food}</i>`).join("")}</div>`
+    `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>個 食べた</span>${waitN ? `<span class="waitchip">⏳ 丸つけ待ち ${waitN}個</span>` : ""}` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => i < doneN ? `<i class="eat">✔</i>` : i < doneN + waitN ? `<i class="wait" title="丸つけ待ち">⏳</i>` : `<i>${P.food}</i>`).join("")}</div>`
     + `<div class="petmsg">${esc(P.msg)}</div>`
     + `<div class="pethearts" title="今月のなかよし度">なかよし度 ${"♥".repeat(Math.round(P.pc / 20))}${"♡".repeat(5 - Math.round(P.pc / 20))} <b>${P.pc}%</b>${P.delta == null ? "" : P.delta > 0 ? ` <em class="up">昨日より +${P.delta}</em>` : P.delta < 0 ? ` <em class="dn">昨日より ${P.delta}</em>` : " <em>昨日と同じ</em>"}</div>`;
 
