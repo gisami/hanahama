@@ -605,7 +605,6 @@ html{color-scheme:light only}
 .zc-unit{display:flex; flex-direction:column; gap:7px}
 .tile.btn-tile{cursor:pointer; text-align:left; font:inherit; color:inherit; -webkit-appearance:none; appearance:none; width:100%}
 .tile.btn-tile:active{transform:translateY(1px); background:var(--accent-soft)}
-.tile.btn-tile::after{content:"↓ ここへ"; display:block; font-size:10.5px; color:var(--accent); font-weight:700; margin-top:2px}
 #view-check .eyebrow, #view-check section{scroll-margin-top:84px}
 .sortbar{display:flex; gap:6px; margin:-2px 0 10px; flex-wrap:wrap; align-items:center}
 .sortbar .sb{border:1.5px solid var(--line-2); background:var(--card); color:var(--ink-2); border-radius:999px; padding:6px 13px; font:inherit; font-size:13px; font-weight:800; cursor:pointer}
@@ -657,7 +656,6 @@ details.ended>summary{cursor:pointer; font-weight:800; font-size:13.5px; padding
   </section>
 
   <div class="zonehead today" id="zoneToday"><b>今日の宿題</b><span>ここから下が、今日やる分です</span></div>
-  <div id="waitHold"></div>
   <div id="nextUp"></div>
 
   <div id="restToday"></div>
@@ -2362,6 +2360,8 @@ function renderToday(plan){
     s2.style.marginTop = "14px";
     host2.appendChild(s2);
   }
+  // チェック待ち（「この後やること」の下）
+  { const wh = el("div"); wh.id = "waitHold"; wh.style.marginTop = "22px"; host2.appendChild(wh); renderWaitHold(); }
   // 終わったもの（折りたたみ）
   const doneList = [];
   today.forEach(g => g.tasks.forEach(t => { if (isPass(t.k)) doneList.push(t); }));   // 丸つけ待ちは上の「チェック待ち」に出す
@@ -3363,7 +3363,7 @@ function render(){
   if (OFFSET) bar.textContent = `見本表示：${fmtMD(TODAY)}（${OFFSET}日後）として表示しています。記録は変わりません。`;
   const plan = buildPlan();
   CATCH_N = plan.catchup.length;
-  renderDateBar(); renderToday(plan); renderWaitHold(); renderMore(); renderTests(); renderCheck(plan); renderPlan(plan); renderReview(); updateBadge();
+  renderDateBar(); renderToday(plan); renderMore(); renderTests(); renderCheck(plan); renderPlan(plan); renderReview(); updateBadge();
   if (FOCUS_K && !document.getElementById("focus").hidden) renderFocus();
 }
 
