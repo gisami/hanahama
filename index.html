@@ -564,7 +564,7 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .tabs{background:#FFD9B3}
 html{color-scheme:light only}
 .score-row.v2{grid-template-columns:minmax(0,1fr)}
-.score-in3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:6px}
+.score-in3{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:6px}
 .score-in3 label{display:flex; flex-direction:column; gap:3px; font-size:11.5px; font-weight:700; color:var(--ink-3)}
 .score-in3 input{width:100%; font-family:inherit; font-size:15px; padding:7px 8px; border-radius:9px; border:1px solid var(--line-2); background:var(--paper); color:var(--ink); text-align:right; font-variant-numeric:tabular-nums}
 
@@ -706,9 +706,8 @@ details.ended>summary{cursor:pointer; font-weight:800; font-size:13.5px; padding
   <section class="rvcard" id="rvWeekend"><h3>週末の復習（悪かった単元）</h3><div id="rvWeekendBody"></div></section>
   <div class="tiles" id="rvTiles" style="margin-bottom:14px"></div>
   <section class="rvcard"><h3>復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
-  <section class="rvcard"><h3>偏差値</h3><div class="chart" id="rvChart2"></div><div class="legend" id="rvLeg2"></div></section>
   <section class="rvcard" id="rvMonth" hidden><h3>月の成績個人票</h3><div id="rvMonthBody"></div></section>
-  <section class="rvcard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点・偏差値を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
+  <section class="rvcard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
   <section class="rvcard"><h3>間違えた理由</h3><div id="rvReasons"></div></section>
   <section class="rvcard"><h3>丸つけの振返り（コメントつき）</h3>
     <div class="fchips"><button class="fchip" id="rvCmtOnly" type="button" aria-pressed="false">コメントがあるものだけ</button></div>
@@ -797,7 +796,6 @@ details.ended>summary{cursor:pointer; font-weight:800; font-size:13.5px; padding
         <label for="pub-国語">国語（点）<input id="pub-国語" type="number" inputmode="numeric" min="0" max="200"></label>
         <label for="pub-理科">理科（点）<input id="pub-理科" type="number" inputmode="numeric" min="0" max="200"></label>
         <label for="pub-社会">社会（点）<input id="pub-社会" type="number" inputmode="numeric" min="0" max="200"></label>
-        <label for="pub-dev">4科偏差値<input id="pub-dev" type="number" inputmode="decimal" step="0.1" min="20" max="80"></label>
       </div>
       <div class="row" style="margin-top:10px"><button class="btn primary sm" id="btnPubSave">保存</button></div>
       <div style="overflow-x:auto; margin-top:12px"><table class="tbl" id="pubTable"></table></div>
@@ -2734,8 +2732,7 @@ function scoreRow(u, kid){
         <div class="note">テスト ${fmtMD(u.test)}　宿題 ${st.done}/${st.total}個　間違え 計${st.wrong}問${st.sec ? `　かかった時間 ${fmtMin(Math.round(st.sec/60))}` : ""}</div></div>
       <div class="score-in3">
         <label>点数<input type="number" inputmode="numeric" min="0" max="100" data-f="score" aria-label="${esc(u.subject)} No.${u.lec} の点数" value="${s.score ?? ""}"></label>
-        <label>平均点<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-f="avg" aria-label="${esc(u.subject)} No.${u.lec} の平均点" value="${s.avg ?? ""}"></label>
-        <label>偏差値<input type="number" inputmode="decimal" min="20" max="100" step="0.1" data-f="dev" aria-label="${esc(u.subject)} No.${u.lec} の偏差値" value="${s.dev ?? ""}"></label></div>
+        <label>平均点<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-f="avg" aria-label="${esc(u.subject)} No.${u.lec} の平均点" value="${s.avg ?? ""}"></label></div>
       <div class="note" data-diff>${diffTxt(s)}</div>`;
     if (s.src === "本人"){
       const ok = el("button","btn primary sm","確認済みにする（親）"); ok.type = "button"; ok.style.cssText = "justify-self:start;margin-top:6px";
@@ -2751,8 +2748,8 @@ function scoreRow(u, kid){
     row.querySelectorAll("input").forEach(inp => inp.onchange = () => {
       const g = f => { const v = row.querySelector(`[data-f=${f}]`).value; return v === "" ? null : Number(v); };
       const clamp = (v, lo, hi) => v == null ? null : Math.max(lo, Math.min(hi, v));
-      const o = {score: clamp(g("score"),0,100), avg: clamp(g("avg"),0,100), dev: clamp(g("dev"),20,100)};
-      if (o.score == null && o.avg == null && o.dev == null) delete SCORES.review[u.key];
+      const o = {score: clamp(g("score"),0,100), avg: clamp(g("avg"),0,100), dev: (SCORES.review[u.key] || {}).dev ?? null};   // 偏差値は画面に出さないが、記録は消さずに残す
+      if (o.score == null && o.avg == null) delete SCORES.review[u.key];
       else { const rec = {at: (SCORES.review[u.key] || {}).at || TODAY}; Object.keys(o).forEach(k => { if (o[k] != null) rec[k] = o[k]; });
         if ((SCORES.review[u.key] || {}).avgN != null) rec.avgN = SCORES.review[u.key].avgN;
         const prevSrc = (SCORES.review[u.key] || {}).src; if (kid || prevSrc === "本人") rec.src = "本人"; SCORES.review[u.key] = rec; }
@@ -2779,16 +2776,15 @@ function renderScores(){
   const fill = () => {
     const p = SCORES.pub[sel.value] || {};
     ["算数","国語","理科","社会"].forEach(s => document.getElementById("pub-"+s).value = p[s] ?? "");
-    document.getElementById("pub-dev").value = p.dev ?? "";
   };
   sel.onchange = fill; fill();
   const rows = PUBS.filter(([n]) => SCORES.pub[n]).map(([n,d]) => {
     const p = SCORES.pub[n], sum = ["算数","国語","理科","社会"].reduce((a,s) => a + (Number(p[s]) || 0), 0);
     return `<tr><td>第${n}回</td><td class="num">${fmtMD(d)}</td>${["算数","国語","理科","社会"].map(s => `<td class="n">${p[s] ?? "—"}</td>`).join("")}
-      <td class="n"><b>${sum}</b></td><td class="n">${p.dev ?? "—"}</td></tr>`;
+      <td class="n"><b>${sum}</b></td></tr>`;
   });
   document.getElementById("pubTable").innerHTML = rows.length
-    ? `<thead><tr><th>回</th><th>日</th><th class="n">算</th><th class="n">国</th><th class="n">理</th><th class="n">社</th><th class="n">合計</th><th class="n">偏差値</th></tr></thead><tbody>${rows.join("")}</tbody>`
+    ? `<thead><tr><th>回</th><th>日</th><th class="n">算</th><th class="n">国</th><th class="n">理</th><th class="n">社</th><th class="n">合計</th></tr></thead><tbody>${rows.join("")}</tbody>`
     : `<tbody><tr><td class="note">まだ記録がありません。上で回を選んで点数を入れてください。</td></tr></tbody>`;
 }
 
@@ -2875,17 +2871,15 @@ function renderReview(){
       band: se.band ? grp(se.band, (x, a) => ({x, y1: mean1(a.map(p => p.y1)), y2: mean1(a.map(p => p.y2))})) : se.band};
   };
   const rev = REVUNITS.filter(u => SCORES.review[u.key] && on(u)).map(u => ({u, r: SCORES.review[u.key]})).sort((a,b) => a.u.test.localeCompare(b.u.test));
-  const sc = rev.filter(x => x.r.score != null), withAvg = rev.filter(x => x.r.score != null && x.r.avg != null), devs = rev.filter(x => x.r.dev != null);
+  const sc = rev.filter(x => x.r.score != null), withAvg = rev.filter(x => x.r.score != null && x.r.avg != null);
   const mean = a => a.length ? a.reduce((p,q) => p+q, 0) / a.length : null, r1 = v => v == null ? "—" : (Math.round(v*10)/10);
   const dAvg = mean(withAvg.map(x => x.r.score - x.r.avg));
-  const lastDev = devs.length ? devs[devs.length-1].r.dev : null;
   // 判定の履歴
   const items = ALLTASKS.map(t => ({t, s: PROG[t.k]})).filter(x => x.s && x.s.judge && (RV_SUBJ === "全部" || x.t.s === RV_SUBJ));
   const pass = items.filter(x => x.s.judge === "合格").length, wrongSum = items.reduce((a,x) => a + (x.s.wrong || 0), 0);
   document.getElementById("rvTiles").innerHTML = [
     [`${r1(mean(sc.map(x => x.r.score)))}${sc.length ? "点" : ""}`, `復習テストの平均（${sc.length}回）`],
     [dAvg == null ? "—" : `${dAvg >= 0 ? "+" : ""}${r1(dAvg)}点`, "平均点との差（目安）"],
-    [lastDev == null ? "—" : r1(lastDev), "いちばん新しい偏差値"],
     [items.length ? `${Math.round(pass / items.length * 100)}%` : "—", `合格の割合（${items.length}個中 ${pass}）`],
   ].map(([b,l]) => `<div class="tile"><b>${b}</b><span>${l}</span></div>`).join("");
 
@@ -2902,16 +2896,6 @@ function renderReview(){
   if (!s1.length) s1.push({name:"自分の点数", color: SUBJ_VAR[RV_SUBJ] || "--accent", pts:[]}, {name:"平均点", color: SUBJ_VAR[RV_SUBJ] || "--accent", dash:true, pts:[]});
   document.getElementById("rvLeg1").innerHTML = (RV_SUBJ === "全部" ? s1.filter(x => !x.dash).map(x => `<span><i style="--c:var(${x.color})"></i>${x.name}</span>`).join("") + `<span><i class="dash" style="--c:var(--ink-3)"></i>点線＝平均点</span>`
     : s1.map(x => `<span><i class="${x.dash ? "dash" : ""}" style="--c:var(${x.color})"></i>${x.name}${x.dash ? "（○）" : "（●）"}</span>`).join("")) + (s1.some(x => x.dash && x.pts.length) ? `<span>薄い色＝平均との差</span>` + (rev.some(x => x.r.avgN) ? `<span class="note" style="flex-basis:100%">平均点は、成績表に見えた生徒（20〜26人）の平均です。クラス全体の平均ではなく、目安です。</span>` : "") : `<span style="color:var(--crit-ink);font-weight:700">平均点が入っていないので、点線と色の塗りはまだ出ません</span>`);
-
-  // 偏差値グラフ（復習テスト＋公開学力テスト）
-  const pubDev = PUBS.filter(([n,d]) => SCORES.pub[n] && SCORES.pub[n].dev != null && d <= addDays(TODAY, 0)).map(([n,d]) => ({x: d, y: SCORES.pub[n].dev, tip: `第${n}回`}));
-  let s2 = (RV_SUBJ === "全部" ? ["算数","国語","理科","社会"] : [RV_SUBJ]).map(sj => mk(devs.filter(x => x.u.subject === sj), "dev", sj + "（復習）", SUBJ_VAR[sj])).filter(x => x.pts.length);
-  if (pubDev.length) s2.push({name: "公開学力テスト", color: "--accent", square: true, pts: pubDev});
-  if (RV_MODE === "month") s2 = s2.map(monthlySeries);
-  s2 = s2.map(lastN);
-  const dv = s2.flatMap(x => x.pts.map(p => p.y));
-  document.getElementById("rvChart2").innerHTML = lineChart(s2, {min: dv.length ? Math.min(35, Math.floor((Math.min(...dv) - 3) / 5) * 5) : 35, max: dv.length ? Math.max(65, Math.ceil((Math.max(...dv) + 3) / 5) * 5) : 65, step: 5, ref: 50, label:"偏差値の推移", month: RV_MODE === "month", empty:"まだ偏差値がありません", empty2:"入れると、ここに線が出ます（点線は偏差値50）"});
-  document.getElementById("rvLeg2").innerHTML = s2.map(x => `<span><i style="--c:var(${x.color})"></i>${x.name}${x.square ? "（■）" : ""}</span>`).join("");
 
   renderImportCard();
   // 入力待ち
@@ -2932,15 +2916,15 @@ function renderReview(){
   const rbar = (rank, n) => `<span class="rkbar" title="${rank}位／${n}人以上"><i style="left:${n > 1 ? Math.min(100, (rank - 1) / (n - 1) * 100) : 0}%"></i></span>`;
   document.getElementById("rvMonthBody").innerHTML = mk2.map(k => { const m = mm[k], [y, mo] = k.split("-"), all = RV_SUBJ === "全部", N = MONTH_N[k] || {};
     const subjRows = ["算数","国語","理科","社会"].filter(sj => m.subj && m.subj[sj] && (all || sj === RV_SUBJ)).map(sj => { const n = N[sj] || N.all || 0;
-      return `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td><td class="n">${m.subj[sj].rank}位${n ? `<span class="note">／${n}人以上</span>` : ""}${n ? rbar(m.subj[sj].rank, n) : ""}</td></tr>`; }).join("");
+      return `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td><td class="n">${m.subj[sj].rank != null ? `${m.subj[sj].rank}位${n ? `<span class="note">／${n}人以上</span>` : ""}${n ? rbar(m.subj[sj].rank, n) : ""}` : "<span class=\"note\">順位なし</span>"}</td></tr>`; }).join("");
     return `<div style="margin-bottom:12px"><b>${y}年${+mo}月度　${esc(m.course || "")}</b>
       <div ${all ? "" : 'style="display:none"'}>
-        <div class="tiles" style="margin:8px 0"><div class="tile"><b>${m.rank}位</b><span>国語・算数・理科の総合順位（${N.all || "?"}人以上中）</span>${N.all ? rbar(m.rank, N.all) : ""}</div>
+        <div class="tiles" style="margin:8px 0"><div class="tile">${m.rank != null ? `<b>${m.rank}位</b><span>国語・算数・理科の総合順位（${N.all || "?"}人以上中）</span>${N.all ? rbar(m.rank, N.all) : ""}` : `<b>順位なし</b><span>欠席が多いテストがあるため、成績表で順位が付いていません</span>`}</div>
           <div class="tile"><b>${m.total}<small>／${m.outOf}</small></b><span>総計（点）</span></div>
           <div class="tile"><b>${m.fuku}</b><span>復習テストの平均（100点満点）</span></div><div class="tile"><b>${m.kokai}</b><span>公開テストの点数（100点満点）</span></div></div>
         <div class="note">総計＝復習テストの平均＋公開テストの点数（100点＋100点＝${m.outOf}点満点）。順位は総計の高い順です。人数は、成績表で見えた範囲の最少人数（実際はもっと多い可能性があります）。</div></div>
       <table class="rtable" style="margin-top:8px"><thead><tr><th>教科</th><th class="n">復習テスト平均</th><th class="n">教科の順位</th></tr></thead><tbody>${subjRows}</tbody></table>${
-        m.soc && (all || RV_SUBJ === "社会") ? `<div class="note" style="margin-top:6px">社会（別の個人票）：総合順位 ${m.soc.rank}位／${N.soc || "?"}人以上　総計 ${m.soc.total}／${m.outOf}点（復習テスト平均 ${m.soc.fuku}＋公開テスト ${m.soc.kokai}）${N.soc ? rbar(m.soc.rank, N.soc) : ""}</div>` : ""}</div>`; }).join("");
+        m.soc && (all || RV_SUBJ === "社会") ? `<div class="note" style="margin-top:6px">社会（別の個人票）：総合順位 ${m.soc.rank != null ? m.soc.rank + "位／" + (N.soc || "?") + "人以上" : "なし"}　総計 ${m.soc.total}／${m.outOf}点（復習テスト平均 ${m.soc.fuku}＋公開テスト ${m.soc.kokai}）${N.soc ? rbar(m.soc.rank, N.soc) : ""}</div>` : ""}</div>`; }).join("");
   // 記録（入力・修正）
   if (!RV_KEEP){
     const all = REVUNITS.filter(u => u.test <= TODAY && on(u)).sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
@@ -3426,7 +3410,7 @@ document.getElementById("btnStartToday").onclick = async () => {
   START = REAL_TODAY; savePlan(); toast(`記録の開始日を ${fmtMD(REAL_TODAY)} にしました`);
 };
 document.getElementById("btnClearScores").onclick = async () => {
-  if (!await ask("復習テストと公開テストの点数・平均点・偏差値の記録を、すべて消しますか？\n（宿題の記録は消えません）", "すべて消す")) return;
+  if (!await ask("復習テストと公開テストの点数・平均点の記録を、すべて消しますか？\n（宿題の記録は消えません）", "すべて消す")) return;
   SCORES = {review:{}, pub:{}, month:{}, imports: SCORES.imports || []}; saveScores(); toast("点数の記録を消しました");
 };
 document.getElementById("btnExport").onclick = () => {
@@ -3439,8 +3423,8 @@ document.getElementById("btnExport").onclick = () => {
 document.getElementById("btnPubSave").onclick = () => {
   const n = document.getElementById("pubSel").value, rec = {};
   ["算数","国語","理科","社会"].forEach(s => { const v = document.getElementById("pub-"+s).value; if (v !== "") rec[s] = Number(v); });
-  const dv = document.getElementById("pub-dev").value; if (dv !== "") rec.dev = Number(dv);
-  if (!Object.keys(rec).length){ delete SCORES.pub[n]; } else SCORES.pub[n] = rec;
+  if (SCORES.pub[n] && SCORES.pub[n].dev != null) rec.dev = SCORES.pub[n].dev;   // 偏差値は画面に出さないが、記録は残す
+  if (!Object.keys(rec).filter(k => k !== "dev").length){ delete SCORES.pub[n]; } else SCORES.pub[n] = rec;
   saveScores(); toast(`第${n}回の点数を保存しました`);
 };
 const views = {today:"view-today", test:"view-test", more:"view-more", review:"view-review", check:"view-check", plan:"view-plan"};
