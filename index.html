@@ -589,14 +589,41 @@ html{color-scheme:light only}
 .morecard li{font-size:14px; font-weight:700; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:5px 10px}
 .morecard li.ng{background:var(--crit-bg); border-color:var(--crit); color:var(--crit-ink)}
 .morecard .mc-others{margin-top:8px; font-size:12px; color:var(--ink-3)}
+
+/* v69 */
+.waithold{margin:0 0 16px; border:1.5px dashed var(--redo); border-radius:14px; background:var(--redo-bg); padding:10px 12px; display:flex; flex-direction:column; gap:7px}
+.wh-head{font-weight:900; font-size:14.5px; color:var(--redo-ink)}
+.wh-head small{display:block; font-weight:600; font-size:11.5px; margin-top:2px; color:var(--ink-2)}
+.wh-item{display:flex; align-items:center; flex-wrap:wrap; gap:6px 8px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 10px; opacity:.55; pointer-events:none; user-select:none}
+.wh-title{font-size:13.5px; font-weight:700; flex:1 1 150px; min-width:0}
+.zone-catch{margin-bottom:26px; border:2.5px solid var(--crit); border-radius:18px; background:var(--crit-bg); overflow:hidden}
+.zc-head{background:var(--crit); color:#fff; padding:11px 16px; font-weight:900; font-size:15px}
+.zc-head small{display:block; font-weight:500; font-size:12px; opacity:.95; margin-top:2px}
+.zc-box{padding:12px 12px 14px; display:flex; flex-direction:column; gap:14px}
+.zc-uh{font-weight:900; font-size:14px; margin-bottom:7px}
+.zc-uh small{display:block; font-weight:600; font-size:11.5px; color:var(--ink-3); margin-top:2px}
+.zc-unit{display:flex; flex-direction:column; gap:7px}
+.tile.btn-tile{cursor:pointer; text-align:left; font:inherit; color:inherit; -webkit-appearance:none; appearance:none; width:100%}
+.tile.btn-tile:active{transform:translateY(1px); background:var(--accent-soft)}
+.tile.btn-tile::after{content:"↓ ここへ"; display:block; font-size:10.5px; color:var(--accent); font-weight:700; margin-top:2px}
+#view-check .eyebrow, #view-check section{scroll-margin-top:84px}
+.sortbar{display:flex; gap:6px; margin:-2px 0 10px; flex-wrap:wrap; align-items:center}
+.sortbar .sb{border:1.5px solid var(--line-2); background:var(--card); color:var(--ink-2); border-radius:999px; padding:6px 13px; font:inherit; font-size:13px; font-weight:800; cursor:pointer}
+.sortbar .sb[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+.sortbar .sbnote{font-size:11.5px; color:var(--ink-3); flex-basis:100%}
+.wgroup-h{font-size:12.5px; font-weight:800; color:var(--ink-2); margin:12px 0 6px; padding-left:2px}
+.wgroup-h small{font-weight:600; color:var(--ink-3)}
+details.ended{border:1px solid var(--line-2); border-radius:12px; padding:2px 10px; background:var(--card-2); margin-top:14px}
+details.ended>summary{cursor:pointer; font-weight:800; font-size:13.5px; padding:9px 2px; color:var(--ink-2)}
 </style>
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v68</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v69</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
+      <button role="tab" id="tab-more" aria-selected="false">もっと！<span class="badge warn" id="badgeMore" hidden></span></button>
       <button role="tab" id="tab-review" aria-selected="false">振返り<span class="badge" id="badgeReview" hidden></span></button>
       <button role="tab" id="tab-check" aria-selected="false">丸つけ<span class="badge" id="badgeCheck" hidden></span><svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
       <button role="tab" id="tab-plan" aria-selected="false">計画<svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
@@ -630,6 +657,7 @@ html{color-scheme:light only}
   </section>
 
   <div class="zonehead today" id="zoneToday"><b>今日の宿題</b><span>ここから下が、今日やる分です</span></div>
+  <div id="waitHold"></div>
   <div id="nextUp"></div>
 
   <div id="restToday"></div>
@@ -641,10 +669,6 @@ html{color-scheme:light only}
     <div class="units" id="unitCards"></div>
   </section>
 
-  <section class="zone-more" id="moreSec">
-    <div class="zm-head">もっとやりたいとき<small>宿題が全部終わって、時間があるときのおすすめ（4教科）。やらなくてもOK・記録には入りません</small></div>
-    <div class="zm-body" id="moreBox"></div>
-  </section>
 </main>
 
 <!-- ============ テスト範囲 ============ -->
@@ -655,6 +679,17 @@ html{color-scheme:light only}
 </main>
 
 <!-- ============ 振返り ============ -->
+<main class="wrap view" id="view-more" hidden>
+  <section id="catchSec" hidden class="zone-catch">
+    <div class="zc-head">🏃 追いつこう<small id="catchSub"></small></div>
+    <div class="zc-box" id="catchBox"></div>
+  </section>
+  <section class="zone-more" id="moreSec">
+    <div class="zm-head">弱点克服<small>宿題が全部終わって、時間があるときに。点数の悪かった単元から、4教科それぞれのおすすめです。やらなくてもOK・記録には入りません。</small></div>
+    <div class="zm-body" id="moreBox"></div>
+  </section>
+</main>
+
 <main class="wrap view" id="view-review" hidden>
   <div class="eyebrow">これまでの振返り</div>
   <div class="fchips" id="rvSubj"></div>
@@ -706,11 +741,16 @@ html{color-scheme:light only}
     <div id="cuList" class="stack"></div>
   </section>
 
-  <div class="eyebrow">丸つけ待ち（娘が「できた」を押したもの）</div>
+  <div class="eyebrow" id="waitHead">丸つけ待ち（娘が「できた」を押したもの）</div>
+  <div class="sortbar" id="waitSort">
+    <button type="button" class="sb" data-m="new" aria-pressed="true">新しい順</button>
+    <button type="button" class="sb" data-m="near" aria-pressed="false">授業が近い順</button>
+    <span class="sbnote" id="waitSortNote"></span>
+  </div>
   <div id="waitList" class="stack"></div>
 
   <section style="margin-top:26px">
-    <div class="eyebrow">今日つけた分</div>
+    <div class="eyebrow" id="judgedHead">今日つけた分</div>
     <div id="judgedList" class="stack"></div>
   </section>
 
@@ -720,7 +760,7 @@ html{color-scheme:light only}
   </section>
 
   <section style="margin-top:26px">
-    <div class="eyebrow">お直し中（やり直しの時間に自動で入ります）</div>
+    <div class="eyebrow" id="redoHead">お直し中（やり直しの時間に自動で入ります）</div>
     <div id="redoList" class="stack"></div>
   </section>
 
@@ -1031,7 +1071,8 @@ function lsRead(){ try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}")
 function lsWrite(o){ try { localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch {} }
 /* 同じ枠・同じ教材の宿題は1枚のカードにまとめる（例題＋標準問題 など）。まとめたカードの状態は、中身の宿題から計算する */
 let GROUPS = {};
-let CU_OPEN = true, CATCH_N = 0;
+let CU_OPEN = true, CATCH_N = 0, ENDED_OPEN = false;
+let WAIT_SORT = "new"; try { if (localStorage.getItem("waitSort") === "near") WAIT_SORT = "near"; } catch {}
 function groupState(k){
   const ms = GROUPS[k].map(m => PROG[m.k] || {}), own = PROG[k] || {};
   const all = f => ms.every(f), some = f => ms.some(f);
@@ -1053,7 +1094,7 @@ const unitKeyOf = k => String(k).split("-")[0];
 
 /* ---------- 週末の復習（土日の「2単元」）：振返りテストで悪かった単元を、アプリが割りふる ---------- */
 const RV_MIN = {理科:60, 社会:30, 国語:60, 算数:60};
-const RV_NOTE = {理科:"レベル1〜3", 社会:"基本問題", 国語:"みち・とも 標準問題", 算数:"練習問題"};
+const RV_NOTE = {理科:"レベル1〜3", 社会:"基本問題", 国語:"みち 標準問題・長文問題", 算数:"練習問題"};
 const RV_RE = /^(.+?)-復習-(\d{4}-\d\d-\d\d)$/;
 let RV_PLAN = {};
 /* 復習の中身：その単元の「必修」と、国語は漢字のひろばのページ（番号・ページつき） */
@@ -1372,7 +1413,7 @@ const isLv = t => /^レベル[123]$/.test(t.part || "");
 const isMaster = t => t.s === "社会" && t.mat === "マスター社会小4";
 const RS = ["理科","社会"];
 const CYCLE = {
-  "月02": {s:["国語"], name:"国語のとも 応用・みち 標準", pick: t => (t.mat === "国語のとも" && t.part === "応用問題") || t.mat === "国語のみち"},
+  "月02": {s:["国語"], name:"国語のみち 標準問題・長文問題", pick: t => t.mat === "国語のみち"},
   "月03": {s:RS, name:"理科 レベル1〜3・社会 基本問題の2回目", pick: t => (t.s === "理科" && isLv(t) && t.rep === 2) || (isMaster(t) && t.rep === 2)},
   "火05": {s:["算数"], name:"算数の必修（練習問題 3回目・次の授業の前）", pick: t => t.mat === "算数のとも" && t.part === "練" && t.rep === 3},
   "火06": {s:["算数"], name:"算数のとも テーマ・練習問題 1回目", pick: t => t.mat === "算数のとも" && (t.part === "テ" || (t.part === "練" && t.rep === 1))},
@@ -1665,11 +1706,6 @@ function dailyTasks(list){
   const wd = d => { const w = parse(d).getDay(); return w >= 1 && w <= 5; };
   const monBefore = due => { let d = addDays(due, -1); while (parse(d).getDay() !== 1) d = addDays(d, -1); return d; };
   const out = [], byU = {};
-  {  // 国語のとも 応用問題（週の表の月曜）：教材データに無いので、単元ごとに1個ずつ足す（範囲の指定なし）
-    const seen = {}; list.forEach(t => { if (t.mat === "国語のとも") (seen[t.u] ||= []).push(t); });
-    Object.values(seen).forEach(ts => { if (!ts.some(x => x.part === "応用問題")){ const b = ts.find(x => x.part === "標準問題") || ts[0];
-      list = list.concat([{...b, k: `${b.u}-J応用問題1`, part: "応用問題", rep: 1, rng: "", mark: "", min: 10}]); } });
-  }
   {  // 復習テスト対策。国語：金曜19:30に学習計画表の必修（＋漢字は別に足す）。
      // 授業のない週をはさむ単元（授業からテストまで2週間）は、ふだんどおり3回目までやったあと、テストの直前に「4回目」として思い出すために必修をもう一度
     const add = [], two = uu => uu && uu.test && diffDays(uu.lesson, uu.test) > 7;
@@ -1901,8 +1937,10 @@ function renderTests(){
 function renderDateBar(){
   const vd = addDays(REAL_TODAY, DOFF), d = parse(vd);
   document.getElementById("dLabel").textContent = `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）`;
-  document.getElementById("dSub").textContent = DOFF === 0 ? "今日" : DOFF === -1 ? "きのう" : DOFF === 1 ? "明日"
+  const rel = DOFF === 0 ? "今日" : DOFF === -1 ? "きのう" : DOFF === 1 ? "明日"
     : DOFF < 0 ? `${-DOFF}日前（記録を見る）` : `${DOFF}日あと（予定を見る）`;
+  const cal0 = CAL[vd];
+  document.getElementById("dSub").textContent = `${rel}・${cal0?.lessons?.length ? cal0.lessons.join("・") + "の授業" : "塾はお休み"}`;
   document.getElementById("dToday").hidden = DOFF === 0;
 }
 function renderOtherDay(plan){
@@ -1936,8 +1974,7 @@ function renderOtherDay(plan){
   else line = `予定 ${tasks.length}個`;
   document.getElementById("heroTitle").textContent = line;
   document.getElementById("heroSub").innerHTML =
-    `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）・${cal?.lessons?.length ? cal.lessons.join("・")+"の授業" : "塾はお休み"}`
-    + (!past && total ? `<div class="status-sub">今のところの予定です。進み具合で変わります。</div>` : "");
+    (!past && total ? `<div class="status-sub">今のところの予定です。進み具合で変わります。</div>` : "");
   const meta = document.getElementById("heroMeta"); meta.innerHTML = "";
   if (cal && HOLIDAY_KBN.includes(cal.kbn)) meta.appendChild(el("div","cheer",`${past ? "" : "この日は"}${esc(cal.holiday || "休み")}${past ? "でした" : "！ 宿題以外の勉強にも取り組もう！！"}`));
   DATA.units.filter(u => u.test === vd).forEach(u => meta.appendChild(el("span","chip crit",`${esc(u.subject)} 復習テスト No.${u.lec}`)));
@@ -2063,6 +2100,26 @@ function petState(doneN, total, waitN = 0){
   return {face, lv, mood, pc, delta, food: z[2], msg, detail: `${z[0]}の月（${parseInt(TODAY.slice(5, 7), 10)}月）なかよし度 ${pc}%：宿題 ${hw == null ? "-" : Math.round(hw * 100) + "%"}（${dn}/${due}）・今月のテスト ${gaps.length ? "平均との差 " + (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(0) + "点" : "まだなし"}`};
 }
 
+
+/* 丸つけ待ち：一度「できた」にしたものが消えないよう、薄くして上に残す（押せない）。合格で消える／お直しで押せる状態に戻る */
+function renderWaitHold(){
+  const host = document.getElementById("waitHold"); if (!host) return;
+  host.innerHTML = "";
+  if (DOFF !== 0) return;
+  const ws = TASKS.filter(t => { const x = taskState(t.k); return x && x.done && !x.judge; })
+    .sort((a, b) => (taskState(b.k).doneAt || 0) - (taskState(a.k).doneAt || 0) || sortTasks(a, b));
+  if (!ws.length) return;
+  const box = el("div", "waithold");
+  box.innerHTML = `<div class="wh-head">⏳ チェック待ち ${ws.length}個<small>お家の人が丸つけ中。合格をもらうと消えます。お直しになったら、また押せるようになります。</small></div>`;
+  ws.forEach(t => {
+    const x = taskState(t.k), r = el("div", `wh-item s-${t.s}`);
+    r.setAttribute("aria-disabled", "true");
+    r.innerHTML = `<span class="subj">${t.s}</span><span class="wh-title">${taskTitle(t)}</span><span class="chip redo">⏳ チェック待ち</span><span class="chip">${fmtMD(x.done)}にやった</span>`;
+    box.appendChild(r);
+  });
+  host.appendChild(box);
+}
+
 /* ---------- もっとやりたいとき：点数の悪かった単元から、4教科それぞれのおすすめ ---------- */
 function moreRecs(sub, n = 3){
   const reviewed = reviewedMap(), recent = addDays(TODAY, -7);
@@ -2077,11 +2134,35 @@ function moreWrongs(ru){
   return DATA.tasks.filter(t => t.u === ru).map(t => ({t, s: PROG[t.k]})).filter(x => x.s && (x.s.wrong || 0) > 0)
     .map(x => `${x.t.mat}${x.t.part && x.t.part !== "（なし）" ? " " + partLabel(x.t.part) : ""}：前に間違えた ${x.s.wrongNo ? x.s.wrongNo + "番" : x.s.wrong + "問"}`);
 }
+/* 追いつこう：丸つけが追いつかない等で、お直し・積み残しのまま復習テストを過ぎてしまった宿題 */
+function overdueAfterTest(){
+  return TASKS.filter(t => {
+    if (t.review || t.retry || t.tentative) return false;
+    const u = unitOf(t.u); if (!u || !u.test || u.test >= TODAY) return false;
+    return isRedo(t.k) || !isDone(t.k);
+  }).sort((a, b) => (isRedo(a.k) ? 0 : 1) - (isRedo(b.k) ? 0 : 1) || unitOf(a.u).test.localeCompare(unitOf(b.u).test) || sortTasks(a, b));
+}
 function renderMore(){
-  const sec = document.getElementById("moreSec"), box = document.getElementById("moreBox");
-  if (!sec || !box) return;
-  sec.hidden = DOFF !== 0;
-  if (sec.hidden) return;
+  const box = document.getElementById("moreBox");
+  const csec = document.getElementById("catchSec"), cbox = document.getElementById("catchBox");
+  if (!box || !csec) return;
+  const od = overdueAfterTest();
+  csec.hidden = !od.length;
+  const bm = document.getElementById("badgeMore");
+  if (bm){ bm.textContent = od.length > 99 ? "99+" : String(od.length); bm.hidden = !od.length; bm.setAttribute("aria-label", `追いつこう ${od.length}個`); }
+  cbox.innerHTML = "";
+  if (od.length){
+    document.getElementById("catchSub").textContent = `お直し・積み残しのまま、復習テストが終わってしまった宿題が ${od.length}個あります。テストに出る前の単元が先ですが、これも仕上げよう。`;
+    const byU = new Map();
+    clusterTasks(od).forEach(t => { const uk = t.u; if (!byU.has(uk)) byU.set(uk, []); byU.get(uk).push(t); });
+    byU.forEach((ts, uk) => {
+      const u = unitOf(uk), days = u ? diffDays(u.test, TODAY) : 0;
+      const g = el("div", "zc-unit");
+      g.appendChild(el("div", "zc-uh", `<span class="subj s-${u?.subject}">${u?.subject || ""}</span> No.${u?.lec ?? ""} ${esc(uname(u))}<small>復習テスト ${u ? fmtMD(u.test) : ""}（${days}日前に終わり）</small>`));
+      ts.forEach(t => g.appendChild(taskCard(t, {catchup: true, compact: true})));
+      cbox.appendChild(g);
+    });
+  }
   box.innerHTML = "";
   ["算数","国語","理科","社会"].forEach(sub => {
     const recs = moreRecs(sub), card = el("div", `morecard s-${sub}`);
@@ -2102,7 +2183,6 @@ function renderMore(){
 }
 function renderToday(plan){
   document.getElementById("unitCards").parentElement.hidden = true;   // 単元ごとの進み具合は「テスト範囲」タブの宿題数表示だけにした
-  renderMore();
   if (DOFF !== 0) return renderOtherDay(plan);
   const today = plan.byDate[TODAY] || [];
   let total = 0, doneMin = 0, doneN = 0, waitN = 0, undone = [];
@@ -2147,8 +2227,7 @@ function renderToday(plan){
   window.__petMsg = P.msg;
   const leftMin = undone.reduce((a, x) => a + x.t.min, 0);
   document.getElementById("heroSub").innerHTML =
-    `${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）・${cal?.lessons?.length ? cal.lessons.join("・")+"の授業" : "塾はお休み"}`
-    + `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>個 食べた</span>${waitN ? `<span class="waitchip">⏳ 丸つけ待ち ${waitN}個（まだ食べられない）</span>` : ""}` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => i < doneN ? `<i class="eat">✔</i>` : i < doneN + waitN ? `<i class="wait" title="丸つけ待ち">⏳</i>` : `<i>${P.food}</i>`).join("")}</div>`
+    `<div class="bigcnt">${total ? `<b>${doneN}</b><i>/ ${total}</i><span>個 食べた</span>${waitN ? `<span class="waitchip">⏳ 丸つけ待ち ${waitN}個（まだ食べられない）</span>` : ""}` : "<span>予定なし</span>"}</div><div class="feed">${Array.from({length: total}, (_, i) => i < doneN ? `<i class="eat">✔</i>` : i < doneN + waitN ? `<i class="wait" title="丸つけ待ち">⏳</i>` : `<i>${P.food}</i>`).join("")}</div>`
     + `<div class="petmsg">${esc(P.msg)}</div>`
     + `<div class="pethearts" title="今月のなかよし度">なかよし度 ${"♥".repeat(Math.round(P.pc / 20))}${"♡".repeat(5 - Math.round(P.pc / 20))} <b>${P.pc}%</b>${P.delta == null ? "" : P.delta > 0 ? ` <em class="up">昨日より +${P.delta}</em>` : P.delta < 0 ? ` <em class="dn">昨日より ${P.delta}</em>` : " <em>昨日と同じ</em>"}</div>`;
 
@@ -2196,13 +2275,13 @@ function renderToday(plan){
     let box;
     if (waitN){
       box = el("div","nc-wait",
-        `<b>⏳ やることは やった！ まだ「完了」じゃないよ</b><span class="note">${waitN}個が丸つけ待ちです。お家の人に丸つけして、合格をもらったら動物がごはんを食べます。待つあいだ、もっとやりたいときは下の「もっとやりたいとき」から選べるよ。</span>`);
-      const mb = el("button","btn primary sm","もっとやるなら ↓ おすすめを見る"); mb.type = "button";
-      mb.onclick = () => { try { document.getElementById("moreSec").scrollIntoView({behavior:"smooth", block:"start"}); } catch {} };
+        `<b>⏳ やることは やった！ まだ「完了」じゃないよ</b><span class="note">${waitN}個が丸つけ待ちです。お家の人に丸つけして、合格をもらったら動物がごはんを食べます。待つあいだ、もっとやりたいときは「もっと！」タブから選べるよ。</span>`);
+      const mb = el("button","btn primary sm","もっとやるなら →「もっと！」タブ"); mb.type = "button";
+      mb.onclick = () => showTab("more");
       box.appendChild(mb);
     } else {
       box = el("div","nc-done",
-        `<b>今日の分は全部終わりました</b><span class="note">${doneN}個 合格！ よくがんばりました。時間があるときは下の「もっとやりたいとき」もどうぞ。</span>`);
+        `<b>今日の分は全部終わりました</b><span class="note">${doneN}個 合格！ よくがんばりました。時間があるときは「もっと！」タブもどうぞ。</span>`);
     }
     host.appendChild(box);
   } else {
@@ -2285,12 +2364,10 @@ function renderToday(plan){
   }
   // 終わったもの（折りたたみ）
   const doneList = [];
-  today.forEach(g => g.tasks.forEach(t => { if (isDone(t.k)) doneList.push(t); }));
-  doneList.sort((a, b) => (isPass(a.k) ? 1 : 0) - (isPass(b.k) ? 1 : 0));   // 丸つけ待ちを上に
+  today.forEach(g => g.tasks.forEach(t => { if (isPass(t.k)) doneList.push(t); }));   // 丸つけ待ちは上の「チェック待ち」に出す
   if (doneList.length){
     const det = el("details","fold");
-    det.open = waitN > 0;
-    det.innerHTML = `<summary>やったもの ${doneList.length}個${waitN ? `（⏳丸つけ待ち ${waitN}個・合格 ${doneN}個）` : `（合格 ${doneN}個）`}</summary>`;
+    det.innerHTML = `<summary>合格したもの ${doneList.length}個（${fmtMin(doneMin)}）</summary>`;
     const body = el("div","fold-body");
     doneList.forEach(t => body.appendChild(taskCard(t, {compact:true})));
     det.appendChild(body);
@@ -2465,14 +2542,23 @@ function renderCheck(plan){
 
   const tiles = document.getElementById("checkTiles");
   tiles.innerHTML = "";
-  [["丸つけ待ち", waiting.length],["お直し中", redos.length],["合格ずみ", passed.length],["積み残し", plan.catchup.length]]
-    .forEach(([lab,n]) => tiles.appendChild(el("div","tile",
-      `<b class="num">${n}<span style="font-size:12px;color:var(--ink-3)">件</span></b><span>${lab}</span>`)));
+  [["丸つけ待ち", waiting.length, "waitHead"],["お直し中", redos.length, "redoHead"],["合格ずみ", passed.length, "judgedHead"],["積み残し", plan.catchup.length, "cuSec"]]
+    .forEach(([lab,n,target]) => {
+      const tl = el("button","tile btn-tile",
+        `<b class="num">${n}<span style="font-size:12px;color:var(--ink-3)">件</span></b><span>${lab}</span>`);
+      tl.type = "button";
+      tl.onclick = () => {
+        let node = document.getElementById(target);
+        if (!node || node.hidden) node = document.getElementById("waitHead");   // 積み残しが0件で欄が無いときは丸つけ待ちへ
+        if (node){ if (node.tagName === "DETAILS") node.open = true; node.scrollIntoView({behavior:"smooth", block:"start"}); }
+      };
+      tiles.appendChild(tl);
+    });
 
   const wl = document.getElementById("waitList");
   wl.innerHTML = "";
   if (!waiting.length) wl.appendChild(el("div","empty","丸つけ待ちはありません。娘さんが「できた」を押すとここに出ます。"));
-  waiting.sort(sortTasks).forEach(t => {
+  const mkWait = t => {
     const u = unitOf(t.u);
     const card = el("div", `card s-${t.s}`);
     card.style.cssText = "padding:13px 15px; border-left:4px solid var(--s)";
@@ -2528,8 +2614,34 @@ function renderCheck(plan){
     const row = el("div","judge-row");
     row.append(ok, ng, undo);
     card.append(wrap, wnoWrap, reasons, cmWrap, row);
-    wl.appendChild(card);
-  });
+    return card;
+  };
+  // 並び：新しい順（既定）／授業が近い順（次の復習テストが近い単元→教材順。テストが終わった単元は下の折りたたみへ）
+  document.querySelectorAll("#waitSort .sb").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.m === WAIT_SORT)); b.onclick = () => { WAIT_SORT = b.dataset.m; try { localStorage.setItem("waitSort", WAIT_SORT); } catch {} renderCheck(plan); }; });
+  document.getElementById("waitSortNote").textContent = WAIT_SORT === "near" ? "次の復習テストが近い単元の宿題から順に。早く見てあげたいものが上です。" : "娘さんが「できた」を押した順（新しいものが上）。";
+  if (WAIT_SORT === "near" && waiting.length){
+    const tst = t => { const u = unitOf(t.u) || unitOf(t.ru); return u && u.test ? u.test : ""; };
+    const live = [], ended = [];
+    waiting.forEach(t => { const d = tst(t); (d && d >= TODAY ? live : ended).push(t); });
+    const cmp = (a, b) => tst(a).localeCompare(tst(b)) || (SUBJ_ORDER[a.s] - SUBJ_ORDER[b.s]) || ((MAT_ORDER[a.mat] ?? 9) - (MAT_ORDER[b.mat] ?? 9)) || String(a.part).localeCompare(String(b.part)) || ((a.rep || 0) - (b.rep || 0));
+    live.sort(cmp); ended.sort((a, b) => tst(b).localeCompare(tst(a)) || cmp(a, b));
+    let last = null;
+    const head = (host, t) => { const u = unitOf(t.u) || unitOf(t.ru), key = u ? u.key : "-"; if (key === last) return; last = key;
+      host.appendChild(el("div","wgroup-h", u ? `${u.subject} No.${u.lec} ${esc(uname(u))}　<small>復習テスト ${fmtMD(u.test)}（${u.test === TODAY ? "今日" : u.test > TODAY ? "あと" + diffDays(TODAY, u.test) + "日" : diffDays(u.test, TODAY) + "日前に終わり"}）</small>` : "週末の復習など")); };
+    if (!live.length) wl.appendChild(el("div","empty","復習テストがこれからの単元の丸つけ待ちはありません。"));
+    live.forEach(t => { head(wl, t); wl.appendChild(mkWait(t)); });
+    if (ended.length){
+      const det = el("details","ended"); det.id = "endedFold"; det.open = ENDED_OPEN;
+      det.ontoggle = () => { ENDED_OPEN = det.open; };
+      det.innerHTML = `<summary>復習テスト終了済み単元の宿題（${ended.length}個）</summary>`;
+      const body = el("div","stack"); last = null;
+      ended.forEach(t => { head(body, t); body.appendChild(mkWait(t)); });
+      det.appendChild(body); wl.appendChild(det);
+    }
+  } else {
+    waiting.sort((a, b) => (taskState(b.k).doneAt || 0) - (taskState(a.k).doneAt || 0) || taskState(b.k).done.localeCompare(taskState(a.k).done) || sortTasks(a, b))
+      .forEach(t => wl.appendChild(mkWait(t)));
+  }
 
   const jl = document.getElementById("judgedList");
   jl.innerHTML = "";
@@ -2928,7 +3040,7 @@ function endTimer(k){
   const st = taskState(k) || {};
   const set = setMinOf(TASKMAP[k] || {k});
   FOCUS_END = {k, sec, set};
-  saveTask(k, {done: TODAY, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), {d: TODAY, sec, set}], run: null});
+  saveTask(k, {done: TODAY, doneAt: Date.now(), skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), {d: TODAY, sec, set}], run: null});
 }
 /* ---- 先生のポイント（折りたたみ）---- */
 let ADV_OPEN = false;
@@ -3093,7 +3205,7 @@ function renderFocus(){
   on("fxSkip", () => openSkip(t.k));
   on("fxCancel", async () => { if (await ask("時間の記録を消して、やめますか？", "消してやめる")) saveTask(t.k, {run: null}); });
   on("fxNoTimer", async () => { if (await ask("時間を計らずに「できた」にしますか？", "できたにする")){
-    saveTask(t.k, {done: TODAY, skip: null, judge: null, reason: null, run: null}); closeFocus(); } });
+    saveTask(t.k, {done: TODAY, doneAt: Date.now(), skip: null, judge: null, reason: null, run: null}); closeFocus(); } });
 }
 function tick(){
   if (FOCUS_K && !document.getElementById("focus").hidden){
@@ -3251,7 +3363,7 @@ function render(){
   if (OFFSET) bar.textContent = `見本表示：${fmtMD(TODAY)}（${OFFSET}日後）として表示しています。記録は変わりません。`;
   const plan = buildPlan();
   CATCH_N = plan.catchup.length;
-  renderDateBar(); renderToday(plan); renderTests(); renderCheck(plan); renderPlan(plan); renderReview(); updateBadge();
+  renderDateBar(); renderToday(plan); renderWaitHold(); renderMore(); renderTests(); renderCheck(plan); renderPlan(plan); renderReview(); updateBadge();
   if (FOCUS_K && !document.getElementById("focus").hidden) renderFocus();
 }
 
@@ -3331,7 +3443,7 @@ document.getElementById("btnPubSave").onclick = () => {
   if (!Object.keys(rec).length){ delete SCORES.pub[n]; } else SCORES.pub[n] = rec;
   saveScores(); toast(`第${n}回の点数を保存しました`);
 };
-const views = {today:"view-today", test:"view-test", review:"view-review", check:"view-check", plan:"view-plan"};
+const views = {today:"view-today", test:"view-test", more:"view-more", review:"view-review", check:"view-check", plan:"view-plan"};
 function showTab(k){
   Object.keys(views).forEach(j => {
     document.getElementById("tab-"+j).setAttribute("aria-selected", String(j === k));
@@ -3344,7 +3456,7 @@ Object.keys(views).forEach(k => {
   document.getElementById("tab-"+k).onclick = () => {
     USER_NAV = true;
     if (k === "today"){ unlocked = false; if (DOFF){ DOFF = 0; render(); } showTab(k); return; }
-    if (k === "test" || k === "review"){ unlocked = false; showTab(k); return; }   // 子どもの画面に戻ったら鍵をかけ直す
+    if (k === "test" || k === "more" || k === "review"){ unlocked = false; showTab(k); return; }   // 子どもの画面に戻ったら鍵をかけ直す
     if (unlocked) showTab(k); else openPin(() => showTab(k));
   };
 });
