@@ -634,7 +634,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v72</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v73</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1817,7 +1817,7 @@ const FWN = "０１２３４５６７８９";
 const redoLabel = n => n <= 1 ? "やり直し" : "やり直し" + String(n).split("").map(c => FWN[+c] ?? c).join("");
 const fmtDT = (at, d) => {
   if (at){ const x = new Date(at); return `${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`; }
-  if (d){ const x = parse(d); return `${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）`; }
+  if (d){ const x = parse(d); return `${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）・時刻は記録なし`; }
   return "日時不明";
 };
 function histOf(k){
@@ -1839,7 +1839,9 @@ function histOf(k){
     const pre = [], jd = keys.map(mk => PROG[mk]?.judgeAt).filter(Boolean).sort().pop();
     for (let i = 1; i <= Math.max(miss, 0); i++){ pre.push({e: "done", at: null}); pre.push({e: "redo", n: i, at: null, d: (i === n && !have) ? jd : null}); }
     ev = pre.concat(ev);
-    if (!have && st.done && !st.judge) ev.push({e: "done", at: null, d: st.done});
+    if (!have && st.done && !st.judge){
+      const da = keys.map(mk => PROG[mk]?.doneAt).filter(Boolean).sort().pop();
+      ev.push(da ? {e: "done", at: da} : {e: "done", at: null, d: st.done}); }
   }
   return ev;
 }
