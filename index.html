@@ -614,11 +614,25 @@ html{color-scheme:light only}
 .wgroup-h small{font-weight:600; color:var(--ink-3)}
 details.ended{border:1px solid var(--line-2); border-radius:12px; padding:2px 10px; background:var(--card-2); margin-top:14px}
 details.ended>summary{cursor:pointer; font-weight:800; font-size:13.5px; padding:9px 2px; color:var(--ink-2)}
+
+/* v70 やり直しの履歴 */
+.redo-hist-fold{background:var(--card); border-color:var(--redo)}
+.redo-hist-fold>summary{color:var(--redo-ink); font-weight:800}
+.hv-now{font-weight:800; font-size:13.5px; background:var(--redo-bg); color:var(--redo-ink); border-radius:9px; padding:7px 10px; margin-bottom:8px}
+ol.hv{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0}
+ol.hv li{display:flex; gap:10px; padding:7px 0 7px 2px; border-left:2px solid var(--line-2); margin-left:6px; position:relative}
+ol.hv .hv-dot{width:12px; height:12px; border-radius:50%; background:var(--accent); flex:none; margin-left:-9px; margin-top:4px; border:2px solid var(--card)}
+ol.hv li.hv-redo .hv-dot{background:var(--redo)}
+ol.hv li.hv-pass .hv-dot{background:var(--good)}
+ol.hv li.hv-undo .hv-dot, ol.hv li.hv-unjudge .hv-dot{background:var(--ink-3)}
+ol.hv b{font-size:13.5px}
+ol.hv .hv-t{display:block; font-size:12px; color:var(--ink-3); font-weight:700}
+ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 </style>
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v69</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v71</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1078,6 +1092,7 @@ function groupState(k){
   const secs = ms.filter(m => typeof m.sec === "number"); if (secs.length) st.sec = secs.reduce((a, m) => a + m.sec, 0);
   const wr = ms.filter(m => typeof m.wrong === "number"); if (wr.length) st.wrong = wr.reduce((a, m) => a + m.wrong, 0);
   if (all(m => m.skip)) st.skip = ms[0].skip;
+  const rd = ms.map(m => m.redo || 0); if (Math.max(...rd) > 0) st.redo = Math.max(...rd);
   st.reason = ms.map(m => m.reason).filter(Boolean).join("・") || undefined;
   st.comment = ms.map(m => m.comment).filter(Boolean).join(" ／ ") || undefined;
   return st;
@@ -1141,8 +1156,21 @@ const textbookTasks = () => DATA.units.filter(u => u.subject === "社会" && u.l
   k: `${u.key}-教科書`, u: u.key, s: "社会", mat: "教科書・授業ノート", part: "", rep: 1, rng: "太字・赤字を書いて覚える", mark: "",
   min: 25, lesson: u.lesson, due: addDays(u.lesson, 6), saki: "×"}));
 
+/* 「できた」「差し戻し」「やり直しができた」「合格」…を、日時つきで毎回、PROG[k].hist に足していく（消さない）。スプレッドシートの progress にもそのまま入る */
+function evOf(patch){
+  if (patch.clear) return [];
+  const out = [];
+  if (patch.done === null) out.push({e: "undo"});
+  else if (patch.done && !patch.judge) out.push({e: "done"});
+  if (patch.judge === "合格") out.push(patch.byParent ? {e: "pass", by: "親"} : {e: "pass"});
+  if (patch.judge === "お直し"){ const o = {e: "redo", n: patch.redo}; if (patch.wrongNo) o.no = patch.wrongNo; if (patch.reason) o.why = patch.reason; out.push(o); }
+  if (patch.judge === null && patch.judgeAt === null && !("done" in patch)) out.push({e: "unjudge"});
+  return out;
+}
+const withHist = (key, p, evs, now) => evs.length ? {...p, hist: [...(PROG[key]?.hist || []), ...evs.map(x => ({...x, at: now}))]} : p;
 async function saveTask(k, patch){
   const unit = unitKeyOf(k);
+  const EVS = evOf(patch), NOW = Date.now();
   const ms = GROUPS[k];
   if (ms && !patch.clear){
     const own = {}, rest = {};
@@ -1156,10 +1184,10 @@ async function saveTask(k, patch){
         const p = {...rest};
         if (per !== undefined) p.sec = per;
         if (rest.secLog){ const last = rest.secLog[rest.secLog.length - 1]; p.secLog = [...(PROG[m.k]?.secLog || []), {...last, sec: per ?? last.sec}]; }
-        PROG[m.k] = {...(PROG[m.k] || {}), ...p};
+        PROG[m.k] = withHist(m.k, {...(PROG[m.k] || {}), ...p}, EVS, NOW);
       });
     }
-  } else if (patch.clear) delete PROG[k]; else PROG[k] = {...(PROG[k]||{}), ...patch};
+  } else if (patch.clear) delete PROG[k]; else PROG[k] = withHist(k, {...(PROG[k]||{}), ...patch}, EVS, NOW);
   render();
   if (DB && unit){
     const body = {};
@@ -1781,13 +1809,65 @@ function taskTitle(t){
 const MAT_COL = {"算数のとも":["#E3E0FA","#352A8C"],"計算テキスト":["#CFEFEC","#0B5A54"],"国語のとも":["#FBDCE6","#8A1B41"],"国語のみち":["#FFEDB0","#745300"],
   "漢字のひろば":["#EBDCCB","#66401F"],"漢字対策":["#EBDCCB","#66401F"],"漢字対策1":["#EBDCCB","#66401F"],"サイエンス":["#DDF0B8","#445C0C"],"小学理科学習辞典":["#E2E5EA","#3E4553"],
   "マスター社会小4":["#CFE8F8","#0B4B76"],"教科書・授業ノート":["#EBD7F6","#582879"],"復習":["#3B3F52","#FFFFFF"],"_":["#E2E5EA","#3E4553"]};
+/* ---- やり直しの回数・履歴 ---- */
+const redoN = k => (taskState(k)?.redo) || 0;
+const FWN = "０１２３４５６７８９";
+const redoLabel = n => n <= 1 ? "やり直し" : "やり直し" + String(n).split("").map(c => FWN[+c] ?? c).join("");
+const fmtDT = (at, d) => {
+  if (at){ const x = new Date(at); return `${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`; }
+  if (d){ const x = parse(d); return `${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）`; }
+  return "日時不明";
+};
+function histOf(k){
+  const keys = GROUPS[k] ? GROUPS[k].map(m => m.k) : [k];
+  const map = new Map();
+  keys.forEach(mk => (PROG[mk]?.hist || []).forEach(x => map.set(x.e + "|" + x.at + "|" + (x.n ?? ""), x)));
+  let ev = [...map.values()].sort((a, b) => a.at - b.at);
+  const merged = [];   // 同じ出来事が、まとめカードの中身ごとに少しずれて付いたものは1つに
+  ev.forEach(x => { const l = merged[merged.length - 1];
+    if (l && l.e === x.e && (l.n ?? 0) === (x.n ?? 0) && x.at - l.at < 30 * 60 * 1000){
+      if (x.no && !(l.no || "").includes(x.no)) l.no = (l.no ? l.no + "／" : "") + x.no;
+      if (x.why && !(l.why || "").includes(x.why)) l.why = (l.why ? l.why + "／" : "") + x.why; }
+    else merged.push({...x}); });
+  ev = merged;
+  // この機能より前の分：回数と日付だけから、分かる範囲でつくる
+  const st = taskState(k) || {}, n = st.redo || 0, have = ev.filter(x => x.e === "redo").length;
+  const miss = n - have;
+  if (miss > 0 || (!ev.length && st.done && n)){
+    const pre = [], jd = keys.map(mk => PROG[mk]?.judgeAt).filter(Boolean).sort().pop();
+    for (let i = 1; i <= Math.max(miss, 0); i++){ pre.push({e: "done", at: null}); pre.push({e: "redo", n: i, at: null, d: (i === n && !have) ? jd : null}); }
+    ev = pre.concat(ev);
+    if (!have && st.done && !st.judge) ev.push({e: "done", at: null, d: st.done});
+  }
+  return ev;
+}
+function redoHistFold(k){
+  const n = redoN(k); if (!n) return "";
+  const ev = histOf(k), st = taskState(k) || {};
+  let r = 0, d = 0;
+  const rows = ev.map(x => {
+    if (x.e === "redo") r = x.n || r + 1;
+    let lab, cls = x.e, sub = "";
+    if (x.e === "done"){ d++; lab = r === 0 ? "最初に「できた」" : `${redoLabel(r)}をやって「できた」`; }
+    else if (x.e === "redo"){ lab = `差し戻し ${x.n || r}回目`; sub = [x.no ? `間違えた問題：${esc(x.no)}` : "", x.why ? `理由：${esc(x.why)}` : ""].filter(Boolean).join("　"); }
+    else if (x.e === "pass") lab = "合格" + (x.by ? "（お家の人が記録）" : "");
+    else if (x.e === "undo") lab = "「できた」を取り消し";
+    else lab = "丸つけを取り消し";
+    return {html: `<li class="hv-${cls}"><span class="hv-dot"></span><div><b>${lab}</b><span class="hv-t">${fmtDT(x.at, x.d)}</span>${sub ? `<div class="hv-sub">${sub}</div>` : ""}</div></li>`};
+  }).reverse();   // 新しいものが上
+  const now = st.judge === "お直し" ? `いまは「${redoLabel(n)}」中（差し戻し ${n}回目のあと）` : (st.done && !st.judge) ? `いまは丸つけ待ち（${redoLabel(n)}を出したところ）` : st.judge === "合格" ? "合格しました" : `いまは「${redoLabel(n)}」中`;
+  return `<details class="fold redo-hist-fold"${HIST_OPEN ? " open" : ""}><summary>やり直しの履歴（差し戻し ${n}回）</summary>
+    <div class="fold-body"><div class="hv-now">${now}</div><ol class="hv">${rows.map(x => x.html).join("")}</ol>
+    <div class="note">新しいものが上です。</div></div></details>`;
+}
+let HIST_OPEN = false;
 /* お直し：間違えた問題がどこか、すぐわかるようにする */
 function redoBanner(t, tail){
   const src = t.retry ? (PROG[t.retryOf] || {}) : (taskState(t.k) || {});
   const n = t.retry ? t.wrongs : (src.wrong || 0);
   const no = (src.wrongNo || "").trim();
   const reason = !t.retry && src.reason ? esc(src.reason) : "";
-  return `<div class="redobig"><b>🔁 お直し</b>${no ? `<span class="rno">間違えた問題：<em>${esc(no)}</em></span>` : (n ? `<span class="rno">間違えた問題が ${esc(String(n))}問</span>` : "")}${reason ? `<span class="rwhy">理由：${reason}</span>` : ""}<span class="rtail">${tail}</span></div>`;
+  return `<div class="redobig"><b>🔁 ${t.retry ? "お直し" : redoLabel(redoN(t.k) || 1)}</b>${no ? `<span class="rno">間違えた問題：<em>${esc(no)}</em></span>` : (n ? `<span class="rno">間違えた問題が ${esc(String(n))}問</span>` : "")}${reason ? `<span class="rwhy">理由：${reason}</span>` : ""}<span class="rtail">${tail}</span></div>`;
 }
 function taskSub(t){
   const bits = [];
@@ -1820,8 +1900,8 @@ function taskCard(t, opts = {}){
   if ((t.rep > 1 || t.mat === "計算テキスト") && t.mat !== "漢字のひろば") chips.push(`<span class="chip">${t.rep}回目</span>`);
   if (running) chips.push(`<span class="chip must">途中 ${clock(elapsed(runOf(t.k)))}</span>`);
   if (pass) chips.push(`<span class="chip good">合格</span>`);
-  else if (st.done && st.judge === "お直し") chips.push(`<span class="chip redo">お直し</span>`);
-  else if (st.done) chips.push(`<span class="chip redo">⏳ 丸つけ待ち（まだ完了じゃないよ）</span>`);
+  else if (st.done && st.judge === "お直し") chips.push(`<span class="chip redo">${redoLabel(st.redo || 1)}</span>`);
+  else if (st.done) chips.push(`<span class="chip redo">⏳ 丸つけ待ち${st.redo ? `（${redoLabel(st.redo)}を提出）` : "（まだ完了じゃないよ）"}</span>`);
   if (st.skip && !st.skip.ok) chips.push(`<span class="chip redo">やらない相談中</span>`);
   if (typeof st.sec === "number") chips.push(`<span class="chip num">かかった ${fmtSec(st.sec)}</span>`);
   const wr = wrongOf(t.k);
@@ -1870,12 +1950,7 @@ function taskCard(t, opts = {}){
     btn.setAttribute("aria-label", running ? "続きをやる" : "始める");
     btn.onclick = () => openFocus(t.k);
     act.appendChild(btn);
-    if (!st.skip){
-      const sk = el("button", "undo", "やらない");
-      sk.type = "button";
-      sk.onclick = e => { e.stopPropagation(); openSkip(t.k); };
-      act.appendChild(sk);
-    } else if (!st.skip.ok){
+    if (st.skip && !st.skip.ok){   // 「やらない」の相談は、開いたあとの画面（始めるの下）だけ。相談中のとりやめだけ一覧に残す
       const cn = el("button", "undo", "相談をやめる");
       cn.type = "button";
       cn.onclick = e => { e.stopPropagation(); saveTask(t.k, {skip: null}); };
@@ -2305,18 +2380,12 @@ function renderToday(plan){
         ${(isRedo(t.k) || t.retry) ? redoBanner(t, "間違えたところをもう一度やろう") : ""}
         ${commentBand(st)}
         ${onTest(t) && u ? `<div class="nc-test">${fmtMD(u.test)}の復習テストに出るところ<b>${esc(testLabel(t))}</b></div>` : ""}
-        ${adviceFold(u)}
+        ${adviceFold(u)}${redoHistFold(t.k)}
         <div class="stepbar"><span class="on">①始める</span><span>②終わったら「終わり」</span><span>③丸つけ</span><span>④合格</span></div>
       </div>`;
     const btn = el("button","nc-btn", runOf(t.k) ? "続きをやる ▶" : "始める ▶");
     btn.onclick = () => openFocus(t.k);
     card.querySelector(".nc-body").appendChild(btn);
-    if (!st.skip){
-      const sk = el("button", "fx-link", "この宿題は「やらない」と相談する");
-      sk.type = "button"; sk.style.display = "block"; sk.style.margin = "10px auto 0";
-      sk.onclick = () => openSkip(t.k);
-      card.querySelector(".nc-body").appendChild(sk);
-    }
     bindAdv(card);
     host.appendChild(card);
   }
@@ -2565,7 +2634,7 @@ function renderCheck(plan){
       <div class="task-sub">${taskSub(t)}</div>
       <div class="task-foot">${typeof taskState(t.k).sec === "number" ? `<span class="chip num">かかった ${fmtSec(taskState(t.k).sec)}</span>` : `<span class="chip">時間の記録なし</span>`}
         ${onTest(t) ? `<span class="chip must">テストに出る ${esc(testLabel(t))}</span>` : ""}
-        ${t.retry ? `<span class="chip redo">解き直し</span>` : t.review ? `<span class="chip">週末の復習</span>` : `<span class="chip">${t.rep}回目</span>`}
+        ${t.retry ? `<span class="chip redo">解き直し</span>` : t.review ? `<span class="chip">週末の復習</span>` : `<span class="chip">${t.rep}回目</span>`}${redoN(t.k) ? `<span class="chip redo">${redoLabel(redoN(t.k))}を提出</span>` : ""}
         <span class="chip num">完了 ${fmtMD(taskState(t.k).done)}</span>
         ${u ? `<span class="chip num">復習テスト ${fmtMD(u.test)}</span>` : ""}</div>`;
     const picked = new Set();
@@ -2612,6 +2681,7 @@ function renderCheck(plan){
     const row = el("div","judge-row");
     row.append(ok, ng, undo);
     card.append(wrap, wnoWrap, reasons, cmWrap, row);
+    if (redoN(t.k)){ const hw = el("div"); hw.innerHTML = redoHistFold(t.k); hw.style.marginTop = "8px"; card.insertBefore(hw, wrap); }
     return card;
   };
   // 並び：新しい順（既定）／授業が近い順（次の復習テストが近い単元→教材順。テストが終わった単元は下の折りたたみへ）
@@ -3038,6 +3108,7 @@ function adviceFold(u){
 }
 function bindAdv(root){
   root.querySelectorAll("details.advice-fold").forEach(d => d.addEventListener("toggle", () => { ADV_OPEN = d.open; }));
+  root.querySelectorAll("details.redo-hist-fold").forEach(d => d.addEventListener("toggle", () => { HIST_OPEN = d.open; }));
 }
 
 /* ---- やらない相談 ---- */
@@ -3175,7 +3246,7 @@ function renderFocus(){
         <button class="fx-btn end" id="fxEnd" type="button">終わり！</button></div>
       <button class="fx-link" id="fxCancel" type="button">記録しないでやめる</button>`;
   }
-  box.innerHTML = head + redo + test + adviceFold(u) + main;
+  box.innerHTML = head + redo + test + adviceFold(u) + redoHistFold(t.k) + main;
   bindAdv(box);
   if (document.getElementById("hg")) paintClock(t, r ? elapsed(r) : 0, !!(r && r.start));
   const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
