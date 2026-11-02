@@ -367,7 +367,9 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 /* カード：はじめるボタン */
 .go-btn{border:0; background:var(--accent); color:var(--paper); width:48px; height:48px; border-radius:14px;
   display:grid; place-items:center; box-shadow:var(--shadow)}
-.go-btn svg{width:20px; height:20px; margin-left:3px}
+.go-btn{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; width:52px; height:54px}
+.go-btn svg{width:18px; height:18px; margin-left:2px}
+.go-lb{font-size:11px; font-weight:700; line-height:1; letter-spacing:.02em}
 .go-btn:active{transform:translateY(1px)}
 .task-body.tap{cursor:pointer}
 .task.is-running{border-color:var(--accent); border-width:2px}
@@ -632,7 +634,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v71</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v72</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1946,7 +1948,7 @@ function taskCard(t, opts = {}){
       act.appendChild(ud);
     }
   } else {
-    const btn = el("button", "go-btn", PLAY);
+    const btn = el("button", "go-btn", PLAY + `<span class="go-lb">${running ? "つづき" : "やる"}</span>`);
     btn.setAttribute("aria-label", running ? "続きをやる" : "始める");
     btn.onclick = () => openFocus(t.k);
     act.appendChild(btn);
