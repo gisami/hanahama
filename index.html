@@ -634,7 +634,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v73</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v74</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1727,7 +1727,7 @@ function pageList(rng){
   return parts.length > 1 && parts.every(p => /^P\.\d+$/.test(p)) ? parts : null;
 }
 /* 漢字のひろば：見開き（2ページ）を1日分にまとめる。N1,N3,… だけを残し、2ページ分（最後が1ページなら1ページ分）の時間にする */
-/* 平日の朝：計算テキストは月〜金に1回目〜5回目を1日1回／漢字のひろばは見開き2ページを毎日（4ページなら2つの見開きを交互に） */
+/* 平日の朝：計算テキストは授業の翌日から平日に1回目〜5回目を1日1回（5回で1周）／漢字のひろばは見開き2ページを毎日（4ページなら2つの見開きを交互に） */
 function dailyTasks(list){
   const wd = d => { const w = parse(d).getDay(); return w >= 1 && w <= 5; };
   const monBefore = due => { let d = addDays(due, -1); while (parse(d).getDay() !== 1) d = addDays(d, -1); return d; };
@@ -1758,15 +1758,15 @@ function dailyTasks(list){
   Object.values(byU).forEach(ts => {
     const t0 = ts[0];
     if (t0.mat === "計算テキスト"){
-      // 授業の週の月曜から、締切の前の週まで、毎週 月〜金に1回目〜5回目を1日1回ずつ
-      const last = monBefore(t0.due);
-      let first = addDays(t0.lesson, -((parse(t0.lesson).getDay() + 6) % 7));
-      if (first > last) first = last;
-      for (let w = 0, mon = first; mon <= last; w++, mon = addDays(mon, 7))
-        for (let r = 1; r <= 5; r++){
-          const ex = w === 0 ? (ts.find(x => x.rep === r) || {...t0, k: `${t0.u}-K問題1${r}`, rep: r}) : {...t0, k: `${t0.u}-K問題${w + 1}${r}`, rep: r};
-          out.push({...ex, pin: addDays(mon, r - 1)});
-        }
+      // 授業の翌日から平日を1日1回ずつ数える（授業が火曜なら 水=1回目・木=2・金=3・月=4・火=5回目）。5回で1周、次の授業日（テスト当日）の朝まで繰り返す
+      const uu = unitOf(t0.u), end = uu && uu.test && uu.test > t0.due ? uu.test : t0.due;
+      let n = 0;
+      for (let d = addDays(t0.lesson, 1); d <= end; d = addDays(d, 1)){
+        if (!wd(d)) continue;
+        const w = Math.floor(n / 5), r = n % 5 + 1; n++;
+        const ex = w === 0 ? (ts.find(x => x.rep === r) || {...t0, k: `${t0.u}-K問題1${r}`, rep: r}) : {...t0, k: `${t0.u}-K問題${w + 1}${r}`, rep: r};
+        out.push({...ex, pin: d, due: d > t0.due ? d : t0.due});
+      }
     } else {
       const pages = pageList(t0.rng), sp = [];
       for (let i = 0; i < pages.length; i += 2){
