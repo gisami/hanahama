@@ -1546,7 +1546,7 @@ function buildPlan(){
     }
     rvByDate[date] = rvHere;
     // 土曜に終わらなかった復習は日曜の予備の時間にやってよい。月曜には消える（やったことにはしない）
-    if (parse(date).getDay() === 0 && date <= TODAY && !isPubDay(date)){
+    if (parse(date).getDay() === 0 && date <= TODAY){
       const prev = addDays(date, -1);
       let sp = rvByDate[prev];
       if (!sp){ sp = []; slotsFor(prev).filter(s => s.rv).forEach(s => sp.push(...reviewPicks(prev, s, usedRv))); rvByDate[prev] = sp; }
