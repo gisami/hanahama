@@ -685,7 +685,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v88</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v89</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -3114,7 +3114,6 @@ function renderReview(){
   document.getElementById("rvTiles").innerHTML = [
     [`${r1(mean(sc.map(x => x.r.score)))}${sc.length ? "点" : ""}`, `復習テストの平均（${sc.length}回）`],
     [dAvg == null ? "—" : `${dAvg >= 0 ? "+" : ""}${r1(dAvg)}点`, "平均点との差（目安）"],
-    [items.length ? `${Math.round(pass / items.length * 100)}%` : "—", `宿題の丸つけで合格だった割合（${items.length}個中 ${pass}）`],
   ].map(([b,l]) => `<div class="tile"><b>${b}</b><span>${l}</span></div>`).join("");
 
   // 点数グラフ
@@ -3287,7 +3286,10 @@ function renderDayLog(){
   nt.forEach(o => { const a = avgSecOf({group: o.ts}); o.est = ((a != null ? a : (o.ts[0].min ? o.ts[0].min * 60 : HG_DEF * 60)) + 300); });
   if (!ss.length && !nt.length && !cn.length){ body.innerHTML = `<div class="note">この日は、計った記録がありません。</div>`; return; }
   const redoS = ss.filter(o => o.redo), hwS = ss.filter(o => !o.redo);
-  const cnt = a => a.length, sum = a => a.reduce((n, o) => n + o.sec, 0);
+  /* 丸つけで「お直し」に戻されたものは、まだ「できた」ではない（宿題タブと同じ数え方）。やり直して合格すると数える */
+  const ret = o => o.ts.every(t => PROG[t.k]?.judge === "お直し");
+  const retN = [...ss.filter(o => !o.redo), ...nt.filter(o => !o.redo)].filter(ret).length;
+  const cnt = a => a.filter(o => !ret(o)).length, sum = a => a.reduce((n, o) => n + o.sec, 0);
   const tot = sum(ss), fm = sec => fmtMin(Math.round(sec / 60));
   const timed = ss.filter(o => o.t0), first = timed[0], last = timed.reduce((a, o) => Math.max(a, sessEnd(o)), 0);
   const S = 5 * 3600e3, W = 19 * 3600e3, dayStart = parse(D).getTime();   // 帯グラフは 5:00〜24:00
@@ -3298,16 +3300,16 @@ function renderDayLog(){
       return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ntBar.map(o => { const b = pos(o.at), a = pos(o.at - o.est * 1000);
       return `<i class="s-${o.ts[0].s} est" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ticks.map((h, i) => `<span class="dl-tk${i === 0 ? " f" : i === ticks.length - 1 ? " l" : ""}" style="left:${pos(dayStart + h * 3600e3)}%">${h}時</span>`).join("")}</div>` : "";
   const ntRow = o => `<details class="dl-row nt s-${o.ts[0].s}"><summary><div class="dl-t num">${o.at ? `${hmOf(o.at)}<small>できた</small>` : `<small>時刻なし</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}${tagOf(o)}</div>
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}${tagOf(o)}${ret(o) && !o.redo ? ` <span class="chip redo">お直しに戻った</span>` : ""}</div>
       <div class="dl-foot"><span class="dl-dur nm">計測なし</span><span><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></span></div></summary>
       <div class="dl-det"><div class="note">タイマーを使わずに「できた」を押しました${o.at ? `（${hmsOf(o.at)}）` : "（押した時刻は残っていません）"}。${o.at ? `上の帯の色の薄い部分は、この教材の平均時間＋5分（${mins(o.est)}）で、およそやっていた時間帯の目安です。` : ""}</div></div></details>`;
   const row = o => `<details class="dl-row s-${o.ts[0].s}"><summary><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(sessEnd(o))}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}${tagOf(o)}
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}${tagOf(o)}${ret(o) && !o.redo ? ` <span class="chip redo">お直しに戻った</span>` : ""}
         ${(o.np || o.auto || forgot(o)) ? `<div class="note">${(o.np || 0) ? `一時中断 ${o.np}回` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : forgot(o) ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分）</b>` : ""}</div>` : ""}</div>
       <div class="dl-foot"><span class="dl-dur">${fmtSec(o.sec)}</span><span><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></span></div></summary>
       <div class="dl-det">${sessEvents(o)}</div></details>`;
   body.innerHTML = `<div class="dl-tiles">
-      <div class="dl-tile"><span>宿題</span><b>${cnt(hwS) + cnt(nt.filter(o => !o.redo))}<small>個</small></b><em>${fm(sum(hwS))}${nt.some(o => !o.redo) ? `<span class="pl">＋計測なし${cnt(nt.filter(o => !o.redo))}個</span>` : ""}</em></div>
+      <div class="dl-tile"><span>宿題</span><b>${cnt(hwS) + cnt(nt.filter(o => !o.redo))}<small>個</small></b><em>${fm(sum(hwS))}${nt.some(o => !o.redo && !ret(o)) ? `<span class="pl">＋計測なし${cnt(nt.filter(o => !o.redo))}個</span>` : ""}${retN ? `<span class="pl" style="color:var(--redo-ink)">お直し中${retN}個は除く</span>` : ""}</em></div>
       <div class="dl-tile redo"><span>やり直し</span><b>${cnt(redoS) + cnt(nt.filter(o => o.redo))}<small>個</small></b><em>${fm(sum(redoS))}${nt.some(o => o.redo) ? `<span class="pl">＋計測なし${cnt(nt.filter(o => o.redo))}個</span>` : ""}</em></div>
       <div class="dl-tile tot"><span>合計</span><b>${fm(tot)}</b></div></div>${strip}
     <div class="dl-list">${[...ss.map(o => ({k: o.t0 || o.t1 || 9e15, h: row(o)})), ...nt.map(o => ({k: o.at || 9e15, h: ntRow(o)}))].sort((a, b) => a.k - b.k).map(x => x.h).join("")}</div>
