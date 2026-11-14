@@ -683,7 +683,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v84</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v85</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -3023,7 +3023,12 @@ function lineChart(series, o){
   const W = 340, H = 196, L = 30, R = 8, T = 12, B = 26;
   const pts = series.flatMap(x => x.pts), none = !pts.length;
   const ts = none ? [0] : pts.map(p => parse(p.x).getTime()), t0 = Math.min(...ts), t1 = Math.max(...ts), span = t1 - t0;
-  const X = x => span ? L + 8 + (parse(x).getTime() - t0) / span * (W - L - R - 16) : (L + (W - L - R) / 2);
+  /* even：横の間隔に意味がないグラフ。同じ週のテストは同じ位置、休みの週は詰めて、均等に並べる */
+  const wk = d => o.month ? d : addDays(d, -((parse(d).getDay() + 6) % 7));
+  const EK = o.even ? [...new Set(pts.map(p => wk(p.x)))].sort() : [], EREP = {};
+  if (o.even) pts.forEach(p => { const k = wk(p.x); if (!EREP[k] || p.x < EREP[k]) EREP[k] = p.x; });
+  const X = o.even ? (x => EK.length > 1 ? L + 8 + EK.indexOf(wk(x)) / (EK.length - 1) * (W - L - R - 16) : (L + (W - L - R) / 2))
+    : (x => span ? L + 8 + (parse(x).getTime() - t0) / span * (W - L - R - 16) : (L + (W - L - R) / 2));
   const PH = H - T - B, KN = o.knot, LB = KN ? PH * KN.frac : 0, UH = PH - LB;
   const Y = y => KN ? (y >= KN.v ? T + (o.max - y) / (o.max - KN.v) * UH : T + UH + (KN.v - Math.max(y, o.min)) / (KN.v - o.min) * LB)
                     : T + (o.max - y) / (o.max - o.min) * PH;
@@ -3034,7 +3039,7 @@ function lineChart(series, o){
   } else
   for (let v = o.min; v <= o.max + 0.001; v += o.step) g += `<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end">${v}</text>`;
   if (o.ref != null) g += `<line x1="${L}" x2="${W-R}" y1="${Y(o.ref)}" y2="${Y(o.ref)}" style="stroke:var(--ink-3)" stroke-width="1.4" stroke-dasharray="2 3"/>`;
-  const dates = [...new Set(pts.map(p => p.x))].sort(), every = Math.ceil(dates.length / 6);
+  const dates = o.even ? EK.map(k => EREP[k]) : [...new Set(pts.map(p => p.x))].sort(), every = Math.ceil(dates.length / 6);
   if (none) g += `<text x="${(L+W-R)/2}" y="${(T+H-B)/2}" text-anchor="middle" style="font-size:12px;fill:var(--ink-2);font-weight:700">${esc(o.empty || "まだ記録がありません")}</text><text x="${(L+W-R)/2}" y="${(T+H-B)/2+17}" text-anchor="middle">${esc(o.empty2 || "")}</text>`;
   let lastX = -99;
   const xl = d => o.month ? `${parse(d).getMonth()+1}月` : fmtMD(d);
@@ -3120,7 +3125,7 @@ function renderReview(){
     : [{...mk(rev, "score", "自分の点数", SUBJ_VAR[RV_SUBJ]), band: band(rev)}, mk(rev, "avg", "平均点", SUBJ_VAR[RV_SUBJ], {dash: true})].filter(x => x.pts.length);
   if (RV_MODE === "month") s1 = s1.map(monthlySeries);
   s1 = s1.map(lastN);
-  document.getElementById("rvChart1").innerHTML = lineChart(s1, {min:0, max:100, knot:{v:40, frac:.13}, ticks:[0,40,50,60,70,80,90,100], tickLabels:[0,40,60,80,100], label:"復習テストの点数の推移", month: RV_MODE === "month", empty:"まだ点数がありません", empty2:"下の「復習テストの記録」で入れると、ここに線が出ます"});
+  document.getElementById("rvChart1").innerHTML = lineChart(s1, {min:0, max:100, knot:{v:40, frac:.13}, ticks:[0,40,50,60,70,80,90,100], tickLabels:[0,40,60,80,100], label:"復習テストの点数の推移", month: RV_MODE === "month", even: true, empty:"まだ点数がありません", empty2:"下の「復習テストの記録」で入れると、ここに線が出ます"});
   if (!s1.length) s1.push({name:"自分の点数", color: SUBJ_VAR[RV_SUBJ] || "--accent", pts:[]}, {name:"平均点", color: SUBJ_VAR[RV_SUBJ] || "--accent", dash:true, pts:[]});
   document.getElementById("rvLeg1").innerHTML = (RV_SUBJ === "全部" ? s1.filter(x => !x.dash).map(x => `<span><i style="--c:var(${x.color})"></i>${x.name}</span>`).join("") + `<span><i class="dash" style="--c:var(--ink-3)"></i>点線＝平均点</span>`
     : s1.map(x => `<span><i class="${x.dash ? "dash" : ""}" style="--c:var(${x.color})"></i>${x.name}${x.dash ? "（○）" : "（●）"}</span>`).join("")) + (s1.some(x => x.dash && x.pts.length) ? `<span>薄い色＝平均との差</span>` + (rev.some(x => x.r.avgN) ? `<span class="note" style="flex-basis:100%">平均点は、成績表に見えた生徒（20〜26人）の平均です。クラス全体の平均ではなく、目安です。</span>` : "") : `<span style="color:var(--crit-ink);font-weight:700">平均点が入っていないので、点線と色の塗りはまだ出ません</span>`);
@@ -3142,17 +3147,14 @@ function renderReview(){
   const mm = SCORES.month || {}, mk2 = Object.keys(mm).sort().reverse();
   document.getElementById("rvMonth").hidden = !mk2.length;
   const rbar = (rank, n) => `<span class="rkbar" title="${rank}位／${n}人以上"><i style="left:${n > 1 ? Math.min(100, (rank - 1) / (n - 1) * 100) : 0}%"></i></span>`;
-  document.getElementById("rvMonthBody").innerHTML = mk2.map(k => { const m = mm[k], [y, mo] = k.split("-"), all = RV_SUBJ === "全部", N = MONTH_N[k] || {};
-    const subjRows = ["算数","国語","理科","社会"].filter(sj => m.subj && m.subj[sj] && (all || sj === RV_SUBJ)).map(sj => { const n = N[sj] || N.all || 0;
-      return `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td><td class="n">${m.subj[sj].rank != null ? `${m.subj[sj].rank}位${n ? `<span class="note">／${n}人以上</span>` : ""}${n ? rbar(m.subj[sj].rank, n) : ""}` : "<span class=\"note\">順位なし</span>"}</td></tr>`; }).join("");
+  /* 月の成績個人票：4教科の復習テスト平均だけ見せる（3教科の総計・順位、教科ごとの順位は出さない） */
+  document.getElementById("rvMonthBody").innerHTML = mk2.map(k => { const m = mm[k], [y, mo] = k.split("-"), all = RV_SUBJ === "全部";
+    const sj4 = ["算数","国語","理科","社会"].filter(sj => m.subj && m.subj[sj] && (all || sj === RV_SUBJ));
+    const avg4 = sj4.length ? Math.round(sj4.reduce((a, sj) => a + m.subj[sj].avg, 0) / sj4.length * 10) / 10 : null;
+    if (!sj4.length) return "";
     return `<div style="margin-bottom:12px"><b>${y}年${+mo}月度　${esc(m.course || "")}</b>
-      <div ${all ? "" : 'style="display:none"'}>
-        <div class="tiles" style="margin:8px 0"><div class="tile">${m.rank != null ? `<b>${m.rank}位</b><span>国語・算数・理科の総合順位（${N.all || "?"}人以上中）</span>${N.all ? rbar(m.rank, N.all) : ""}` : `<b>順位なし</b><span>欠席が多いテストがあるため、成績表で順位が付いていません</span>`}</div>
-          <div class="tile"><b>${m.total}<small>／${m.outOf}</small></b><span>総計（点）</span></div>
-          <div class="tile"><b>${m.fuku}</b><span>復習テストの平均（100点満点）</span></div><div class="tile"><b>${m.kokai}</b><span>公開テストの点数（100点満点）</span></div></div>
-        <div class="note">総計＝復習テストの平均＋公開テストの点数（100点＋100点＝${m.outOf}点満点）。順位は総計の高い順です。人数は、成績表で見えた範囲の最少人数（実際はもっと多い可能性があります）。</div></div>
-      <table class="rtable" style="margin-top:8px"><thead><tr><th>教科</th><th class="n">復習テスト平均</th><th class="n">教科の順位</th></tr></thead><tbody>${subjRows}</tbody></table>${
-        m.soc && (all || RV_SUBJ === "社会") ? `<div class="note" style="margin-top:6px">社会（別の個人票）：総合順位 ${m.soc.rank != null ? m.soc.rank + "位／" + (N.soc || "?") + "人以上" : "なし"}　総計 ${m.soc.total}／${m.outOf}点（復習テスト平均 ${m.soc.fuku}＋公開テスト ${m.soc.kokai}）${N.soc ? rbar(m.soc.rank, N.soc) : ""}</div>` : ""}</div>`; }).join("");
+      ${all && sj4.length === 4 ? `<div class="tiles" style="margin:8px 0"><div class="tile"><b>${avg4}</b><span>4教科の復習テスト平均（点）</span></div></div>` : ""}
+      <table class="rtable" style="margin-top:8px"><thead><tr><th>教科</th><th class="n">復習テスト平均</th></tr></thead><tbody>${sj4.map(sj => `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td></tr>`).join("")}</tbody></table></div>`; }).join("");
   // 記録（入力・修正）
   if (!RV_KEEP){
     const all = REVUNITS.filter(u => u.test <= TODAY && on(u) && !(NO_TEST.has(u.key) && !(SCORES.review[u.key] && SCORES.review[u.key].score != null))).sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
@@ -3268,6 +3270,8 @@ function renderDayLog(){
   document.getElementById("dlPrev").onclick = () => { DL_OFF++; renderDayLog(); };
   const nx = document.getElementById("dlNext"); nx.disabled = DL_OFF === 0; nx.onclick = () => { if (DL_OFF > 0){ DL_OFF--; renderDayLog(); } };
   const ss = timeSessions(D, D).sort((a, b) => (a.t0 || a.t1 || 9e15) - (b.t0 || b.t1 || 9e15));
+  /* 同じ名前の宿題を見分ける：何回目か、前の日の分なら「11/13分」 */
+  const tagOf = o => { const t = o.ts[0], pl = t.pin || t.due; return `${t.rep ? ` <span class="chip">${t.rep}回目</span>` : ""}${pl && pl < D ? ` <span class="chip">${fmtMD(pl)}分</span>` : ""}`; };
   const ntRaw = doneNoTimer(D, D), cn = cancelsIn(D, D);
   const rev = {}; Object.keys(GROUPS).forEach(g => GROUPS[g].forEach(m => { rev[m.k] = g; }));
   const ntIdx = {}, nt = [];
@@ -3293,11 +3297,11 @@ function renderDayLog(){
       return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ntBar.map(o => { const b = pos(o.at), a = pos(o.at - o.est * 1000);
       return `<i class="s-${o.ts[0].s} est" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ticks.map((h, i) => `<span class="dl-tk${i === 0 ? " f" : i === ticks.length - 1 ? " l" : ""}" style="left:${pos(dayStart + h * 3600e3)}%">${h}時</span>`).join("")}</div>` : "";
   const ntRow = o => `<details class="dl-row nt s-${o.ts[0].s}"><summary><div class="dl-t num">${o.at ? `${hmOf(o.at)}<small>できた</small>` : `<small>時刻なし</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}</div>
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}${tagOf(o)}</div>
       <div class="dl-foot"><span class="dl-dur nm">計測なし</span><span><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></span></div></summary>
       <div class="dl-det"><div class="note">タイマーを使わずに「できた」を押しました${o.at ? `（${hmsOf(o.at)}）` : "（押した時刻は残っていません）"}。${o.at ? `上の帯の色の薄い部分は、この教材の平均時間＋5分（${mins(o.est)}）で、およそやっていた時間帯の目安です。` : ""}</div></div></details>`;
   const row = o => `<details class="dl-row s-${o.ts[0].s}"><summary><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(sessEnd(o))}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}${tagOf(o)}
         ${(o.np || o.auto || forgot(o)) ? `<div class="note">${(o.np || 0) ? `一時中断 ${o.np}回` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : forgot(o) ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分）</b>` : ""}</div>` : ""}</div>
       <div class="dl-foot"><span class="dl-dur">${fmtSec(o.sec)}</span><span><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></span></div></summary>
       <div class="dl-det">${sessEvents(o)}</div></details>`;
