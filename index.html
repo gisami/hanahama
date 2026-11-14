@@ -590,6 +590,8 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .fchips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
 .fchip{border:1px solid var(--line-2); background:var(--card); color:var(--ink-2); border-radius:999px; padding:6px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer}
 .fchip[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.fchip.sc{color:var(--s); border-color:var(--s); background:var(--s-bg)}
+.fchip.sc[aria-pressed="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
 .rvcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 14px 12px; margin-bottom:14px}
 .rvcard h3{margin:0 0 8px; font-size:14px}
 .chart svg{width:100%; height:auto; display:block}
@@ -683,7 +685,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v86</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v87</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -768,12 +770,11 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
   <div class="eyebrow">これまでの成績の振返り</div>
   <div class="fchips" id="rvSubj"></div>
   <div class="fchips" id="rvMode"></div>
+  <div class="fchips" id="rvMode2"></div>
   <div class="tiles" id="rvTiles" style="margin-bottom:14px"></div>
   <section class="rvcard"><h3>復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
   <section class="rvcard" id="rvMonth" hidden><h3>月の成績個人票</h3><div id="rvMonthBody"></div></section>
-  <section class="rvcard" id="rvPending" hidden style="border-color:var(--crit)"><h3>点数・平均点の入力待ち</h3>
-    <div class="note" style="margin-bottom:4px">テストおつかれさま！ 点数と平均点を入れよう。入れるまで、アプリを開くと振返りタブが最初に出ます。わからないときは「忘れた」を押せば大丈夫。</div><div id="rvPendList"></div></section>
-  <section class="rvcard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
+  <section class="rvcard" id="rvRecCard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div id="rvRecNote"></div><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
   <section class="rvcard"><h3>間違えた理由</h3><div id="rvReasons"></div></section>
   <section class="rvcard"><h3>丸つけの振返り（コメントつき）</h3>
     <div class="fchips"><button class="fchip" id="rvCmtOnly" type="button" aria-pressed="false">コメントがあるものだけ</button></div>
@@ -1396,6 +1397,7 @@ function openInitialTab(){
   NAVLOCK = true; try { showTab(want); } finally { NAVLOCK = false; }
   try { history.replaceState({aibou: 1, tab: want, focus: null}, ""); } catch {}
   try { window.scrollTo(0, 0); } catch {}
+  if (want === "review") setTimeout(() => { const c = document.getElementById("rvRecCard"); if (c) c.scrollIntoView({block: "start"}); }, 80);   // 入力待ちがあるときは、復習テストの記録から開く
 }
 let REFRESHING = false;
 async function refreshApp(manual){
@@ -3017,10 +3019,10 @@ function renderScores(){
 }
 
 /* ---------- 振返りタブ ---------- */
-let RV_LAST = true, RV_MODE = "test", RV_SUBJ = "全部", RV_CMT = false, RV_N = 15, RV_T = 12, RV_KEEP = false;
+let RV_RANGE = 3, RV_LAST = true, RV_MODE = "test", RV_SUBJ = "全部", RV_CMT = false, RV_N = 15, RV_T = 12, RV_KEEP = false;
 const SUBJ_VAR = {算数:"--s-math", 国語:"--s-jp", 理科:"--s-sci", 社会:"--s-soc"};
 function lineChart(series, o){
-  const W = 340, H = 196, L = 30, R = 8, T = 12, B = 26;
+  const W = 340, H = o.h || 196, L = 30, R = 8, T = 12, B = 26;
   const pts = series.flatMap(x => x.pts), none = !pts.length;
   const ts = none ? [0] : pts.map(p => parse(p.x).getTime()), t0 = Math.min(...ts), t1 = Math.max(...ts), span = t1 - t0;
   /* even：横の間隔に意味がないグラフ。同じ週のテストは同じ位置、休みの週は詰めて、均等に並べる */
@@ -3083,18 +3085,17 @@ function renderReview(){
   if (!document.getElementById("rvSubj")) return;
   const SUBS = ["全部","算数","国語","理科","社会"], on = u => RV_SUBJ === "全部" || u.subject === RV_SUBJ;
   const chips = document.getElementById("rvSubj"); chips.innerHTML = "";
-  SUBS.forEach(x => { const b = el("button","fchip",x); b.type = "button"; b.setAttribute("aria-pressed", String(x === RV_SUBJ));
+  SUBS.forEach(x => { const b = el("button","fchip" + (x === "全部" ? "" : " sc s-" + x),x); b.type = "button"; b.setAttribute("aria-pressed", String(x === RV_SUBJ));
     b.onclick = () => { RV_SUBJ = x; RV_N = 15; renderReview(); }; chips.appendChild(b); });
   const modes = document.getElementById("rvMode"); modes.innerHTML = "";
-  { const b = el("button","fchip", RV_MODE === "month" ? "直近5か月" : "直近5回"); b.type = "button"; b.setAttribute("aria-pressed", String(RV_LAST));
-    b.onclick = () => { RV_LAST = true; RV_KEEP = false; renderReview(); }; modes.appendChild(b);
-    const c = el("button","fchip","すべて"); c.type = "button"; c.setAttribute("aria-pressed", String(!RV_LAST));
-    c.onclick = () => { RV_LAST = false; RV_KEEP = false; renderReview(); }; modes.appendChild(c);
-    const sp = el("span","note","　"); modes.appendChild(sp); }
+  [["直近3か月", 3], ["直近6か月", 6], ["すべて", 0]].forEach(([l, n]) => { const b = el("button","fchip",l); b.type = "button"; b.setAttribute("aria-pressed", String(RV_RANGE === n));
+    b.onclick = () => { RV_RANGE = n; RV_KEEP = false; renderReview(); }; modes.appendChild(b); });
+  const modes2 = document.getElementById("rvMode2"); modes2.innerHTML = "";
   [["test","テストごと"],["month","月平均"]].forEach(([k,l]) => { const b = el("button","fchip",l); b.type = "button"; b.setAttribute("aria-pressed", String(k === RV_MODE));
-    b.onclick = () => { RV_MODE = k; RV_KEEP = false; renderReview(); }; modes.appendChild(b); });
+    b.onclick = () => { RV_MODE = k; RV_KEEP = false; renderReview(); }; modes2.appendChild(b); });
+  const cutD = RV_RANGE ? (() => { const d = parse(TODAY); d.setMonth(d.getMonth() - RV_RANGE); return iso(d); })() : null;
   const mean1 = a => Math.round(a.reduce((p,q) => p+q, 0) / a.length * 10) / 10;
-  const lastN = se => { if (!RV_LAST) return se; const keep = new Set(se.pts.slice().sort((a,b) => a.x.localeCompare(b.x)).slice(-5).map(p => p.x));
+  const lastN = se => { return se; if (!RV_LAST) return se; const keep = new Set(se.pts.slice().sort((a,b) => a.x.localeCompare(b.x)).slice(-5).map(p => p.x));
     return {...se, pts: se.pts.filter(p => keep.has(p.x)), band: se.band ? se.band.filter(p => keep.has(p.x)) : se.band}; };
   const monthlySeries = se => {
     const grp = (items, f) => { const m = {}; items.forEach(p => { (m[p.x.slice(0,7)] = m[p.x.slice(0,7)] || []).push(p); });
@@ -3113,36 +3114,25 @@ function renderReview(){
   document.getElementById("rvTiles").innerHTML = [
     [`${r1(mean(sc.map(x => x.r.score)))}${sc.length ? "点" : ""}`, `復習テストの平均（${sc.length}回）`],
     [dAvg == null ? "—" : `${dAvg >= 0 ? "+" : ""}${r1(dAvg)}点`, "平均点との差（目安）"],
-    [items.length ? `${Math.round(pass / items.length * 100)}%` : "—", `合格の割合（${items.length}個中 ${pass}）`],
+    [items.length ? `${Math.round(pass / items.length * 100)}%` : "—", `宿題の丸つけで合格だった割合（${items.length}個中 ${pass}）`],
   ].map(([b,l]) => `<div class="tile"><b>${b}</b><span>${l}</span></div>`).join("");
 
   // 点数グラフ
   const mk = (arr, key, name, color, extra = {}) => ({name, color, pts: arr.filter(x => x.r[key] != null).map(x => ({x: x.u.test, y: x.r[key], tip: uname(x.u)})), ...extra});
   const band = arr => arr.filter(x => x.r.score != null && x.r.avg != null).map(x => ({x: x.u.test, y1: x.r.score, y2: x.r.avg}));
+  const revG = cutD ? rev.filter(x => x.u.test >= (RV_MODE === "month" ? cutD.slice(0, 7) + "-01" : cutD)) : rev;
   let s1 = RV_SUBJ === "全部"
-    ? ["算数","国語","理科","社会"].flatMap(sj => { const a = rev.filter(x => x.u.subject === sj);
+    ? ["算数","国語","理科","社会"].flatMap(sj => { const a = revG.filter(x => x.u.subject === sj);
         return [{...mk(a, "score", sj, SUBJ_VAR[sj]), band: band(a)}, mk(a, "avg", sj + "の平均点", SUBJ_VAR[sj], {dash: true, hideLabel: true})]; }).filter(x => x.pts.length)
-    : [{...mk(rev, "score", "自分の点数", SUBJ_VAR[RV_SUBJ]), band: band(rev)}, mk(rev, "avg", "平均点", SUBJ_VAR[RV_SUBJ], {dash: true})].filter(x => x.pts.length);
+    : [{...mk(revG, "score", "自分の点数", SUBJ_VAR[RV_SUBJ]), band: band(revG)}, mk(revG, "avg", "平均点", SUBJ_VAR[RV_SUBJ], {dash: true})].filter(x => x.pts.length);
   if (RV_MODE === "month") s1 = s1.map(monthlySeries);
   s1 = s1.map(lastN);
-  document.getElementById("rvChart1").innerHTML = lineChart(s1, {min:0, max:100, knot:{v:40, frac:.13}, ticks:[0,40,50,60,70,80,90,100], tickLabels:[0,40,60,80,100], label:"復習テストの点数の推移", month: RV_MODE === "month", even: true, empty:"まだ点数がありません", empty2:"下の「復習テストの記録」で入れると、ここに線が出ます"});
+  document.getElementById("rvChart1").innerHTML = lineChart(s1, {min:0, max:100, knot:{v:40, frac:.13}, ticks:[0,40,50,60,70,80,90,100], tickLabels:[0,40,60,80,100], label:"復習テストの点数の推移", month: RV_MODE === "month", even: true, h: 300, empty:"まだ点数がありません", empty2:"下の「復習テストの記録」で入れると、ここに線が出ます"});
   if (!s1.length) s1.push({name:"自分の点数", color: SUBJ_VAR[RV_SUBJ] || "--accent", pts:[]}, {name:"平均点", color: SUBJ_VAR[RV_SUBJ] || "--accent", dash:true, pts:[]});
   document.getElementById("rvLeg1").innerHTML = (RV_SUBJ === "全部" ? s1.filter(x => !x.dash).map(x => `<span><i style="--c:var(${x.color})"></i>${x.name}</span>`).join("") + `<span><i class="dash" style="--c:var(--ink-3)"></i>点線＝平均点</span>`
     : s1.map(x => `<span><i class="${x.dash ? "dash" : ""}" style="--c:var(${x.color})"></i>${x.name}${x.dash ? "（○）" : "（●）"}</span>`).join("")) + (s1.some(x => x.dash && x.pts.length) ? `<span>薄い色＝平均との差</span>` + (rev.some(x => x.r.avgN) ? `<span class="note" style="flex-basis:100%">平均点は、成績表に見えた生徒（20〜26人）の平均です。クラス全体の平均ではなく、目安です。</span>` : "") : `<span style="color:var(--crit-ink);font-weight:700">平均点が入っていないので、点線と色の塗りはまだ出ません</span>`);
 
   renderImportCard();
-  // 入力待ち
-  if (!RV_KEEP){
-    const pend = pendingUnits().filter(on), pb = document.getElementById("rvPendList"); pb.innerHTML = "";
-    pend.forEach(u => { const r = SCORES.review[u.key] || {}, miss = [r.score == null ? "点数" : "", r.avg == null ? "平均点" : ""].filter(Boolean).join("・");
-      const row = scoreRow(u, true); const nt = document.createElement("div"); nt.className = "note"; nt.style.cssText = "color:var(--crit-ink);font-weight:700"; nt.textContent = `まだ入っていない：${miss}`;
-      row.insertBefore(nt, row.children[1]);
-      const fg = document.createElement("button"); fg.type = "button"; fg.className = "btn ghost sm"; fg.style.cssText = "justify-self:start;margin-top:6px"; fg.textContent = "点数や平均点を忘れた（あとで親が入れる）";
-      fg.onclick = async () => { if (!await ask(`${u.subject} No.${u.lec} は「忘れた」にして、あとで親が入力しますか？`, "忘れた")) return;
-        SCORES.skip = {...(SCORES.skip || {}), [u.key]: TODAY}; saveScores(); toast("あとで入れるようにしました"); };
-      row.appendChild(fg); pb.appendChild(row); });
-    document.getElementById("rvPending").hidden = !pend.length;
-  }
   // 月の成績個人票
   const mm = SCORES.month || {}, mk2 = Object.keys(mm).sort().reverse();
   document.getElementById("rvMonth").hidden = !mk2.length;
@@ -3157,11 +3147,24 @@ function renderReview(){
   if (!RV_KEEP){
     const all = REVUNITS.filter(u => u.test <= TODAY && on(u) && !(NO_TEST.has(u.key) && !(SCORES.review[u.key] && SCORES.review[u.key].score != null))).sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
     const tb = document.getElementById("rvTable"); tb.innerHTML = "";
-    all.slice(0, RV_T).forEach(u => tb.appendChild(scoreRow(u)));
+    const pend = pendingUnits().filter(on), pset = new Set(pend.map(u => u.key));
+    const lastP = all.reduce((m, u, i) => pset.has(u.key) ? i : m, -1), nShow = Math.max(RV_T, lastP + 1);
+    all.slice(0, nShow).forEach(u => { const row = scoreRow(u);
+      if (pset.has(u.key)){
+        const r = SCORES.review[u.key] || {}, miss = [r.score == null ? "点数" : "", r.avg == null ? "平均点" : ""].filter(Boolean).join("・");
+        row.style.cssText += ";border-left:5px solid var(--crit);padding-left:8px";
+        const nt = document.createElement("div"); nt.className = "note"; nt.style.cssText = "color:var(--crit-ink);font-weight:700"; nt.textContent = `まだ入っていない：${miss}`;
+        row.insertBefore(nt, row.children[1]);
+        const fg = document.createElement("button"); fg.type = "button"; fg.className = "btn ghost sm"; fg.style.cssText = "justify-self:start;margin-top:6px"; fg.textContent = "点数や平均点を忘れた（あとで親が入れる）";
+        fg.onclick = async () => { if (!await ask(`${u.subject} No.${u.lec} は「忘れた」にして、あとで親が入力しますか？`, "忘れた")) return;
+          SCORES.skip = {...(SCORES.skip || {}), [u.key]: TODAY}; saveScores(); toast("あとで入れるようにしました"); };
+        row.appendChild(fg); }
+      tb.appendChild(row); });
+    document.getElementById("rvRecNote").innerHTML = pend.length ? `<div class="note" style="color:var(--crit-ink);font-weight:700;margin-bottom:4px">テストおつかれさま！ 点数・平均点がまだ入っていないテストが${pend.length}件あります（赤い印の行）。入れるまで、アプリを開くと振返りタブのここが最初に出ます。わからないときは「忘れた」を押せば大丈夫。</div>` : "";
     if (!all.length) tb.innerHTML = '<div class="note">まだテストが終わった単元はありません。</div>';
     { const nn = REVUNITS.filter(u => NO_TEST.has(u.key) && on(u) && !(SCORES.review[u.key] && SCORES.review[u.key].score != null)).sort((a, b) => a.test.localeCompare(b.test));
       if (nn.length) tb.insertAdjacentHTML("beforeend", `<div class="note" style="margin-top:8px">テストがなかった回（マイページにも結果がありません）：${nn.map(u => esc(u.subject.slice(0, 1) + " No." + u.lec)).join("、")}</div>`); }
-    const tm = document.getElementById("rvTMore"); tm.hidden = all.length <= RV_T;
+    const tm = document.getElementById("rvTMore"); tm.hidden = all.length <= nShow;
     tm.onclick = () => { RV_T += 15; renderReview(); };
   }
 
