@@ -689,7 +689,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v93</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v94</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -3577,10 +3577,10 @@ async function startTimer(k){
   const now = Date.now();
   const patch = {run: {start: now, acc: 0, day: TODAY, t0: now, pz: 0, np: 0, pa: null, pl: []}};
   if (typeof PROG[k]?.setMin !== "number") patch.setMin = setMinOf(TASKMAP[k] || {k});   // 始めた時点の砂時計の分数を固定する
-  saveTask(k, patch);
+  saveTask(k, patch); speak("スタート！ がんばろう！");
 }
-const pauseTimer = k => saveTask(k, {run: pausedRun(runOf(k))});
-const resumeTimer = k => { unlockSound(); return saveTask(k, {run: resumedRun(runOf(k))}); };
+const pauseTimer = k => { speak("ちゅうだん。ひとやすみ、ひとやすみ"); return saveTask(k, {run: pausedRun(runOf(k))}); };
+const resumeTimer = k => { unlockSound(); speak("さいかい！ いくよー！"); return saveTask(k, {run: resumedRun(runOf(k))}); };
 function endTimer(k){
   const r = runOf(k), now = Date.now();
   const sec = Math.round(elapsed(r));
@@ -3589,7 +3589,7 @@ function endTimer(k){
   let pz = (r && r.pz) || 0, pl = (r && r.pl) || [];
   if (r && !r.start && r.pa){ pz += (now - r.pa) / 1000; pl = [...pl, {a: r.pa, b: now}].slice(-20); }   // 中断したまま「終わり」を押した
   const rec = {d: TODAY, sec, set, t0: (r && r.t0) || null, t1: now, pz: Math.round(pz), np: (r && r.np) || 0, pl};
-  FOCUS_END = {k, sec, set};
+  FOCUS_END = {k, sec, set}; speak("できたー！ おつかれさま！");
   saveTask(k, {done: TODAY, doneAt: now, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), rec], run: null});
 }
 /* ---- 先生のポイント（折りたたみ）---- */
@@ -3819,7 +3819,7 @@ function renderFocus(){
           <div class="fx-state" id="fxState">${label}</div></div></div>
       <div class="beads" id="beads"></div>
       <div class="bead-legend">1コマ＝30秒　／　どの宿題も ${MAX_MIN}分で自動的に終わります</div>
-      <button type="button" class="fx-link" id="fxSnd">${SOUND_ON ? "🔔 音（笛・5分ごとの声）：ON" : "🔕 音：OFF"}</button></div>`;
+      <button type="button" class="fx-link" id="fxSnd">${SOUND_ON ? "🔔 音（笛・声）：ON" : "🔕 音：OFF"}</button></div>`;
   let main;
   if (FOCUS_END && FOCUS_END.k === t.k){
     const setM = FOCUS_END.set || setMinOf(t), over = FOCUS_END.sec > setM * 60;
@@ -3858,7 +3858,7 @@ function renderFocus(){
     const rr = runOf(t.k);
     saveTask(t.k, {run: null, aud: [...(PROG[t.k]?.aud || []), {t: Date.now(), e: "cancel", sec: Math.round(elapsed(rr)), t0: (rr && rr.t0) || null}].slice(-30)}); } });
   on("fxNoTimer", async () => { if (await ask("時間を計らずに「できた」にしますか？", "できたにする")){
-    saveTask(t.k, {done: TODAY, doneAt: Date.now(), skip: null, judge: null, reason: null, run: null, aud: [...(PROG[t.k]?.aud || []), {t: Date.now(), e: "notimer"}].slice(-30)}); closeFocus(); } });
+    saveTask(t.k, {done: TODAY, doneAt: Date.now(), skip: null, judge: null, reason: null, run: null, aud: [...(PROG[t.k]?.aud || []), {t: Date.now(), e: "notimer"}].slice(-30)}); speak("できたー！ おつかれさま！"); closeFocus(); } });
 }
 /* ---- 時間を計っている間は、画面を消さない（充電中のとき。充電状態がわからない端末では、計っている間だけ） ---- */
 let WL = null, BAT = null;
