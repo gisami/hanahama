@@ -486,15 +486,33 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .cu-ring .cr-n b{font-size:34px; font-weight:900; color:var(--crit)} .cu-ring.zero .cr-n b{color:var(--good)} .cu-ring .cr-n small{font-size:12px; font-weight:800}
 .cu-ring .cr-t{display:flex; flex-direction:column; gap:3px} .cu-ring .cr-t b{font-size:17px; font-weight:900} .cu-ring .cr-t span{font-size:15px; font-weight:800} .cu-ring .cr-t em{font-style:normal; font-size:12px; color:var(--ink-3)}
 .cu-ring + .zone-cu{margin-top:10px}
-.dl-sum{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; margin:8px 0}
-.dl-sum b{font-size:18px; font-weight:900} .dl-sum span{font-size:12.5px; color:var(--ink-2)}
-.dl-strip{position:relative; height:26px; margin:4px 0 22px; background:var(--track); border-radius:7px}
-.dl-strip i{position:absolute; top:0; bottom:0; background:var(--s); border-radius:3px; opacity:.9}
-.dl-tk{position:absolute; top:28px; font-size:10px; color:var(--ink-3); transform:translateX(-50%)}
+.dl-tiles{display:grid; grid-template-columns:1fr 1fr 1.25fr; gap:8px; margin:10px 0 12px}
+.dl-tile{background:#fff; border:2px solid var(--line-2); border-radius:12px; padding:9px 10px; text-align:center}
+.dl-tile span{display:block; font-size:12px; font-weight:800; color:var(--ink-2)}
+.dl-tile b{display:block; font-family:var(--font-round); font-size:26px; font-weight:900; line-height:1.15} .dl-tile b small{font-size:13px; margin-left:2px}
+.dl-tile em{display:block; font-style:normal; font-size:15px; font-weight:900; color:var(--ink)}
+.dl-tile.redo{border-color:var(--redo); background:#FFF6EA} .dl-tile.tot{border-color:var(--accent); background:var(--accent-soft)}
+.dl-strip{position:relative; height:28px; margin:4px 0 24px; background:var(--track); border-radius:7px}
+.dl-strip u{position:absolute; top:0; bottom:0; width:1px; background:rgba(0,0,0,.14)}
+.dl-strip i{position:absolute; top:3px; bottom:3px; background:var(--s); border-radius:3px}
+.dl-tk{position:absolute; top:31px; font-size:10.5px; color:var(--ink-3); transform:translateX(-50%); white-space:nowrap} .dl-tk.f{transform:none} .dl-tk.l{transform:translateX(-100%)}
 .dl-list{display:flex; flex-direction:column; gap:7px}
-.dl-row{display:grid; grid-template-columns:76px 1fr; gap:10px; padding:8px 10px; border-left:5px solid var(--s); background:var(--s-bg); border-radius:8px}
+.dl-row{border-left:5px solid var(--s); background:var(--s-bg); border-radius:8px}
+.dl-row>summary{display:grid; grid-template-columns:76px 1fr; gap:10px; padding:8px 10px; cursor:pointer; list-style:none} .dl-row>summary::-webkit-details-marker{display:none}
 .dl-t{font-weight:900; font-size:16px; line-height:1.2} .dl-t small{display:block; font-size:12px; font-weight:700; color:var(--ink-2)}
-.dl-m .subj{margin-right:4px}
+.dl-m .subj{margin-right:4px} .dl-more{color:var(--ink-3); font-size:11.5px} .dl-row[open] .dl-more{display:none}
+.dl-det{padding:2px 12px 10px 14px}
+.dl-ev{display:flex; flex-direction:column; gap:3px; margin-bottom:6px}
+.dl-ev>div{display:flex; gap:10px; align-items:baseline; font-size:13.5px} .dl-ev b{min-width:68px; font-size:14px}
+.dl-ev .pz span{color:var(--redo-ink); font-weight:800} .dl-ev .end span{font-weight:800}
+.rvcard.wk-green{background:#EAF6EC; border-color:#B9DDC0} .wk-green summary{cursor:pointer; list-style:none} .wk-green summary::-webkit-details-marker{display:none}
+.wk-green summary::before{content:"▶ "; color:var(--ink-3)} .wk-green details[open]>summary::before{content:"▼ "}
+.mrow{padding:9px 0; border-bottom:1px solid var(--line)}
+.mname{white-space:nowrap; overflow-x:auto; font-size:13.5px; padding-bottom:3px}
+.mstats{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+.mstats div{background:#fff; border:1px solid var(--line); border-radius:9px; padding:5px 8px} .mstats small{display:block; font-size:10.5px; color:var(--ink-3); font-weight:700} .mstats b{font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap}
+.sj-line{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0}
+.sj-line span{display:inline-flex; gap:6px; align-items:center; font-size:12.5px; font-weight:700; padding:3px 9px 3px 4px; border:1.5px solid var(--s); background:var(--s-bg); border-radius:8px}
 .cu-chip{border:0; cursor:pointer; font:inherit; font-weight:800}
 .zone-cu{margin-top:34px; border:3px solid var(--crit); border-radius:16px; background:#FFF1F0; overflow:hidden}
 .zone-cu .zonehead{background:var(--crit); border-radius:0; margin:0}
@@ -659,7 +677,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v79</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v80</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -731,12 +749,12 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 </main>
 
 <main class="wrap view" id="view-review" hidden>
-  <section class="rvcard" id="wkSum"><h3>日曜の家族ふり返り（週のまとめ）</h3>
-    <div class="wknav"><button class="btn ghost sm" id="wkPrev" type="button">◀ 前の週</button><b id="wkLabel" style="font-size:13px"></b><button class="btn ghost sm" id="wkNext" type="button">次の週 ▶</button></div>
+  <section class="rvcard wk-green" id="wkSum"><details id="wkDet"><summary><h3 style="display:inline">日曜の家族ふり返り（週のまとめ）</h3></summary>
+    <div class="wknav" style="margin-top:10px"><button class="btn ghost sm" id="wkPrev" type="button">◀ 前の週</button><b id="wkLabel" style="font-size:13px"></b><button class="btn ghost sm" id="wkNext" type="button">次の週 ▶</button></div>
     <div id="wkBody"></div>
     <div class="judge-row" style="margin-top:10px"><button class="btn ghost sm" id="wkCopy" type="button">文章でコピー（LINEなどに貼る用）</button></div>
-  </section>
-  <section class="rvcard" id="dayLog"><h3>日ごとの勉強の記録（何時から何時まで、何をやったか）</h3>
+  </details></section>
+  <section class="rvcard" id="dayLog"><h3>日ごとの勉強の記録</h3>
     <div class="wknav"><button class="btn ghost sm" id="dlPrev" type="button">◀ 前の日</button><b id="dlLabel" style="font-size:13px"></b><button class="btn ghost sm" id="dlNext" type="button">次の日 ▶</button></div>
     <div id="dlBody"></div>
   </section>
@@ -3196,12 +3214,12 @@ const mins = sec => `${Math.round(sec / 60)}分`;
 function timeSessions(from, to){
   const rev = {}; Object.keys(GROUPS).forEach(g => GROUPS[g].forEach(m => { rev[m.k] = g; }));
   const out = [], idx = {};
-  TASKS.forEach(t => (PROG[t.k]?.secLog || []).forEach(x => {
+  TASKS.forEach(t => (PROG[t.k]?.secLog || []).forEach((x, xi) => {
     if (!x.d || x.d < from || x.d > to) return;
     const key = x.t0 ? `${x.t0}|${x.d}` : null;
     if (key && idx[key] != null){ const o = out[idx[key]]; o.sec += secOf(x); o.raw += x.sec || 0; o.ts.push(t); return; }
     const g = rev[t.k], gt = g && TASKMAP[g];
-    const o = {...x, sec: secOf(x), raw: x.sec || 0, ts: [t], title: taskTitle(gt || t)};
+    const o = {...x, sec: secOf(x), raw: x.sec || 0, ts: [t], title: taskTitle(gt || t), redo: !!(t.retry || t.note || (xi > 0 && (PROG[t.k]?.redo || 0) > 0))};
     if (key) idx[key] = out.length;
     out.push(o);
   }));
@@ -3209,8 +3227,20 @@ function timeSessions(from, to){
 }
 /* ---------- 日ごとの記録：何時から何時まで、何をやったか（今日も含む） ---------- */
 let DL_OFF = 0;
-const forgot = o => o.raw > MAX_SEC && !o.auto;   // 30分を超えて止め忘れた古い記録
 const hmOf = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
+const hmsOf = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`; };
+const forgot = o => o.raw > MAX_SEC && !o.auto;   // 30分を超えて止め忘れた古い記録
+const sessEnd = o => forgot(o) ? o.t0 + MAX_SEC * 1000 : (o.t1 || o.t0 + (o.sec + (o.pz || 0)) * 1000);
+/* スタート・一時中断・再開・ストップの時刻 */
+function sessEvents(o){
+  if (!o.t0) return `<div class="note">この記録は時刻を残していません（旧記録）。</div>`;
+  const ev = [["スタート", o.t0, "go"]];
+  (o.pl || []).forEach(x => { ev.push(["一時中断", x.a, "pz"]); ev.push(["再開", x.b, "go"]); });
+  ev.push([o.auto ? "自動終了（30分）" : forgot(o) ? "止め忘れ（30分として数えています）" : "ストップ・終了", forgot(o) ? o.t0 + MAX_SEC * 1000 : (o.t1 || sessEnd(o)), "end"]);
+  const lost = (o.np || 0) - (o.pl || []).length;
+  return `<div class="dl-ev">${ev.map(([n, t, c]) => `<div class="${c}"><b class="num">${forgot(o) && c === "end" ? "—" : hmsOf(t)}</b><span>${n}</span></div>`).join("")}</div>
+    <div class="note">計った時間 ${fmtSec(o.sec)}　／　一時中断 ${(o.np || 0) ? `${o.np}回・合計${fmtSec(o.pz || 0)}` : "なし"}${lost > 0 ? `（古い${lost}回分の時刻は省略）` : ""}</div>`;
+}
 function renderDayLog(){
   const body = document.getElementById("dlBody"); if (!body) return;
   const D = addDays(REAL_TODAY, -DL_OFF);
@@ -3220,21 +3250,28 @@ function renderDayLog(){
   const ss = timeSessions(D, D).sort((a, b) => (a.t0 || a.t1 || 9e15) - (b.t0 || b.t1 || 9e15));
   const nt = doneNoTimer(D, D), cn = cancelsIn(D, D);
   if (!ss.length && !nt.length && !cn.length){ body.innerHTML = `<div class="note">この日は、計った記録がありません。</div>`; return; }
-  const timed = ss.filter(o => o.t0), first = timed[0], last = timed.reduce((a, o) => Math.max(a, forgot(o) ? o.t0 + MAX_SEC * 1000 : (o.t1 || o.t0)), 0);
-  const tot = ss.reduce((a, o) => a + o.sec, 0);
+  const redoS = ss.filter(o => o.redo), hwS = ss.filter(o => !o.redo);
+  const cnt = a => a.reduce((n, o) => n + o.ts.length, 0), sum = a => a.reduce((n, o) => n + o.sec, 0);
+  const tot = sum(ss), fm = sec => fmtMin(Math.round(sec / 60));
+  const timed = ss.filter(o => o.t0), first = timed[0], last = timed.reduce((a, o) => Math.max(a, sessEnd(o)), 0);
   const S = 5 * 3600e3, W = 19 * 3600e3, dayStart = parse(D).getTime();   // 帯グラフは 5:00〜24:00
   const pos = t => Math.max(0, Math.min(100, (t - dayStart - S) / W * 100));
-  const strip = timed.length ? `<div class="dl-strip" aria-hidden="true">${timed.map(o => { const a = pos(o.t0), b = pos(forgot(o) ? o.t0 + MAX_SEC * 1000 : (o.t1 || o.t0 + o.sec * 1000));
-      return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}<span class="dl-tk" style="left:0">5時</span><span class="dl-tk" style="left:${pos(dayStart + 12 * 3600e3)}%">12時</span><span class="dl-tk" style="left:${pos(dayStart + 18 * 3600e3)}%">18時</span><span class="dl-tk" style="right:0">24時</span></div>` : "";
-  const row = o => `<div class="dl-row s-${o.ts[0].s}"><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(o.t1 || o.t0 + (o.sec + (o.pz || 0)) * 1000)}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}
-        <div class="note">計った時間 ${fmtSec(o.sec)}${o.pz > 30 ? `　一時中断 ${mins(o.pz)}（${o.np || 1}回）` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : o.raw > MAX_SEC ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分として数えています）</b>` : ""}</div></div></div>`;
-  body.innerHTML = `<div class="dl-sum"><b>${first ? `${hmOf(first.t0)} 〜 ${hmOf(last)}` : "時刻つきの記録なし"}</b><span>計った勉強時間 合計 ${fmtMin(Math.round(tot / 60))}（${ss.length}件）</span></div>${strip}
+  const ticks = [5, 7, 10, 13, 16, 20, 24];
+  const strip = timed.length ? `<div class="dl-strip" aria-hidden="true">${ticks.map(h => `<u style="left:${pos(dayStart + h * 3600e3)}%"></u>`).join("")}${timed.map(o => { const a = pos(o.t0), b = pos(sessEnd(o));
+      return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ticks.map((h, i) => `<span class="dl-tk${i === 0 ? " f" : i === ticks.length - 1 ? " l" : ""}" style="left:${pos(dayStart + h * 3600e3)}%">${h}時</span>`).join("")}</div>` : "";
+  const row = o => `<details class="dl-row s-${o.ts[0].s}"><summary><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(sessEnd(o))}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}
+        <div class="note">${fmtSec(o.sec)}${(o.np || 0) ? `　一時中断 ${o.np}回` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : forgot(o) ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分）</b>` : ""}　<span class="dl-more">▼ 詳しく</span></div></div></summary>
+      <div class="dl-det">${sessEvents(o)}</div></details>`;
+  body.innerHTML = `<div class="dl-tiles">
+      <div class="dl-tile"><span>宿題</span><b>${cnt(hwS)}<small>個</small></b><em>${fm(sum(hwS))}</em></div>
+      <div class="dl-tile redo"><span>やり直し</span><b>${cnt(redoS)}<small>個</small></b><em>${fm(sum(redoS))}</em></div>
+      <div class="dl-tile tot"><span>合計</span><b>${fm(tot)}</b><em>${first ? `${hmOf(first.t0)}〜${hmOf(last)}` : "時刻なし"}</em></div></div>${strip}
     <div class="dl-list">${ss.map(row).join("")}</div>
     ${nt.length ? `<div class="note" style="margin-top:8px">時間を計らずに「できた」にした宿題：${nt.map(t => esc(t.s + " " + t.mat + (t.part && t.part !== "（なし）" ? " " + partLabel(t.part) : ""))).join("、")}</div>` : ""}
     ${cn.length ? `<div class="note">記録せずにやめた回：${cn.map(c => `${hmOf(c.t)}ごろ ${mins(c.sec)}`).join("、")}</div>` : ""}`;
 }
-const wallSec = o => o.t0 && o.t1 ? Math.round((o.t1 - o.t0) / 1000) : (o.sec + (o.pz || 0));
+const wallSec = o => (o.t0 && o.t1 && !(o.raw > MAX_SEC && !o.auto)) ? Math.round((o.t1 - o.t0) / 1000) : (o.sec + (o.pz || 0));   // 止め忘れの記録は、実時間に数えない
 function sessFlags(o){
   const f = [], pz = o.pz || 0;
   if (o.auto) f.push(`${MAX_MIN}分で自動終了`);
@@ -3264,6 +3301,8 @@ function renderWeekSummary(){
   document.getElementById("wkNext").disabled = WK_OFF === 0;
   document.getElementById("wkPrev").onclick = () => { WK_OFF++; renderWeekSummary(); };
   document.getElementById("wkNext").onclick = () => { if (WK_OFF > 0){ WK_OFF--; renderWeekSummary(); } };
+  const wd = document.getElementById("wkDet");
+  if (wd && !renderWeekSummary.init){ renderWeekSummary.init = true; wd.open = parse(REAL_TODAY).getDay() === 0; }   // 日曜だけ開いておく
   const inW = d => d && d >= mon && d <= sun;
   let done = 0, pass = 0, wrong = 0, redo = 0;
   const days = Array.from({length: 7}, (_, i) => ({d: addDays(mon, i), n: 0, sec: 0}));
@@ -3281,7 +3320,7 @@ function renderWeekSummary(){
     (s.secLog || []).forEach(x => {
       if (!inW(x.d)) return;
       days[diffDays(mon, x.d)].sec += secOf(x); subj[t.s].sec += secOf(x);
-      const o = (week[catKey(t)] ||= {s: t.s, n: 0, sec: 0}); o.n++; o.sec += secOf(x);
+      const o = (week[catKey(t)] ||= {s: t.s, n: 0, sec: 0, t}); o.n++; o.sec += secOf(x);
     });
   });
   const totSec = days.reduce((a, d) => a + d.sec, 0), maxSec = Math.max(1, ...days.map(d => d.sec));
@@ -3295,12 +3334,7 @@ function renderWeekSummary(){
   const fmtT = (sec) => sec >= 3600 ? `${Math.floor(sec / 3600)}時間${Math.round(sec % 3600 / 60)}分` : mins(sec);
   const dlab = ["日","月","火","水","木","金","土"];
 
-  const lines = [];   // コピー用の文章
-  lines.push(`【${fmtMD(mon)}〜${fmtMD(sun)} 週のまとめ】`);
-  lines.push(`できた宿題 ${done}個（合格 ${pass}個）／計った勉強時間 ${fmtT(totSec)}／間違えた問題 ${wrong}問`);
-  if (cur.avg != null) lines.push(`復習テストの平均 ${cur.avg}点` + (prev.avg != null ? `（前の週 ${prev.avg}点）` : ""));
-  tests.forEach(u => { const r = SCORES.review[u.key]; lines.push(`・${u.subject} No.${u.lec}：${r.score}点` + (r.avg != null ? `（平均 ${r.avg}）` : "")); });
-  lines.push(`時間の記録：ボタンを押していた実時間 ${fmtT(wall)}／計った時間 ${fmtT(totSec)}／一時中断 ${mins(pz)}（${np}回）／計らずに完了 ${nt}個／記録せずやめた ${cn}回`);
+  const lines = [];   // コピー用の文章（あとで組み立てる）
 
   const tile = (b, l) => `<div class="tile"><b>${b}</b><span>${l}</span></div>`;
   const delta = (x, y, goodUp = true) => (x == null || y == null || x === y) ? "" : `<small class="${(goodUp ? x > y : x < y) ? "delta-up" : "delta-dn"}"> ${x > y ? "+" : ""}${x - y}</small>`;
@@ -3312,10 +3346,10 @@ function renderWeekSummary(){
     ${tile(cur.avg != null ? `${cur.avg}<small>点</small>${delta(cur.avg, prev.avg)}` : "—", "復習テストの平均")}</div>`;
 
   h += `<div class="wkh">曜日ごとの勉強時間（できた個数）</div>` + days.map(d => `<div class="rbar"><span>${dlab[parse(d.d).getDay()]} ${d.n}個</span><div><span style="width:${d.sec / maxSec * 100}%"></span></div><b>${d.sec ? mins(d.sec) : "—"}</b></div>`).join("");
-  h += `<div class="note">${["算数","国語","理科","社会"].map(x => `${x} ${subj[x].n}個・${subj[x].sec ? mins(subj[x].sec) : "—"}`).join("　")}</div>`;
+  h += `<div class="sj-line">${["算数","国語","理科","社会"].map(x => `<span class="s-${x}"><i class="subj">${x}</i>${subj[x].n}個・${subj[x].sec ? mins(subj[x].sec) : "—"}</span>`).join("")}</div>`;
 
   if (tests.length) h += `<div class="wkh">この週の復習テスト</div>` + tests.map(u => { const r = SCORES.review[u.key];
-    return `<div class="note" style="color:var(--ink)">${u.subject} No.${u.lec}　<b>${r.score}点</b>${r.avg != null ? `（平均 ${r.avg}点 ／ ${r.score - r.avg >= 0 ? "+" : "−"}${Math.abs(Math.round((r.score - r.avg) * 10) / 10)}）` : ""}</div>`; }).join("");
+    return `<div class="note s-${u.subject}" style="color:var(--ink)"><i class="subj">${u.subject}</i> No.${u.lec}　<b>${r.score}点</b>${r.avg != null ? `（平均 ${r.avg}点 ／ ${r.score - r.avg >= 0 ? "+" : "−"}${Math.abs(Math.round((r.score - r.avg) * 10) / 10)}）` : ""}</div>`; }).join("");
 
   h += `<div class="wkh">時間の記録（ほんとうに続けて勉強できたか）</div>
     <table class="tbl"><tbody>
@@ -3328,14 +3362,45 @@ function renderWeekSummary(){
     </tbody></table><div class="note">一覧は「丸つけ」タブの「時間の記録チェック」で見られます。</div>`;
 
   const wk = Object.entries(week).sort((a, b) => SUBJ_ORDER[a[1].s] - SUBJ_ORDER[b[1].s] || a[0].localeCompare(b[0]));
-  if (wk.length) h += `<div class="wkh">教材ごとの平均時間（タイマーの初めの分数）</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>教材</th><th class="n">この週</th><th class="n">全体の平均</th><th class="n">タイマーの初め</th></tr></thead><tbody>${wk.map(([k, o]) => {
-    const all = catAvg()[k], ok = all && all.n >= AVG_MIN_N;
-    return `<tr><td>${esc(k)}</td><td class="n">${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回）</td><td class="n">${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"}</td><td class="n">${k.includes("｜計算テキスト") ? CALC_MIN + "分（固定）" : ok ? Math.max(1, Math.round(all.sec / all.n / 60) - HG_OFFSET) + "分" : `<span class="note">${HG_DEF}分（記録待ち）</span>`}</td></tr>`; }).join("")}</tbody></table></div>
-    <div class="note">タイマーの初めの分数は「平均 − ${HG_OFFSET}分」（計算テキストだけは ${CALC_MIN}分 固定）。中断が長かった記録は平均に入れていません。まとめカードは中身の合計です。</div>`;
+  const initOf = (k, all) => k.includes("｜計算テキスト") ? `${CALC_MIN}分` : (all && all.n >= AVG_MIN_N) ? `${Math.max(1, Math.round(all.sec / all.n / 60) - HG_OFFSET)}分` : `${HG_DEF}分`;
+  const catLabel = t => `<span class="s-${t.s}"><i class="subj">${t.s}</i></span> <span class="mt" style="--m:${(MAT_COL[t.mat]||MAT_COL["_"])[0]};--mi:${(MAT_COL[t.mat]||MAT_COL["_"])[1]}">${esc(t.mat)}</span>${t.part && t.part !== "（なし）" ? `<span class="pt">${esc(partLabel(t.part))}</span>` : ""}${t.retry ? `<span class="chip redo">解き直し</span>` : ""}`;
+  if (wk.length) h += `<div class="wkh">教材ごとの平均時間</div>` + wk.map(([k, o]) => {
+    const all = catAvg()[k];
+    return `<div class="mrow"><div class="mname">${catLabel(o.t)}</div><div class="mstats">
+      <div><small>この週</small><b>${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回）</b></div>
+      <div><small>全体の平均</small><b>${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"}</b></div>
+      <div><small>タイマーの初期値</small><b>${initOf(k, all)}${k.includes("｜計算テキスト") ? "（固定）" : (all && all.n >= AVG_MIN_N) ? "" : "（記録待ち）"}</b></div></div></div>`; }).join("")
+    + `<div class="note">タイマーの初期値は「全体の平均 − ${HG_OFFSET}分」（計算テキストだけは ${CALC_MIN}分 固定）。中断が長かった記録や30分を超えた記録は平均に入れていません。</div>`;
 
-  if (top.length){ h += `<div class="wkh">間違えた理由（多い順）</div><div class="note" style="color:var(--ink)">${top.map(([r, n]) => `${esc(r)} ${n}回`).join("　")}</div>`; lines.push(`間違えた理由：` + top.map(([r, n]) => `${r} ${n}回`).join("、")); }
+  if (top.length) h += `<div class="wkh">間違えた理由（多い順）</div><div class="note" style="color:var(--ink)">${top.map(([r, n]) => `${esc(r)} ${n}回`).join("　")}</div>`;
   if (cmts.length){ h += `<div class="wkh">お家の人からのコメント</div>` + cmts.slice(0, 8).map(({t, s}) => `<div class="hitem s-${t.s}"><b style="font-size:13px">${taskTitle(t)}</b><div class="note" style="color:var(--ink)">${fmtMD(s.judgeAt)}　${esc(s.comment)}</div></div>`).join(""); }
-  body.innerHTML = h; WK_TEXT = lines.join("\n");
+  body.innerHTML = h;
+  {   // 文章でコピー（LINEなどに貼る用）
+    const L = [], bar = "━━━━━━━━━━━━";
+    const dd = (x, y, unit = "") => (x == null || y == null) ? "" : `（前の週 ${y}${unit} → ${x - y >= 0 ? "+" : "−"}${Math.abs(x - y)}）`;
+    L.push(`📘 週のまとめ ${fmtMD(mon)}（月）〜${fmtMD(sun)}（日）`, bar);
+    L.push("■ 今週のようす");
+    L.push(`・できた宿題：${done}個（合格 ${pass}個）${prev.done != null ? `（前の週 ${prev.done}個）` : ""}`);
+    L.push(`・計った勉強時間：${fmtT(totSec)}`);
+    L.push(`・間違えた問題：${wrong}問${prev.wrong != null ? `（前の週 ${prev.wrong}問）` : ""}`);
+    if (cur.avg != null) L.push(`・復習テストの平均：${cur.avg}点${dd(cur.avg, prev.avg, "点")}`);
+    L.push("", "■ 曜日ごと（できた個数・勉強時間）");
+    days.forEach(d => L.push(`・${dlab[parse(d.d).getDay()]}曜 ${d.n}個 ／ ${d.sec ? mins(d.sec) : "—"}`));
+    L.push("", "■ 教科ごと");
+    ["算数","国語","理科","社会"].forEach(x => L.push(`・${x}：${subj[x].n}個 ／ ${subj[x].sec ? mins(subj[x].sec) : "—"}`));
+    if (tests.length){ L.push("", "■ この週の復習テスト");
+      tests.forEach(u => { const r = SCORES.review[u.key]; L.push(`・${u.subject} No.${u.lec}：${r.score}点` + (r.avg != null ? `（平均 ${r.avg}点 ／ ${r.score - r.avg >= 0 ? "+" : "−"}${Math.abs(Math.round((r.score - r.avg) * 10) / 10)}）` : "")); }); }
+    L.push("", "■ 時間の使い方");
+    L.push(`・ボタンを押していた実時間：${fmtT(wall)}（うち計った時間 ${fmtT(totSec)}）`);
+    L.push(`・一時中断：${mins(pz)}（${np}回）`);
+    L.push(`・計らずに「できた」にした宿題：${nt}個 ／ 記録せずやめた：${cn}回`);
+    L.push(`・気になる記録：${flagged}件`);
+    if (wk.length){ L.push("", "■ 教材ごとの平均時間（今週 ／ 全体の平均 ／ タイマー初期値）");
+      wk.forEach(([k, o]) => { const all = catAvg()[k]; L.push(`・${k.replace("｜", " ")}：${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回） ／ ${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"} ／ ${initOf(k, all)}`); }); }
+    if (top.length) L.push("", "■ 間違えた理由（多い順）", ...top.map(([r, n]) => `・${r}：${n}回`));
+    if (cmts.length){ L.push("", "■ お家の人からのコメント"); cmts.slice(0, 8).forEach(({t, s}) => L.push(`・${fmtMD(s.judgeAt)} ${t.s} ${t.mat}：${s.comment}`)); }
+    WK_TEXT = L.join("\n");
+  }
   document.getElementById("wkCopy").onclick = async () => {
     try { await navigator.clipboard.writeText(WK_TEXT); toast("コピーしました"); } catch { toast("コピーできませんでした"); }
   };
@@ -3344,7 +3409,7 @@ function renderSunBanner(){
   const b = document.getElementById("sunBanner"); if (!b) return;
   if (parse(TODAY).getDay() !== 0){ b.innerHTML = ""; return; }
   b.innerHTML = `<div class="sunbn"><div><b>今日は日曜日：家族ふり返りの日</b><div class="note">この1週間のまとめが見られます。</div></div><button class="btn primary sm" id="sunGo" type="button">週のまとめを見る</button></div>`;
-  document.getElementById("sunGo").onclick = () => { WK_OFF = 0; showTab("review"); renderWeekSummary(); setTimeout(() => document.getElementById("wkSum").scrollIntoView({block: "start"}), 50); };
+  document.getElementById("sunGo").onclick = () => { WK_OFF = 0; showTab("review"); const wd = document.getElementById("wkDet"); if (wd) wd.open = true; renderWeekSummary(); setTimeout(() => document.getElementById("wkSum").scrollIntoView({block: "start"}), 50); };
 }
 function renderTimeAudit(){
   const box = document.getElementById("auditBody"); if (!box) return;
