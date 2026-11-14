@@ -659,7 +659,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v78</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v79</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -3640,6 +3640,18 @@ function renderFocus(){
   on("fxNoTimer", async () => { if (await ask("時間を計らずに「できた」にしますか？", "できたにする")){
     saveTask(t.k, {done: TODAY, doneAt: Date.now(), skip: null, judge: null, reason: null, run: null, aud: [...(PROG[t.k]?.aud || []), {t: Date.now(), e: "notimer"}].slice(-30)}); closeFocus(); } });
 }
+/* ---- 時間を計っている間は、画面を消さない（充電中のとき。充電状態がわからない端末では、計っている間だけ） ---- */
+let WL = null, BAT = null;
+try { navigator.getBattery && navigator.getBattery().then(b => { BAT = b; }).catch(() => {}); } catch {}
+function keepAwake(running){
+  try {
+    const want = running && !document.hidden && (!BAT || BAT.charging);
+    if (want && !WL && navigator.wakeLock && !keepAwake.busy){
+      keepAwake.busy = true;
+      navigator.wakeLock.request("screen").then(l => { WL = l; l.addEventListener("release", () => { if (WL === l) WL = null; }); }).catch(() => {}).finally(() => { keepAwake.busy = false; });
+    } else if (!want && WL){ const l = WL; WL = null; l.release().catch(() => {}); }
+  } catch {}
+}
 const ANN = {}, AUTOING = new Set();
 function autoEnd(k, live){
   if (AUTOING.has(k)) return;
@@ -3656,6 +3668,7 @@ function autoEnd(k, live){
 }
 function tick(){
   const rk = runningKey(), rr = rk && runOf(rk);
+  keepAwake(!!(rr && rr.start));
   if (rr && rr.start){
     const e = elapsed(rr);
     if (e >= MAX_SEC) autoEnd(rk, e - MAX_SEC < 15);
