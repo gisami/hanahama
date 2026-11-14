@@ -80,6 +80,7 @@ button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
   border:1px dashed var(--line-2); border-radius:var(--r); background:var(--card-2)}
 .note{font-size:12px; color:var(--ink-3); line-height:1.65}
 .s-算数{--s:var(--s-math); --s-bg:var(--s-math-bg)}
+.s-全教科{--s:#3A3E8F; --s-bg:#ECEDFA}
 .s-国語{--s:var(--s-jp);   --s-bg:var(--s-jp-bg)}
 .s-理科{--s:var(--s-sci);  --s-bg:var(--s-sci-bg)}
 .s-社会{--s:var(--s-soc);  --s-bg:var(--s-soc-bg)}
@@ -478,6 +479,14 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .zonehead b{font-size:19px; font-weight:900; letter-spacing:.04em}
 .zonehead span{font-size:12.5px; font-weight:700; opacity:.92}
 .zonehead.today{background:#3A3E8F}
+.cu-ring{display:grid; grid-template-columns:84px 1fr; gap:14px; align-items:center; position:relative; margin-top:34px; padding:12px 14px; border:3px solid var(--crit); border-radius:16px; background:#FFF1F0}
+.cu-ring.zero{border-color:var(--good); background:#EEF9F0}
+.cu-ring svg{grid-row:1; grid-column:1}
+.cu-ring .cr-n{position:absolute; left:14px; top:12px; width:84px; height:84px; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1}
+.cu-ring .cr-n b{font-size:34px; font-weight:900; color:var(--crit)} .cu-ring.zero .cr-n b{color:var(--good)} .cu-ring .cr-n small{font-size:12px; font-weight:800}
+.cu-ring .cr-t{display:flex; flex-direction:column; gap:3px} .cu-ring .cr-t b{font-size:17px; font-weight:900} .cu-ring .cr-t span{font-size:15px; font-weight:800} .cu-ring .cr-t em{font-style:normal; font-size:12px; color:var(--ink-3)}
+.cu-ring + .zone-cu{margin-top:10px}
+.cu-chip{border:0; cursor:pointer; font:inherit; font-weight:800}
 .zone-cu{margin-top:34px; border:3px solid var(--crit); border-radius:16px; background:#FFF1F0; overflow:hidden}
 .zone-cu .zonehead{background:var(--crit); border-radius:0; margin:0}
 .zone-cu .zonehead b{font-size:20px}
@@ -534,6 +543,8 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .fx-unitlab{font-size:19px; font-weight:900}
 .fx-left{font-size:19px; font-weight:900; margin-top:6px}
 .fx-left.over{color:var(--redo-ink)}
+.fx-time.over{color:var(--redo-ink)}
+.fx-time.over::before{content:"＋";font-size:.6em}
 .beads{display:flex; flex-wrap:nowrap; gap:2px; width:100%}
 .bd{flex:1 1 0; min-width:0; height:18px; border-radius:3px; background:var(--track); display:block}
 .bd.on{background:var(--s,var(--accent))}
@@ -639,7 +650,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v76</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v77</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -759,6 +770,15 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
       <div id="impPreview" style="margin-top:10px"></div>
     </div></details></section>
 
+  <div class="eyebrow" id="waitHead" style="margin-top:6px">丸つけ待ち（娘が「できた」を押したもの）</div>
+  <div class="sortbar" id="waitSort">
+    <button type="button" class="sb" data-m="new" aria-pressed="true">新しい順</button>
+    <button type="button" class="sb" data-m="near" aria-pressed="false">授業が近い順</button>
+    <span class="sbnote" id="waitSortNote"></span>
+  </div>
+  <div id="waitList" class="stack"></div>
+<div style="height:24px"></div>
+
   <section id="cuSec" hidden style="margin-bottom:24px">
     <div class="eyebrow">積み残しの整理（お家の人が決めます）</div>
     <div class="note" style="margin:-2px 0 10px">「対象外にする」は予定から外します（見送り扱い・あとで戻せます）。「やったことにする」は、やった記録だけ付けて丸つけはしません。</div>
@@ -768,13 +788,6 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
   <section id="auditSec" style="margin-bottom:24px"><details class="fold" id="auditFold" open><summary>時間の記録チェック（開始・終了の時刻／最近14日）</summary>
     <div class="fold-body"><div id="auditBody"></div></div></details></section>
 
-  <div class="eyebrow" id="waitHead">丸つけ待ち（娘が「できた」を押したもの）</div>
-  <div class="sortbar" id="waitSort">
-    <button type="button" class="sb" data-m="new" aria-pressed="true">新しい順</button>
-    <button type="button" class="sb" data-m="near" aria-pressed="false">授業が近い順</button>
-    <span class="sbnote" id="waitSortNote"></span>
-  </div>
-  <div id="waitList" class="stack"></div>
 
   <section style="margin-top:26px">
     <div class="eyebrow" id="judgedHead">今日つけた分</div>
@@ -979,7 +992,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 "use strict";
 const DATA = JSON.parse(document.getElementById("seed").textContent);
 const WD = ["日","月","火","水","木","金","土"];
-const SUBJ_ORDER = {算数:0, 国語:1, 理科:2, 社会:3};
+const SUBJ_ORDER = {算数:0, 国語:1, 理科:2, 社会:3, 全教科:4};
 const MAT_ORDER = {"算数のとも":0,"計算テキスト":1,"国語のとも":0,"国語のみち":1,"漢字のひろば":2,
                    "サイエンス":0,"小学理科学習辞典":1,"マスター社会小4":0,"社会-家庭学習1":1};
 const REASONS = ["計算ミス","やり方","漢字・用語","読み取り","時間切れ","その他"];
@@ -1541,6 +1554,13 @@ function buildPlan(){
       (slotList[d] ||= {})[s.id] = list;
     }
   }
+  // 理科の1回目・3回目：要点ノートの赤字を赤シートで隠して、ノートに解く（レベル1と同じ日・同じ枠に1つ足す）
+  TASKS = TASKS.filter(t => !t.akashi);
+  TASKS.filter(t => t.s === "理科" && t.mat === "サイエンス" && t.part === "レベル1" && (t.rep === 1 || t.rep === 3) && !t.retry && !t.review && SCHED[t.k] && SLOTOF[t.k]).forEach(base => {
+    const sl = SLOTOF[base.k], x = {...base, k: `${base.k}~赤`, part: "要点ノート", mark: "", rng: "要点ノートの赤字を、赤シートで隠して、ノートに解く", min: 10, items: [],
+      pin: SCHED[base.k], at: sl.day + sl.start, akashi: true, saki: "×"};
+    TASKS.push(x); TASKMAP[x.k] = x;
+  });
   TASKS.forEach(t => {
     if (t.pin) SCHED[t.k] = t.pin;
     else if (t.retry) SCHED[t.k] = t.lesson;
@@ -1549,7 +1569,8 @@ function buildPlan(){
   const byDate = {}, rvByDate = {}, usedRv = new Set();
   for (let i = 0; i < HOR; i++){
     const date = addDays(TODAY, i);
-    const groups = slotsFor(date).map(s => ({slot:s, tasks:[], used:0}));
+    let groups = slotsFor(date).map(s => ({slot:s, tasks:[], used:0}));
+    if (isPubDay(date)) groups = pubDayGroups(date, groups);
     const placed = new Set();
     const put = (g, t) => { if (placed.has(t.k)) return; g.tasks.push(t); g.used += t.min; placed.add(t.k); };
     // 週末の復習枠：悪かった単元を2つずつ
@@ -1806,15 +1827,42 @@ function dailyTasks(list){
       if (uu && uu.test && diffDays(uu.lesson, uu.test) > 7) out.push({...t0, k: `${t0.u}-漢字対策1`, part: "テスト対策", rep: 1, rng: t0.rng, min: 15, pin: addDays(uu.lesson, 6), due: addDays(uu.lesson, 6), saki: "○", prep: true, at: "金19:30"});
       if (uu && uu.test) out.push({...t0, k: `${t0.u}-漢字対策`, part: "テスト対策", rep: 1, rng: t0.rng, min: 15, pin: addDays(uu.test, -1), due: addDays(uu.test, -1), saki: "○", prep: true, at: "金19:30"});
       if (uu && uu.test) out.push({...t0, k: `${t0.u}-漢字再`, part: "再チェック", rep: 1, rng: t0.rng, min: 15, pin: uu.test, due: uu.test, saki: "○", recheck: true});
-      let n = 0;
+      let n = 0, nS = 0, nF = 0;
+      const four = pages.length === 4, hasSat = SLOTS.some(x => x.day === "土" && x.assign === "計算・漢字" && x.min > 0);
+      const one = p => ({rng: p, min: t0.min});
       for (let d = addDays(t0.lesson, 1); d <= t0.due; d = addDays(d, 1)){
-        if (!wd(d)) continue;
-        const x = sp[n % sp.length]; n++;
+        const dw = parse(d).getDay();
+        if (!wd(d) && !(four && dw === 6 && hasSat)) continue;
+        let x;
+        if (four){   // 4ページの週：月〜木は1ページずつ、金・土は2ページずつ（1・2ページ目→3・4ページ目の順）
+          if (dw >= 1 && dw <= 4) x = one(pages[nS++ % 4]); else x = sp[nF++ % 2];
+        } else { x = sp[n % sp.length]; n++; }
         out.push({...t0, k: `${t0.u}-N日${d}`, rep: 1, rng: x.rng, min: x.min, spread: true, pin: d});
       }
     }
   });
   return out;
+}
+/* 公開学力テストの日（午後）：丸付け→やり直し→4教科の振り返り、の決まった時間割 */
+const PUB_DAY = [
+  ["13:30","14:00","丸付け","公開","公開テストの丸付け","丸付け", "全教科", 30],
+  ["14:10","14:25","やり直し","公開","漢字のやり直し","漢字のやり直し", "国語", 15],
+  ["14:10","14:25","やり直し","公開","算数の問題のやり直し","算数のやり直し", "算数", 15],
+  ["14:30","15:00","国語","公開","国語の振り返り","振り返り", "国語", 30],
+  ["15:15","15:45","理科","公開","理科の振り返り","振り返り", "理科", 30],
+  ["16:00","16:30","社会","公開","社会の振り返り","振り返り", "社会", 30],
+  ["17:45","18:15","算数","公開","算数の振り返り","振り返り", "算数", 30]];
+function pubDayGroups(date, base){
+  const keep = base.filter(g => g.slot.assign === "お直し");   // 朝のお直し枠は、そのまま
+  const byStart = new Map();
+  PUB_DAY.forEach(([a, b, name, assign, title, part, subj, min], i) => {
+    const id = `公開${date}-${a}`;
+    let g = byStart.get(id);
+    if (!g){ g = {slot: {id, day: WD[parse(date).getDay()], name, start: a, end: b, min: 0, assign, memo: "公開学力テストの日の時間割", pub: true}, tasks: [], used: 0}; byStart.set(id, g); keep.push(g); }
+    const t = {k: `公開-${date}-${i}`, u: "公開", s: subj, mat: part === "振り返り" ? "公開テスト" : part, part: part === "振り返り" ? part : "", rep: 1, rng: title, mark: "", min, lesson: date, due: date, pin: date, saki: "○", pubday: true, items: []};
+    TASKMAP[t.k] = t; g.slot.min += min; g.tasks.push(t); g.used += min;
+  });
+  return keep;
 }
 function kanjiSpreads(list){
   return list.filter(t => {
@@ -2494,6 +2542,25 @@ function renderToday(plan){
   // ===== 積み残し =====
   const cu = document.getElementById("catchup");
   cu.innerHTML = "";
+  // 積み残しのリング：今日 取り返した数 ÷（取り返した数＋残り）。今日の分のリングと同じく、片付けるほど1周に近づく
+  const cuLeft = plan.catchup.reduce((a, t) => a + (t.group ? t.group.length : 1), 0);
+  const todayKeys = new Set(); today.forEach(g => g.tasks.forEach(t => (t.group || [t]).forEach(x => todayKeys.add(x.k))));
+  const cuDone = TASKS.filter(t => !t.review && !t.retry && taskState(t.k)?.done === TODAY && SCHED[t.k] && SCHED[t.k] < TODAY && !todayKeys.has(t.k)).length;
+  if (OFFSET === 0 && (cuLeft || cuDone)){
+    const frac = cuDone / (cuDone + cuLeft), CC = 2 * Math.PI * 34, zero = !cuLeft;
+    const oldestD = cuLeft ? SCHED[plan.catchup[0].k] : null;
+    const msg = zero ? `🎉 積み残しゼロ！ 今日 ${cuDone}個 取り返したよ`
+      : cuLeft === 1 ? "あと1個で、積み残しゼロ！"
+      : cuLeft <= 3 ? `あと${cuLeft}個で ゼロ！ もう少し！`
+      : cuDone ? `今日 ${cuDone}個 取り返した！ あと${cuLeft}個` : `あと${cuLeft}個。1個やるごとに、リングが進むよ`;
+    const card = el("div", `cu-ring${zero ? " zero" : ""}`, `
+      <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="34" fill="none" stroke="#F3C9C5" stroke-width="9"/>
+        <circle cx="42" cy="42" r="34" fill="none" stroke="${zero ? "var(--good)" : "var(--crit)"}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${CC.toFixed(1)}" stroke-dashoffset="${(CC * (1 - frac)).toFixed(1)}" transform="rotate(-90 42 42)" style="opacity:${cuDone ? 1 : 0}"/></svg>
+      <div class="cr-n"><b class="num">${zero ? "✔" : cuLeft}</b><small>${zero ? "" : "個"}</small></div>
+      <div class="cr-t"><b>${zero ? "積み残しなし" : "積み残しを取り返そう"}</b><span>${msg}</span>${oldestD ? `<em>いちばん古いのは ${fmtMD(oldestD)}（${diffDays(oldestD, TODAY)}日前）の分</em>` : ""}</div>`);
+    card.id = "cuRing";
+    cu.appendChild(card);
+  }
   if (plan.catchup.length){
     const oldest = SCHED[plan.catchup[0].k];
     const det = el("details","zone-cu");
@@ -2508,6 +2575,11 @@ function renderToday(plan){
     plan.catchup.forEach(t => body.appendChild(taskCard(t, {catchup:true, compact:true})));
     det.appendChild(body);
     cu.appendChild(det);
+  }
+  if (OFFSET === 0 && cuLeft && !off){   // 上の「今日の学習」にも出して、見落とさないようにする
+    const chip = el("button", "chip redo cu-chip", `⚠ 積み残し ${cuLeft}個${cuDone ? `（今日 ${cuDone}個 取り返した）` : ""} → 見る`); chip.type = "button";
+    chip.onclick = () => { const d = document.querySelector("#catchup details"); if (d) d.open = true; CU_OPEN = true; document.getElementById("cuRing")?.scrollIntoView({behavior: "smooth", block: "start"}); };
+    document.getElementById("heroMeta").appendChild(chip);
   }
   document.getElementById("zoneToday").firstElementChild.textContent = OFFSET === 0 ? "今日の宿題" : `${fmtMD(TODAY)}（${wdOf(TODAY)}）の宿題`;
 
@@ -3213,10 +3285,10 @@ function renderWeekSummary(){
     </tbody></table><div class="note">一覧は「丸つけ」タブの「時間の記録チェック」で見られます。</div>`;
 
   const wk = Object.entries(week).sort((a, b) => SUBJ_ORDER[a[1].s] - SUBJ_ORDER[b[1].s] || a[0].localeCompare(b[0]));
-  if (wk.length) h += `<div class="wkh">教材ごとの平均時間（砂時計の初めの分数）</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>教材</th><th class="n">この週</th><th class="n">全体の平均</th><th class="n">砂時計の初め</th></tr></thead><tbody>${wk.map(([k, o]) => {
+  if (wk.length) h += `<div class="wkh">教材ごとの平均時間（タイマーの初めの分数）</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>教材</th><th class="n">この週</th><th class="n">全体の平均</th><th class="n">タイマーの初め</th></tr></thead><tbody>${wk.map(([k, o]) => {
     const all = catAvg()[k], ok = all && all.n >= AVG_MIN_N;
-    return `<tr><td>${esc(k)}</td><td class="n">${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回）</td><td class="n">${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"}</td><td class="n">${ok ? Math.max(1, Math.round(all.sec / all.n / 60) - HG_OFFSET) + "分" : `<span class="note">${HG_DEF}分（記録待ち）</span>`}</td></tr>`; }).join("")}</tbody></table></div>
-    <div class="note">砂時計の初めの分数は「平均 − ${HG_OFFSET}分」。中断が長かった記録は平均に入れていません。まとめカードは中身の合計です。</div>`;
+    return `<tr><td>${esc(k)}</td><td class="n">${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回）</td><td class="n">${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"}</td><td class="n">${k.includes("｜計算テキスト") ? CALC_MIN + "分（固定）" : ok ? Math.max(1, Math.round(all.sec / all.n / 60) - HG_OFFSET) + "分" : `<span class="note">${HG_DEF}分（記録待ち）</span>`}</td></tr>`; }).join("")}</tbody></table></div>
+    <div class="note">タイマーの初めの分数は「平均 − ${HG_OFFSET}分」（計算テキストだけは ${CALC_MIN}分 固定）。中断が長かった記録は平均に入れていません。まとめカードは中身の合計です。</div>`;
 
   if (top.length){ h += `<div class="wkh">間違えた理由（多い順）</div><div class="note" style="color:var(--ink)">${top.map(([r, n]) => `${esc(r)} ${n}回`).join("　")}</div>`; lines.push(`間違えた理由：` + top.map(([r, n]) => `${r} ${n}回`).join("、")); }
   if (cmts.length){ h += `<div class="wkh">お家の人からのコメント</div>` + cmts.slice(0, 8).map(({t, s}) => `<div class="hitem s-${t.s}"><b style="font-size:13px">${taskTitle(t)}</b><div class="note" style="color:var(--ink)">${fmtMD(s.judgeAt)}　${esc(s.comment)}</div></div>`).join(""); }
@@ -3357,7 +3429,7 @@ const HG = (() => {
     topLevel: remain => at(T, remain, true),      // 上に残っている砂（体積の割合）の表面の高さ
     botLevel: fall => at(B, fall, true) };        // 下にたまった砂の表面の高さ（下から数える）
 })();
-const HG_DEF = 8, HG_OFFSET = 1, AVG_MIN_N = 3;
+const HG_DEF = 8, HG_OFFSET = 1, AVG_MIN_N = 3, CALC_MIN = 6;   // 計算テキストは平均を使わず、いつも6分から始める
 /* 教材ごとの平均時間。一時中断が長かった記録は、平均に入れない（時計を止めて短くなった分で平均が下がらないように） */
 const catKey = t => `${t.s}｜${t.mat}${t.part ? " " + partLabel(t.part) : ""}${t.retry ? "（解き直し）" : ""}`;
 const longPause = x => { const pz = x.pz || 0; return pz >= 300 || (pz >= 120 && pz >= (x.sec || 0) * 0.5); };
@@ -3377,11 +3449,19 @@ function avgSecOf(t){   // 平均（秒）。まとめカードは中身の合�
   for (const x of ms){ const o = catAvg()[catKey(x)]; if (!o || o.n < AVG_MIN_N) return null; sum += o.sec / o.n; }
   return sum;
 }
-const defaultSetMin = t => { const a = avgSecOf(t); return a == null ? HG_DEF : Math.max(1, Math.min(60, Math.round(a / 60) - HG_OFFSET)); };
+const isCalcT = t => (t.group || [t]).every(x => x.mat === "計算テキスト");
+const defaultSetMin = t => {
+  if (isCalcT(t)) return CALC_MIN;
+  const ms = t.group || [t], calc = ms.filter(x => x.mat === "計算テキスト"), rest = ms.filter(x => x.mat !== "計算テキスト");
+  if (calc.length){   // 計算テキストを含むまとめカード：計算テキスト分は6分＋残りは平均（なければ8分）
+    const a = avgSecOf({group: rest}); return Math.max(1, Math.min(60, CALC_MIN + (a == null ? HG_DEF : Math.round(a / 60) - HG_OFFSET)));
+  }
+  const a = avgSecOf(t); return a == null ? HG_DEF : Math.max(1, Math.min(60, Math.round(a / 60) - HG_OFFSET)); };
 const setMinOf = t => { const m = PROG[t.k]?.setMin; return typeof m === "number" && m >= 1 ? m : defaultSetMin(t); };
 const avgNote = t => { const a = avgSecOf(t);
+  if (isCalcT(t)) return `<div class="note fx-avg">計算テキストは、いつも ${CALC_MIN}分 から始めます</div>`;
   return a == null ? `<div class="note fx-avg">この宿題の平均時間：記録が${AVG_MIN_N}回たまると出ます</div>`
-    : `<div class="note fx-avg">この宿題の平均 <b>${(a / 60).toFixed(1)}分</b>　（砂時計の初めは 平均−${HG_OFFSET}分）</div>`; };
+    : `<div class="note fx-avg">この宿題の平均 <b>${(a / 60).toFixed(1)}分</b>　（タイマーの初めは 平均−${HG_OFFSET}分）</div>`; };
 function paintSand(t, e, running){
   const g = document.getElementById("hg"); if (!g) return;
   const total = setMinOf(t) * 60, f = Math.min(1, Math.floor(e) / total);   // 1秒ごとに進める
@@ -3393,14 +3473,26 @@ function paintSand(t, e, running){
   bot.setAttribute("d", f <= 0 ? "M0 132 Z" : `M0 132 L0 ${lvl} L50 ${Math.max(70, lvl - Math.min(7, 2 + f * 9))} L100 ${lvl} L100 132 Z`);
   st.setAttribute("y2", String(f <= 0 ? 132 : Math.max(70, lvl - Math.min(7, 2 + f * 9)))); st.setAttribute("visibility", running && f > 0 && f < 1 ? "visible" : "hidden");
 }
+const ALARMED = {};
+function timerAlarm(){   // タイマーが0になったときに、ひと鳴り＋バイブ（鳴らない端末では何もしない）
+  try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch {}
+  try { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; const c = new C(), o = c.createOscillator(), g = c.createGain();
+    o.type = "sine"; o.frequency.value = 880; g.gain.setValueAtTime(.2, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .8);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .8); } catch {}
+}
 function paintClock(t, e, running){
   if (!document.getElementById("hg")) return;
   const total = setMinOf(t) * 60, over = e > total;
   paintSand(t, e, running);
-  document.getElementById("fxTime").innerHTML = clockHTML(clock(e));
+  const big = document.getElementById("fxTime"), unit = document.getElementById("fxUnit");
+  big.innerHTML = clockHTML(clock(over ? e - total : total - e));   // タイマー（残り）→ 0になったらストップウォッチ（超過）
+  big.classList.toggle("over", over);
+  if (unit) unit.textContent = over ? "超過" : "残り";
   const left = document.getElementById("fxLeft");
-  left.innerHTML = over ? `セットした時間を ${clockHTML(clock(e - total))} 過ぎました` : `残り ${clockHTML(clock(total - e))}`;
+  left.innerHTML = over ? `タイマー ${setMinOf(t)}分が終わりました　合計 ${clockHTML(clock(e))}` : `ここまで ${clockHTML(clock(e))}　（セット ${setMinOf(t)}分）`;
   left.classList.toggle("over", over);
+  if (over && running && !ALARMED[t.k] && e - total < 5){ ALARMED[t.k] = 1; timerAlarm(); }
+  if (!over) delete ALARMED[t.k];
   const N = Math.ceil(total / 30), idx = Math.floor(e / 30);
   const bx = document.getElementById("beads");
   if (bx.children.length !== N) bx.innerHTML = Array.from({length: N}, () => '<i class="bd"></i>').join("");
@@ -3438,10 +3530,10 @@ function renderFocus(){
     : (u && u.focus ? `<div class="fx-notest">この宿題そのものは「テストに出る」指定ではありません。${fmtMD(u.test)}の復習テストに出るのは <b>${esc(u.focus)}</b> です。</div>` : "");
   const redo = ((isRedo(t.k) || t.retry) ? redoBanner(t, "間違えたところをもう一度") : "") + commentBand(st);
   const clockCard = (running, label) => `<div class="fx-clock">
-      <div class="fx-goal"><button type="button" class="fx-ar" id="fxDn" aria-label="1分へらす">▼</button><span>砂時計 <b>${setMinOf(t)}</b>分</span><button type="button" class="fx-ar" id="fxUp" aria-label="1分ふやす">▲</button></div>
+      <div class="fx-goal"><button type="button" class="fx-ar" id="fxDn" aria-label="1分へらす">▼</button><span>タイマー <b>${setMinOf(t)}</b>分</span><button type="button" class="fx-ar" id="fxUp" aria-label="1分ふやす">▲</button></div>
       ${avgNote(t)}
       <div class="glass-row">${glassSVG()}
-        <div class="fx-readout"><div class="fx-timerow"><div class="fx-time num${running ? "" : " paused"}" id="fxTime">0:00</div><span class="fx-unitlab">経過</span></div>
+        <div class="fx-readout"><div class="fx-timerow"><div class="fx-time num${running ? "" : " paused"}" id="fxTime">0:00</div><span class="fx-unitlab" id="fxUnit">残り</span></div>
           <div class="fx-left" id="fxLeft"></div>
           <div class="fx-state" id="fxState">${label}</div></div></div>
       <div class="beads" id="beads"></div>
