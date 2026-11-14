@@ -689,7 +689,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v91</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v92</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1067,7 +1067,7 @@ function applyDataDocs(docs){
 /* ---------- GitHub版：Googleスプレッドシート(Apps Script)に保存する仕組み ----------
    Claudeの共有データと同じ形（doc / collection / onSnapshot）で使えるようにした薄い部品。
    ・書き込みはまずこの端末に保存してから送る（通信できなくても記録は消えない）
-   ・15秒ごと／画面にもどったときに、他の端末の記録を取りこむ */
+   ・開いたとき／画面にもどったとき／「更新」ボタンのときに、他の端末の記録を取りこむ（定期的な読み直しはしない） */
 const API_URL = (window.APP_CONFIG && /^https?:\/\//.test(window.APP_CONFIG.api || "")) ? window.APP_CONFIG.api : "";
 async function makeApiDb(url, status){
   const CK = "aibou.api.cache.v1";
@@ -1105,7 +1105,6 @@ async function makeApiDb(url, status){
     finally { busy = false; }
   }
   await Promise.race([sync(), new Promise(r => setTimeout(r, 7000))]);
-  setInterval(() => { if (!document.hidden) sync(); }, 15000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
   window.addEventListener("online", sync);
   window.__aibouSync = sync;
