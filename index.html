@@ -685,11 +685,31 @@ ol.hv li.hv-undo .hv-dot, ol.hv li.hv-unjudge .hv-dot{background:var(--ink-3)}
 ol.hv b{font-size:13.5px}
 ol.hv .hv-t{display:block; font-size:12px; color:var(--ink-3); font-weight:700}
 ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
+
+/* 休憩（ホームの「今日の宿題をやろう」の枠の右上） */
+.hero{position:relative}
+.hero-main h1{padding-right:66px}
+.break-btn{position:absolute; top:10px; right:12px; border:1px solid var(--line-2); background:var(--paper); color:var(--ink); font-family:var(--font-round);
+  font-weight:800; font-size:13px; border-radius:999px; padding:7px 12px; cursor:pointer}
+.break-btn:active{transform:translateY(1px)}
+.brk-pick{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:6px 0 12px}
+.brk-pick button{border:0; border-radius:16px; padding:22px 6px; font-family:var(--font-round); font-weight:900; font-size:24px; background:var(--accent); color:var(--paper); cursor:pointer}
+.brk-run{position:fixed; inset:0; z-index:90; background:rgba(20,22,31,.82); display:grid; place-items:center; padding:16px}
+.brk-run[hidden]{display:none}
+.brk-card{background:var(--card); border-radius:22px; width:min(420px,100%); padding:26px 20px 22px; text-align:center; box-shadow:var(--shadow-lift)}
+.brk-card h2{font-family:var(--font-round); font-weight:900; font-size:20px; margin:0}
+.brk-clock{font-family:var(--font-round); font-weight:900; font-size:76px; line-height:1.1; margin:12px 0 4px; font-variant-numeric:tabular-nums}
+.brk-card.warn .brk-clock{color:var(--crit-ink,#c0392b)}
+.brk-card.warn{animation:brkpulse .8s ease-in-out infinite}
+@keyframes brkpulse{50%{box-shadow:0 0 0 8px rgba(231,76,60,.35)}}
+.brk-note{font-size:14px; color:var(--ink-2); margin-bottom:16px; min-height:21px}
+.brk-back{width:100%; border:0; border-radius:18px; padding:26px 10px; font-family:var(--font-round); font-weight:900; font-size:30px; background:var(--accent); color:var(--paper); cursor:pointer}
+.brk-back:active{transform:translateY(2px)}
 </style>
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v94</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v95</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -710,6 +730,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <button type="button" id="dNext" aria-label="次の日"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
   </div>
   <section class="hero">
+    <button type="button" class="break-btn" id="btnBreak" aria-label="休憩する">☕ 休憩</button>
     <div class="ring">
       <svg width="110" height="110" viewBox="0 0 110 110" aria-hidden="true">
         <circle cx="55" cy="55" r="47" fill="none" stroke="var(--track)" stroke-width="11"/>
@@ -994,6 +1015,21 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 </div>
 
 <!-- 確認 -->
+<div class="modal" id="brkPick" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="brkPickT" style="max-width:360px">
+    <p id="brkPickT" style="margin:0 0 6px; font-weight:800; font-size:15px">休憩は、何分にする？</p>
+    <div class="brk-pick"><button type="button" data-m="5">5分</button><button type="button" data-m="10">10分</button></div>
+    <div class="row"><div class="spacer"></div><button class="btn sm" id="brkPickNo" type="button">やめる</button></div>
+  </div>
+</div>
+<div class="brk-run" id="brkRun" hidden role="dialog" aria-modal="true" aria-labelledby="brkTitle">
+  <div class="brk-card" id="brkCard">
+    <h2 id="brkTitle">☕ 休憩中</h2>
+    <div class="brk-clock" id="brkClock">5:00</div>
+    <div class="brk-note" id="brkNote">お疲れ様！ ゆっくり一休みしよう</div>
+    <button type="button" class="brk-back" id="brkBack">再開 ▶</button>
+  </div>
+</div>
 <div class="modal" id="askModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="askText" style="max-width:360px">
     <p id="askText" style="margin:0 0 14px; font-size:14px; line-height:1.7; white-space:pre-line"></p>
@@ -3761,6 +3797,70 @@ function speak(text){
 }
 function unlockSound(){ audioCtx(); try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis && speechSynthesis.speak(u); } catch {} }   // 「始める」を押したときに、音を鳴らせる状態にしておく
 function timerAlarm(){ whistle(2); speak("時間です！"); }
+
+/* ---- 休憩：5分／10分。残り30秒で声とアラーム。「再開」を押すまで鳴り続ける ---- */
+const BRK_KEY = "hh_break";
+let BRK = (() => { try { const o = JSON.parse(localStorage.getItem(BRK_KEY) || "null"); return o && o.end ? o : null; } catch { return null; } })();
+let BRK_TICK = null, BRK_RING = null, BRK_RING0 = null;
+function brkSave(){ try { BRK ? localStorage.setItem(BRK_KEY, JSON.stringify(BRK)) : localStorage.removeItem(BRK_KEY); } catch {} }
+function alarmBeep(){   // ピピピッ（目覚ましのような電子音）
+  try { navigator.vibrate && navigator.vibrate([200, 100, 200, 100, 200]); } catch {}
+  if (!SOUND_ON) return;
+  const c = audioCtx(); if (!c) return;
+  for (let i = 0; i < 3; i++){
+    const t0 = c.currentTime + i * .22, o = c.createOscillator(), g = c.createGain();
+    o.type = "square"; o.frequency.value = 1320;
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.28, t0 + .01); g.gain.setValueAtTime(.28, t0 + .12); g.gain.exponentialRampToValueAtTime(.0001, t0 + .16);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + .18);
+  }
+}
+function brkStopRing(){ clearTimeout(BRK_RING0); clearInterval(BRK_RING); BRK_RING0 = BRK_RING = null; }
+function brkStartRing(delay){
+  brkStopRing();
+  BRK_RING0 = setTimeout(() => { alarmBeep(); BRK_RING = setInterval(alarmBeep, 1600); }, delay);   // 声のあとに鳴らす
+}
+function brkPaint(){
+  if (!BRK) return;
+  const left = Math.ceil((BRK.end - Date.now()) / 1000), warn = left <= 30;
+  const L = Math.max(0, left);
+  document.getElementById("brkClock").textContent = `${Math.floor(L / 60)}:${String(L % 60).padStart(2, "0")}`;
+  document.getElementById("brkCard").classList.toggle("warn", warn);
+  document.getElementById("brkTitle").textContent = left <= 0 ? "⏰ 休憩おわり！" : warn ? "⏰ もうすぐ再開！" : "☕ 休憩中";
+  document.getElementById("brkNote").textContent = left <= 0 ? "勉強を再開しよう！ 「再開」をおすと音が止まります" : warn ? "勉強を再開しよう！ 「再開」をおすと音が止まります" : "お疲れ様！ ゆっくり一休みしよう";
+  if (warn && !BRK.warned){ BRK.warned = true; brkSave(); speak("勉強を再開しよう！"); brkStartRing(2200); }
+}
+function brkOpen(){
+  document.getElementById("brkRun").hidden = false;
+  clearInterval(BRK_TICK); BRK_TICK = setInterval(brkPaint, 250); brkPaint();
+  keepAwake(true);
+  if (BRK && BRK.warned && !BRK_RING && !BRK_RING0) brkStartRing(300);   // 画面を開き直したとき、すでに残り30秒を切っていれば鳴らし直す
+}
+function startBreak(min){
+  unlockSound();
+  const rk = runningKey(); let paused = null;
+  if (rk){ paused = rk; saveTask(rk, {run: pausedRun(runOf(rk))}); }   // 宿題のタイマーが動いていたら、いったん止める
+  BRK = {end: Date.now() + min * 60000, min, paused, warned: false}; brkSave();
+  speak("お疲れ様！ 一休みしよう！");
+  brkOpen();
+}
+function endBreak(){
+  const p = BRK && BRK.paused;
+  brkStopRing(); clearInterval(BRK_TICK); BRK_TICK = null;
+  BRK = null; brkSave();
+  document.getElementById("brkRun").hidden = true;
+  try { window.speechSynthesis && speechSynthesis.cancel(); } catch {}
+  try { navigator.vibrate && navigator.vibrate(0); } catch {}
+  if (p){ const r = runOf(p); if (r && !r.start) resumeTimer(p); }   // 休憩の前に動いていた宿題のタイマーを、続きから動かす
+  toast("再開しました。がんばろう！");
+}
+(function brkInit(){
+  const pick = document.getElementById("brkPick");
+  document.getElementById("btnBreak").onclick = () => { if (BRK) { brkOpen(); return; } pick.hidden = false; };
+  document.getElementById("brkPickNo").onclick = () => { pick.hidden = true; };
+  pick.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { pick.hidden = true; startBreak(Number(b.dataset.m)); });
+  document.getElementById("brkBack").onclick = endBreak;
+  if (BRK) brkOpen();   // リロードしても、休憩のカウントダウンは続く
+})();
 function paintClock(t, e, running){
   if (!document.getElementById("hg")) return;
   const total = setMinOf(t) * 60, over = e > total;
@@ -3888,7 +3988,7 @@ function autoEnd(k, live){
 }
 function tick(){
   const rk = runningKey(), rr = rk && runOf(rk);
-  keepAwake(!!(rr && rr.start));
+  keepAwake(!!(rr && rr.start) || !!BRK);
   if (rr && rr.start){
     const e = elapsed(rr);
     if (e >= MAX_SEC) autoEnd(rk, e - MAX_SEC < 15);
