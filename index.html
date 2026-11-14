@@ -689,7 +689,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v92</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v93</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -3031,8 +3031,8 @@ function lineChart(series, o){
   const W = 340, H = o.h || 196, L = 30, R = 8, T = 12, B = 26;
   const pts = series.flatMap(x => x.pts), none = !pts.length;
   const ts = none ? [0] : pts.map(p => parse(p.x).getTime()), t0 = Math.min(...ts), t1 = Math.max(...ts), span = t1 - t0;
-  /* even：横の間隔に意味がないグラフ。同じ週のテストは同じ位置、休みの週は詰めて、均等に並べる */
-  const wk = d => o.month ? d : addDays(d, -((parse(d).getDay() + 6) % 7));
+  /* even：横の間隔に意味がないグラフ。同じ日のテストだけ同じ位置、違う日は1日ぶんずつずらし、テストのない日は詰めて、均等に並べる */
+  const wk = d => d;
   const EK = o.even ? [...new Set(pts.map(p => wk(p.x)))].sort() : [], EREP = {};
   if (o.even) pts.forEach(p => { const k = wk(p.x); if (!EREP[k] || p.x < EREP[k]) EREP[k] = p.x; });
   const X = o.even ? (x => EK.length > 1 ? L + 8 + EK.indexOf(wk(x)) / (EK.length - 1) * (W - L - R - 16) : (L + (W - L - R) / 2))
