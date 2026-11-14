@@ -685,7 +685,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v89</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v90</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -2410,7 +2410,7 @@ function renderToday(plan){
   if (!grew && Date.now() < PET_EAT_UNTIL && rp.querySelector(".pet-f.hop")) { PET_HELLO = false; } else
   rp.innerHTML = `<span class="pet-f l${P2.lv} ${grew ? "hop" : PET_HELLO ? "hello" : ""}">${P2.face}</span>${grew ? `<span class="fly">${P2.food}</span>` : ""}`;
   PET_HELLO = false;
-  rp.onclick = () => toast(P.detail);
+  rp.onclick = () => { toast(P.detail); try { playCry(ZODIAC[parseInt(TODAY.slice(5, 7), 10) - 1][0]); } catch {} };   // タップで今月の干支の声（音量の確認にも）
   document.getElementById("ringSub").textContent = "";
 
   const d = parse(TODAY), cal = CAL[TODAY], off = isOffDay(TODAY);
@@ -3019,7 +3019,7 @@ function renderScores(){
 }
 
 /* ---------- 振返りタブ ---------- */
-let RV_RANGE = 3, RV_LAST = true, RV_MODE = "test", RV_SUBJ = "全部", RV_CMT = false, RV_N = 15, RV_T = 12, RV_KEEP = false;
+let RV_RANGE = "n5", RV_LAST = true, RV_MODE = "test", RV_SUBJ = "全部", RV_CMT = false, RV_N = 15, RV_T = 12, RV_KEEP = false;
 const SUBJ_VAR = {算数:"--s-math", 国語:"--s-jp", 理科:"--s-sci", 社会:"--s-soc"};
 function lineChart(series, o){
   const W = 340, H = o.h || 196, L = 30, R = 8, T = 12, B = 26;
@@ -3088,14 +3088,14 @@ function renderReview(){
   SUBS.forEach(x => { const b = el("button","fchip" + (x === "全部" ? "" : " sc s-" + x),x); b.type = "button"; b.setAttribute("aria-pressed", String(x === RV_SUBJ));
     b.onclick = () => { RV_SUBJ = x; RV_N = 15; renderReview(); }; chips.appendChild(b); });
   const modes = document.getElementById("rvMode"); modes.innerHTML = "";
-  [["直近3か月", 3], ["直近6か月", 6], ["すべて", 0]].forEach(([l, n]) => { const b = el("button","fchip",l); b.type = "button"; b.setAttribute("aria-pressed", String(RV_RANGE === n));
+  [["直近5回", "n5"], ["直近3か月", 3], ["直近6か月", 6], ["すべて", 0]].forEach(([l, n]) => { const b = el("button","fchip",l); b.type = "button"; b.setAttribute("aria-pressed", String(RV_RANGE === n));
     b.onclick = () => { RV_RANGE = n; RV_KEEP = false; renderReview(); }; modes.appendChild(b); });
   const modes2 = document.getElementById("rvMode2"); modes2.innerHTML = "";
   [["test","テストごと"],["month","月平均"]].forEach(([k,l]) => { const b = el("button","fchip",l); b.type = "button"; b.setAttribute("aria-pressed", String(k === RV_MODE));
     b.onclick = () => { RV_MODE = k; RV_KEEP = false; renderReview(); }; modes2.appendChild(b); });
-  const cutD = RV_RANGE ? (() => { const d = parse(TODAY); d.setMonth(d.getMonth() - RV_RANGE); return iso(d); })() : null;
+  const cutD = (RV_RANGE && RV_RANGE !== "n5") ? (() => { const d = parse(TODAY); d.setMonth(d.getMonth() - RV_RANGE); return iso(d); })() : null;
   const mean1 = a => Math.round(a.reduce((p,q) => p+q, 0) / a.length * 10) / 10;
-  const lastN = se => { return se; if (!RV_LAST) return se; const keep = new Set(se.pts.slice().sort((a,b) => a.x.localeCompare(b.x)).slice(-5).map(p => p.x));
+  const lastN = se => { if (RV_RANGE !== "n5") return se; const keep = new Set(se.pts.slice().sort((a,b) => a.x.localeCompare(b.x)).slice(-5).map(p => p.x));
     return {...se, pts: se.pts.filter(p => keep.has(p.x)), band: se.band ? se.band.filter(p => keep.has(p.x)) : se.band}; };
   const monthlySeries = se => {
     const grp = (items, f) => { const m = {}; items.forEach(p => { (m[p.x.slice(0,7)] = m[p.x.slice(0,7)] || []).push(p); });
@@ -3644,6 +3644,43 @@ function whistle(n){   // ピーッ（笛）。ホイッスルのように高い
     g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.4, t0 + .03); g.gain.setValueAtTime(.4, t0 + .5); g.gain.exponentialRampToValueAtTime(.0001, t0 + .6);
     o.connect(g); g.connect(c.destination); o.start(t0); lfo.start(t0); o.stop(t0 + .65); lfo.stop(t0 + .65);
   }
+}
+/* ---------- 干支のなき声（WebAudioで作った、1.5秒ほどの短い声。音量の確認にも使える） ---------- */
+function cryOn(c, dest, name, t0){
+  const T = (t, f0, f1, d, o = {}) => { const osc = c.createOscillator(), g = c.createGain(), v = o.v || .3;
+    osc.type = o.type || "sine"; osc.frequency.setValueAtTime(f0, t); osc.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + d);
+    if (o.vib){ const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = o.vib[0]; lg.gain.value = o.vib[1]; l.connect(lg); lg.connect(osc.frequency); l.start(t); l.stop(t + d + .05); }
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + Math.min(.04, d / 4)); g.gain.setValueAtTime(v, t + d * .65); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    let out = osc; if (o.lp){ const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = o.lp; osc.connect(f); out = f; }
+    out.connect(g); g.connect(dest); osc.start(t); osc.stop(t + d + .06); };
+  const N = (t, d, fc, v = .3, q = 1) => { const len = Math.max(1, Math.floor(c.sampleRate * d)), buf = c.createBuffer(1, len, c.sampleRate), a = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) a[i] = Math.random() * 2 - 1;
+    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = buf; f.type = "bandpass"; f.frequency.value = fc; f.Q.value = q;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .08); g.gain.setValueAtTime(v, t + d * .6); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    s.connect(f); f.connect(g); g.connect(dest); s.start(t); s.stop(t + d); };
+  const CR = {
+    "子": () => { [0, .22, .44].forEach(x => T(t0 + x, 2600, 3500, .13, {v: .25})); T(t0 + .75, 2400, 3900, .45, {v: .25, vib: [18, 120]}); },                       // チュッチュッチュー
+    "丑": () => { T(t0, 190, 120, 1.35, {type: "sawtooth", v: .3, lp: 700, vib: [5, 6]}); },                                                                   // モォー
+    "寅": () => { T(t0, 240, 85, 1.3, {type: "sawtooth", v: .35, lp: 900, vib: [28, 14]}); N(t0, 1.2, 900, .25, .8); },                                        // ガオー
+    "卯": () => { T(t0, 900, 1300, .22, {v: .28}); T(t0 + .32, 950, 1400, .22, {v: .28}); T(t0 + .7, 700, 1800, .5, {v: .26, vib: [14, 80]}); },              // プゥ・プゥ・キュー
+    "辰": () => { T(t0, 110, 330, .7, {type: "sawtooth", v: .3, lp: 1100, vib: [9, 14]}); T(t0 + .65, 330, 90, .8, {type: "sawtooth", v: .3, lp: 1100, vib: [9, 14]}); T(t0 + .2, 1500, 2600, 1, {v: .06, vib: [12, 60]}); },   // ガオォォ
+    "巳": () => { N(t0, 1.3, 6500, .35, 1.2); N(t0 + .05, 1.2, 4200, .15, 1); },                                                                               // シャーー
+    "午": () => { T(t0, 520, 1150, .5, {type: "sawtooth", v: .22, lp: 2200, vib: [30, 40]}); T(t0 + .45, 1150, 560, .9, {type: "sawtooth", v: .22, lp: 2200, vib: [30, 45]}); },   // ヒヒーン
+    "未": () => { T(t0, 430, 380, 1.2, {type: "sawtooth", v: .25, lp: 1600, vib: [26, 40]}); T(t0, 430, 380, 1.2, {type: "square", v: .05, lp: 1200, vib: [26, 40]}); },    // メェェー
+    "申": () => { [0, .15, .3, .45, .6, .75, .9].forEach((x, i) => T(t0 + x, 900 + i * 90, 1800 + i * 60, .12, {v: .25})); T(t0 + 1.05, 1500, 700, .35, {v: .25}); },  // ウキキキキー
+    "酉": () => { T(t0, 650, 900, .16, {type: "sawtooth", v: .22, lp: 2500}); T(t0 + .22, 700, 950, .16, {type: "sawtooth", v: .22, lp: 2500}); T(t0 + .46, 700, 900, .14, {type: "sawtooth", v: .22, lp: 2500});
+      T(t0 + .68, 800, 1050, .75, {type: "sawtooth", v: .24, lp: 2600, vib: [16, 50]}); },                                                                        // コケコッコー
+    "戌": () => { [0, .38, .76].forEach(x => { T(t0 + x, 520, 260, .2, {type: "sawtooth", v: .3, lp: 1500}); N(t0 + x, .16, 1100, .12, 1); }); },                 // ワン・ワン・ワン
+    "亥": () => { T(t0, 140, 110, .3, {type: "sawtooth", v: .3, lp: 500}); T(t0 + .35, 150, 100, .3, {type: "sawtooth", v: .3, lp: 500}); N(t0 + .3, .35, 700, .12, .8);
+      T(t0 + .75, 600, 1300, .65, {type: "sawtooth", v: .2, lp: 1800, vib: [20, 60]}); }                                                                          // ブッ・ブッ・ブヒー
+  };
+  (CR[name] || CR["子"])();
+}
+function playCry(name){
+  const c = audioCtx(); if (!c) return;
+  const m = c.createGain(); m.gain.value = .9; m.connect(c.destination);
+  try { cryOn(c, m, name, c.currentTime + .02); } catch {}
+  try { navigator.vibrate && navigator.vibrate(60); } catch {}
 }
 function speak(text){
   if (!SOUND_ON) return;
