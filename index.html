@@ -590,6 +590,10 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .fchips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
 .fchip{border:1px solid var(--line-2); background:var(--card); color:var(--ink-2); border-radius:999px; padding:6px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer}
 .fchip[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+#view-review.k-pub .rv-rev{display:none} #view-review:not(.k-pub) .rv-pub{display:none}
+.pb-card{border-top:1px solid var(--line-2); padding:10px 0} .pb-card.pend{border-left:5px solid var(--crit); padding-left:8px}
+.pb-row{display:grid; grid-template-columns:44px 1fr 1fr; gap:8px; align-items:center; margin:5px 0} .pb-row input{width:100%; box-sizing:border-box; padding:7px 9px; border:1.5px solid var(--line-2); border-radius:9px; font:inherit; font-size:14px; background:var(--paper); color:var(--ink)}
+.pb-row .df{grid-column:2/-1; font-size:12px; color:var(--ink-2); margin-top:-3px}
 .fchip.sc{color:var(--s); border-color:var(--s); background:var(--s-bg)}
 .fchip.sc[aria-pressed="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
 .rvcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 14px 12px; margin-bottom:14px}
@@ -685,7 +689,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v90</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v91</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -768,15 +772,17 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <div id="dlBody"></div>
   </section>
   <div class="eyebrow">これまでの成績の振返り</div>
+  <div class="fchips" id="rvKind"></div>
   <div class="fchips" id="rvSubj"></div>
   <div class="fchips" id="rvMode"></div>
   <div class="fchips" id="rvMode2"></div>
   <div class="tiles" id="rvTiles" style="margin-bottom:14px"></div>
-  <section class="rvcard"><h3>復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
-  <section class="rvcard" id="rvMonth" hidden><h3>月の成績個人票</h3><div id="rvMonthBody"></div></section>
-  <section class="rvcard" id="rvRecCard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div id="rvRecNote"></div><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
-  <section class="rvcard"><h3>間違えた理由</h3><div id="rvReasons"></div></section>
-  <section class="rvcard"><h3>丸つけの振返り（コメントつき）</h3>
+  <section class="rvcard"><h3 id="rvChartTitle">復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
+  <section class="rvcard rv-rev" id="rvMonth" hidden><h3>月の成績個人票</h3><div id="rvMonthBody"></div></section>
+  <section class="rvcard rv-pub" id="pbRecCard"><h3>公開テストの記録（ここで入力・修正できます）</h3><div id="pbRecNote"></div><div class="note" style="margin-bottom:4px">点数と平均点を入れたり直したりできます。空にすると、その教科の記録が消えます。</div><div id="pbTable"></div></section>
+  <section class="rvcard rv-rev" id="rvRecCard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div id="rvRecNote"></div><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
+  <section class="rvcard rv-rev"><h3>間違えた理由</h3><div id="rvReasons"></div></section>
+  <section class="rvcard rv-rev"><h3>丸つけの振返り（コメントつき）</h3>
     <div class="fchips"><button class="fchip" id="rvCmtOnly" type="button" aria-pressed="false">コメントがあるものだけ</button></div>
     <div id="rvHist"></div><button class="btn ghost sm" id="rvMore" type="button" hidden>もっと見る</button></section>
 </main>
@@ -1391,13 +1397,14 @@ function openInitialTab(){
   if (USER_NAV || INIT_TAB_N >= 2) return;
   INIT_TAB_N++;
   let want = null;
-  if (pendingUnits().length) want = "review";
+  if (pendingUnits().length || pubPending().length) want = "review";
   else if (CAL[TODAY]?.lessons?.length || DATA.units.some(u => u.test === TODAY)) want = "test";
   if (!want || curTab() === want) return;
   NAVLOCK = true; try { showTab(want); } finally { NAVLOCK = false; }
   try { history.replaceState({aibou: 1, tab: want, focus: null}, ""); } catch {}
   try { window.scrollTo(0, 0); } catch {}
-  if (want === "review") setTimeout(() => { const c = document.getElementById("rvRecCard"); if (c) c.scrollIntoView({block: "start"}); }, 80);   // 入力待ちがあるときは、復習テストの記録から開く
+  if (want === "review") setTimeout(() => { if (!pendingUnits().length && pubPending().length && RV_KIND !== "pub"){ RV_KIND = "pub"; try { renderReview(); } catch {} }
+    const c = document.getElementById(RV_KIND === "pub" ? "pbRecCard" : "rvRecCard"); if (c) c.scrollIntoView({block: "start"}); }, 80);   // 入力待ちがあるときは、復習テストの記録から開く
 }
 let REFRESHING = false;
 async function refreshApp(manual){
@@ -2751,7 +2758,7 @@ function updateBadge(){
   const bt = document.getElementById("badgeToday"), cn = (typeof CATCH_N === "number") ? CATCH_N : 0;
   bt.textContent = cn > 99 ? "99+" : String(cn); bt.hidden = cn === 0; bt.classList.add("warn");
   bt.setAttribute("aria-label", `積み残し ${cn}個`);
-  const p = pendingUnits().length, rb = document.getElementById("badgeReview");
+  const p = pendingUnits().length + pubPending().length, rb = document.getElementById("badgeReview");
   rb.textContent = p > 99 ? "99+" : String(p); rb.hidden = p === 0;
   rb.setAttribute("aria-label", `点数・平均点の入力待ち ${p}件`);
 }
@@ -3019,7 +3026,7 @@ function renderScores(){
 }
 
 /* ---------- 振返りタブ ---------- */
-let RV_RANGE = "n5", RV_LAST = true, RV_MODE = "test", RV_SUBJ = "全部", RV_CMT = false, RV_N = 15, RV_T = 12, RV_KEEP = false;
+let RV_KIND = "rev", RV_RANGE = "n5", RV_LAST = true, RV_MODE = "test", RV_SUBJ = "全部", RV_CMT = false, RV_N = 15, RV_T = 12, RV_KEEP = false;
 const SUBJ_VAR = {算数:"--s-math", 国語:"--s-jp", 理科:"--s-sci", 社会:"--s-soc"};
 function lineChart(series, o){
   const W = 340, H = o.h || 196, L = 30, R = 8, T = 12, B = 26;
@@ -3080,10 +3087,75 @@ function renderWeekendReview(){
     + `<div class="eyebrow" style="margin-top:12px">やった記録</div>` + (done.length ? done.slice(0, 12).map(d => row({s: d.u?.subject || "", u: d.u},
         `${fmtMD(d.date)}にやった${d.st.judge ? "（" + esc(d.st.judge) + "）" : "（丸つけ待ち）"}`)).join("") : `<div class="note">まだ記録がありません。</div>`);
 }
+/* ---------- 公開学力テスト（復習テストと同じ仕掛け：グラフ・平均との差・入力待ち・記録の入力） ---------- */
+const PUB_SJ = ["算数","国語","理科","社会"];
+function pubPending(){
+  const hr = new Date().getHours();
+  return PUBS.filter(([n, d]) => d >= START && (d < TODAY || (d === TODAY && (OFFSET !== 0 || hr >= 18))) && !(SCORES.skip && SCORES.skip["pub" + n])
+    && PUB_SJ.some(sj => { const p = SCORES.pub[n] || {}; return p[sj] == null || !(p.avgs && p.avgs[sj] != null); })).map(([n, d]) => ({n, d}));
+}
+function renderPubReview(h){
+  const subs = RV_SUBJ === "全部" ? PUB_SJ : [RV_SUBJ];
+  const all = PUBS.filter(([n, d]) => d <= TODAY && SCORES.pub[n]).map(([n, d]) => ({n, d, p: SCORES.pub[n]}));
+  const cut = h.cutD ? (RV_MODE === "month" ? h.cutD.slice(0, 7) + "-01" : h.cutD) : null;
+  const pubs = cut ? all.filter(x => x.d >= cut) : all;
+  const sp = sj => pubs.filter(x => x.p[sj] != null).map(x => ({x: x.d, y: x.p[sj], tip: `第${x.n}回`}));
+  const ap = sj => pubs.filter(x => x.p[sj] != null && x.p.avgs && x.p.avgs[sj] != null).map(x => ({x: x.d, y: x.p.avgs[sj], tip: `第${x.n}回`}));
+  const bd = sj => pubs.filter(x => x.p[sj] != null && x.p.avgs && x.p.avgs[sj] != null).map(x => ({x: x.d, y1: x.p[sj], y2: x.p.avgs[sj]}));
+  let s1 = RV_SUBJ === "全部"
+    ? subs.flatMap(sj => [{name: sj, color: SUBJ_VAR[sj], pts: sp(sj), band: bd(sj)}, {name: sj + "の平均点", color: SUBJ_VAR[sj], dash: true, hideLabel: true, pts: ap(sj)}])
+    : [{name: "自分の点数", color: SUBJ_VAR[RV_SUBJ], pts: sp(RV_SUBJ), band: bd(RV_SUBJ)}, {name: "平均点", color: SUBJ_VAR[RV_SUBJ], dash: true, pts: ap(RV_SUBJ)}];
+  s1 = s1.filter(x => x.pts.length);
+  if (RV_MODE === "month") s1 = s1.map(h.monthlySeries);
+  s1 = s1.map(h.lastN);
+  document.getElementById("rvChartTitle").textContent = "公開テストの点数";
+  document.getElementById("rvChart1").innerHTML = lineChart(s1, {min: 0, max: 100, knot: {v: 40, frac: .13}, ticks: [0,40,50,60,70,80,90,100], tickLabels: [0,40,60,80,100], label: "公開テストの点数の推移", month: RV_MODE === "month", even: true, h: 300, empty: "まだ点数がありません", empty2: "下の「公開テストの記録」で入れると、ここに線が出ます"});
+  document.getElementById("rvLeg1").innerHTML = RV_SUBJ === "全部" ? s1.filter(x => !x.dash).map(x => `<span><i style="--c:var(${x.color})"></i>${x.name}</span>`).join("") + `<span><i class="dash" style="--c:var(--ink-3)"></i>点線＝平均点</span>`
+    : s1.map(x => `<span><i class="${x.dash ? "dash" : ""}" style="--c:var(${x.color})"></i>${x.name}${x.dash ? "（○）" : "（●）"}</span>`).join("");
+  const mean = a => a.length ? a.reduce((p, q) => p + q, 0) / a.length : null, r1 = v => v == null ? "—" : (Math.round(v * 10) / 10);
+  const scs = all.flatMap(x => subs.filter(sj => x.p[sj] != null).map(sj => ({sc: x.p[sj], av: x.p.avgs && x.p.avgs[sj]})));
+  const dA = mean(scs.filter(z => z.av != null).map(z => z.sc - z.av));
+  document.getElementById("rvTiles").innerHTML = [
+    [`${r1(mean(scs.map(z => z.sc)))}${scs.length ? "点" : ""}<small style="font-size:12px;font-weight:700;color:var(--ink-3);margin-left:4px">／${all.length}回</small>`, "平均点"],
+    [dA == null ? "—" : `${dA >= 0 ? "+" : ""}${r1(dA)}点`, "平均点との差（目安）"]].map(([b, l]) => `<div class="tile"><b>${b}</b><span>${l}</span></div>`).join("");
+  // 記録（入力・修正）
+  if (RV_KEEP) return;
+  const pend = pubPending(), pset = new Set(pend.map(x => x.n)), hr = new Date().getHours();
+  const list = PUBS.filter(([n, d]) => d <= TODAY && (d < TODAY || OFFSET !== 0 || hr >= 18 || SCORES.pub[n])).slice().reverse();
+  const tb = document.getElementById("pbTable"); tb.innerHTML = "";
+  list.forEach(([n, d]) => {
+    const p = SCORES.pub[n] || {}, card = el("div", "pb-card" + (pset.has(n) ? " pend" : ""));
+    card.innerHTML = `<b style="font-size:13.5px">第${n}回　${fmtMD(d)}</b>${pset.has(n) ? `<div class="note" style="color:var(--crit-ink);font-weight:700">まだ入っていない：${PUB_SJ.filter(sj => p[sj] == null || !(p.avgs && p.avgs[sj] != null)).join("・")}</div>` : ""}`
+      + subs.map(sj => { const sc = p[sj], av = p.avgs && p.avgs[sj];
+        return `<div class="pb-row" data-sj="${sj}"><span class="mini s-${sj}" style="color:var(--s);background:var(--s-bg);text-align:center">${sj}</span>
+          <label class="note">点数<input type="number" inputmode="numeric" min="0" max="100" data-f="score" aria-label="第${n}回 ${sj}の点数" value="${sc ?? ""}"></label>
+          <label class="note">平均点<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-f="avg" aria-label="第${n}回 ${sj}の平均点" value="${av ?? ""}"></label>
+          <div class="df" data-df>${sc != null && av != null ? `平均点より ${sc - av >= 0 ? "+" : ""}${Math.round((sc - av) * 10) / 10} 点` : ""}</div></div>`; }).join("");
+    card.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+      const rec = {...(SCORES.pub[n] || {})}, avgs = {...(rec.avgs || {})}, devs = {...(rec.devs || {})};
+      card.querySelectorAll(".pb-row").forEach(r => { const sj = r.dataset.sj, g = f => { const v = r.querySelector(`[data-f=${f}]`).value; return v === "" ? null : Math.max(0, Math.min(100, Number(v))); };
+        const sc = g("score"), av = g("avg");
+        if (sc == null){ delete rec[sj]; delete avgs[sj]; delete devs[sj]; } else { rec[sj] = sc; if (av == null) delete avgs[sj]; else avgs[sj] = av; }
+        r.querySelector("[data-df]").textContent = sc != null && av != null ? `平均点より ${sc - av >= 0 ? "+" : ""}${Math.round((sc - av) * 10) / 10} 点` : ""; });
+      rec.avgs = avgs; rec.devs = devs;
+      if (!PUB_SJ.some(sj => rec[sj] != null)) delete SCORES.pub[n]; else SCORES.pub[n] = rec;
+      RV_KEEP = true; try { saveScores(); } finally { RV_KEEP = false; } toast("保存しました"); }));
+    if (pset.has(n)){
+      const fg = el("button", "btn ghost sm", "点数や平均点を忘れた（あとで親が入れる）"); fg.type = "button"; fg.style.cssText = "margin-top:6px";
+      fg.onclick = async () => { if (!await ask(`第${n}回の公開テストは「忘れた」にして、あとで親が入力しますか？`, "忘れた")) return; SCORES.skip = {...(SCORES.skip || {}), ["pub" + n]: TODAY}; saveScores(); toast("あとで入れるようにしました"); };
+      card.appendChild(fg); }
+    tb.appendChild(card); });
+  document.getElementById("pbRecNote").innerHTML = pend.length ? `<div class="note" style="color:var(--crit-ink);font-weight:700;margin-bottom:4px">公開テストの点数・平均点がまだ入っていない回が${pend.length}件あります（赤い印）。入れるまで、アプリを開くとここが最初に出ます。</div>` : "";
+  if (!list.length) tb.innerHTML = '<div class="note">まだ公開テストの記録はありません。</div>';
+}
 function renderReview(){
   renderWeekendReview();
   if (!document.getElementById("rvSubj")) return;
   const SUBS = ["全部","算数","国語","理科","社会"], on = u => RV_SUBJ === "全部" || u.subject === RV_SUBJ;
+  document.getElementById("view-review").classList.toggle("k-pub", RV_KIND === "pub");
+  { const kc = document.getElementById("rvKind"); kc.innerHTML = "";
+    [["rev", "復習テスト"], ["pub", "公開テスト"]].forEach(([k, l]) => { const b = el("button", "fchip kind", l); b.type = "button"; b.setAttribute("aria-pressed", String(RV_KIND === k));
+      b.onclick = () => { RV_KIND = k; RV_KEEP = false; renderReview(); }; kc.appendChild(b); }); }
   const chips = document.getElementById("rvSubj"); chips.innerHTML = "";
   SUBS.forEach(x => { const b = el("button","fchip" + (x === "全部" ? "" : " sc s-" + x),x); b.type = "button"; b.setAttribute("aria-pressed", String(x === RV_SUBJ));
     b.onclick = () => { RV_SUBJ = x; RV_N = 15; renderReview(); }; chips.appendChild(b); });
@@ -3104,6 +3176,8 @@ function renderReview(){
       pts: grp(se.pts, (x, a) => ({x, y: mean1(a.map(p => p.y)), tip: `${a.length}回の平均`})),
       band: se.band ? grp(se.band, (x, a) => ({x, y1: mean1(a.map(p => p.y1)), y2: mean1(a.map(p => p.y2))})) : se.band};
   };
+  if (RV_KIND === "pub"){ renderPubReview({cutD, lastN, monthlySeries, mean1}); return; }
+  document.getElementById("rvChartTitle").textContent = "復習テストの点数";
   const rev = REVUNITS.filter(u => SCORES.review[u.key] && on(u)).map(u => ({u, r: SCORES.review[u.key]})).sort((a,b) => a.u.test.localeCompare(b.u.test));
   const sc = rev.filter(x => x.r.score != null), withAvg = rev.filter(x => x.r.score != null && x.r.avg != null);
   const mean = a => a.length ? a.reduce((p,q) => p+q, 0) / a.length : null, r1 = v => v == null ? "—" : (Math.round(v*10)/10);
@@ -3112,7 +3186,7 @@ function renderReview(){
   const items = ALLTASKS.map(t => ({t, s: PROG[t.k]})).filter(x => x.s && x.s.judge && (RV_SUBJ === "全部" || x.t.s === RV_SUBJ));
   const pass = items.filter(x => x.s.judge === "合格").length, wrongSum = items.reduce((a,x) => a + (x.s.wrong || 0), 0);
   document.getElementById("rvTiles").innerHTML = [
-    [`${r1(mean(sc.map(x => x.r.score)))}${sc.length ? "点" : ""}`, `復習テストの平均（${sc.length}回）`],
+    [`${r1(mean(sc.map(x => x.r.score)))}${sc.length ? "点" : ""}<small style="font-size:12px;font-weight:700;color:var(--ink-3);margin-left:4px">／${sc.length}回</small>`, "平均点"],
     [dAvg == null ? "—" : `${dAvg >= 0 ? "+" : ""}${r1(dAvg)}点`, "平均点との差（目安）"],
   ].map(([b,l]) => `<div class="tile"><b>${b}</b><span>${l}</span></div>`).join("");
 
@@ -4055,10 +4129,10 @@ document.getElementById("btnExport").onclick = () => {
   } catch { toast("コピーできませんでした"); }
 };
 document.getElementById("btnPubSave").onclick = () => {
-  const n = document.getElementById("pubSel").value, rec = {};
-  ["算数","国語","理科","社会"].forEach(s => { const v = document.getElementById("pub-"+s).value; if (v !== "") rec[s] = Number(v); });
-  if (SCORES.pub[n] && SCORES.pub[n].dev != null) rec.dev = SCORES.pub[n].dev;   // 偏差値は画面に出さないが、記録は残す
-  if (!Object.keys(rec).filter(k => k !== "dev").length){ delete SCORES.pub[n]; } else SCORES.pub[n] = rec;
+  const n = document.getElementById("pubSel").value, rec = {...(SCORES.pub[n] || {})};   // 平均点・偏差値・複数科の記録は残す
+  ["算数","国語","理科","社会"].forEach(sj => { const v = document.getElementById("pub-"+sj).value;
+    if (v !== "") rec[sj] = Number(v); else { delete rec[sj]; if (rec.avgs) delete rec.avgs[sj]; if (rec.devs) delete rec.devs[sj]; } });
+  if (!["算数","国語","理科","社会"].some(sj => rec[sj] != null)){ delete SCORES.pub[n]; } else SCORES.pub[n] = rec;
   saveScores(); toast(`第${n}回の点数を保存しました`);
 };
 const views = {today:"view-today", test:"view-test", more:"view-more", review:"view-review", check:"view-check", plan:"view-plan"};
