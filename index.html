@@ -346,7 +346,7 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 @media (max-width:560px){
   .hero{grid-template-columns:1fr; text-align:center; justify-items:center; gap:14px}
   .hero-meta{justify-content:center}
-  .brand span{display:none}
+  .brand .bs{display:none}
   .tabs{width:100%}
   .tabs button{flex:1; padding:8px 6px}
   .units{grid-template-columns:1fr}
@@ -498,9 +498,12 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .dl-tk{position:absolute; top:31px; font-size:10.5px; color:var(--ink-3); transform:translateX(-50%); white-space:nowrap} .dl-tk.f{transform:none} .dl-tk.l{transform:translateX(-100%)}
 .dl-list{display:flex; flex-direction:column; gap:7px}
 .dl-row{border-left:5px solid var(--s); background:var(--s-bg); border-radius:8px}
-.dl-row>summary{display:grid; grid-template-columns:76px 1fr; gap:10px; padding:8px 10px; cursor:pointer; list-style:none} .dl-row>summary::-webkit-details-marker{display:none}
+.dl-row>summary{display:grid; grid-template-columns:84px 1fr; gap:6px 10px; padding:8px 10px; cursor:pointer; list-style:none} .dl-row>summary::-webkit-details-marker{display:none}
 .dl-t{font-weight:900; font-size:16px; line-height:1.2} .dl-t small{display:block; font-size:12px; font-weight:700; color:var(--ink-2)}
-.dl-m .subj{margin-right:4px} .dl-more{color:var(--ink-3); font-size:11.5px} .dl-row[open] .dl-more{display:none}
+.dl-t em{display:block; font-style:normal; font-size:13px; font-weight:800; color:var(--ink); margin-top:3px}
+.dl-foot{grid-column:1/-1; text-align:right; font-size:12px; font-weight:800; color:var(--ink-3)}
+.dl-close{display:none} .dl-row[open] .dl-open{display:none} .dl-row[open] .dl-close{display:inline}
+.dl-m .subj{margin-right:4px}
 .dl-det{padding:2px 12px 10px 14px}
 .dl-ev{display:flex; flex-direction:column; gap:3px; margin-bottom:6px}
 .dl-ev>div{display:flex; gap:10px; align-items:baseline; font-size:13.5px} .dl-ev b{min-width:68px; font-size:14px}
@@ -677,7 +680,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v80</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v81</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1728,6 +1731,8 @@ const mkRevUnits = () => DATA.units.concat(PAST_TESTS.concat(PAST_TESTS2, PAST_T
   .map(p => ({key:p[0], subject:p[1], lec:p[2], test:p[3], name:PAST_NAMES[p[0]] || "復習テスト", past:true})));
 let REVUNITS = mkRevUnits();
 /* 10/28 成績表（マイページ）のスクショから：点数とクラス平均を上書き。1回だけ実行（あとで手で直した分は消さない） */
+const RESULTS_ID2 = "results-2026-11-14";
+const RESULTS_1114 = {"算031":[80,81.3],"算032":[35,58.4],"国032":[52,52.1],"社032":[85,80.8],"理032":[51,66.4],"理033":[56,88.5],"社033":[76,80.8],"理034":[93,86.1],"社034":[41,73.5]};   // 浜学園マイページ「結果一覧」より（得点・クラス平均）
 const RESULTS_ID = "results-2026-10-28";
 const RESULTS_1028 = {"国031":[78,66.1],"社031":[57,84.7],"理031":[82,81.2],"算030":[60,77.6],"国030":[42,58.9],"理030":[76,86.4],"社030":[90,84.1],
   "国029":[50,63.3],"社029":[78,74.6],"理029":[90,83.4],"算029":[80,79.4],"国028":[42,44.7],"国026":[40,57.1],"社026":[82,78.0],"理026":[61,80.9],
@@ -1765,6 +1770,15 @@ function importPast(){
       SCORES.review[k] = n;
     });
     SCORES.imports = [...(SCORES.imports || []), RESULTS_ID]; SCORES.lastImport = "2026-10-28"; changed = true;
+  }
+  if (!(SCORES.imports || []).includes(RESULTS_ID2)){
+    Object.keys(RESULTS_1114).forEach(k => {
+      const u = REVUNITS.find(x => x.key === k), o = SCORES.review[k] || {};
+      const n = {...o, score: RESULTS_1114[k][0], avg: RESULTS_1114[k][1], at: o.at || (u && u.test) || undefined};
+      delete n.avgN; delete n.src;
+      SCORES.review[k] = n;
+    });
+    SCORES.imports = [...(SCORES.imports || []), RESULTS_ID2]; SCORES.lastImport = "2026-11-14"; changed = true;
   }
   return changed;
 }
@@ -3259,9 +3273,10 @@ function renderDayLog(){
   const ticks = [5, 7, 10, 13, 16, 20, 24];
   const strip = timed.length ? `<div class="dl-strip" aria-hidden="true">${ticks.map(h => `<u style="left:${pos(dayStart + h * 3600e3)}%"></u>`).join("")}${timed.map(o => { const a = pos(o.t0), b = pos(sessEnd(o));
       return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ticks.map((h, i) => `<span class="dl-tk${i === 0 ? " f" : i === ticks.length - 1 ? " l" : ""}" style="left:${pos(dayStart + h * 3600e3)}%">${h}時</span>`).join("")}</div>` : "";
-  const row = o => `<details class="dl-row s-${o.ts[0].s}"><summary><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(sessEnd(o))}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
+  const row = o => `<details class="dl-row s-${o.ts[0].s}"><summary><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(sessEnd(o))}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}<em>${fmtSec(o.sec)}</em></div>
       <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}
-        <div class="note">${fmtSec(o.sec)}${(o.np || 0) ? `　一時中断 ${o.np}回` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : forgot(o) ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分）</b>` : ""}　<span class="dl-more">▼ 詳しく</span></div></div></summary>
+        ${(o.np || o.auto || forgot(o)) ? `<div class="note">${(o.np || 0) ? `一時中断 ${o.np}回` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : forgot(o) ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分）</b>` : ""}</div>` : ""}</div>
+      <div class="dl-foot"><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></div></summary>
       <div class="dl-det">${sessEvents(o)}</div></details>`;
   body.innerHTML = `<div class="dl-tiles">
       <div class="dl-tile"><span>宿題</span><b>${cnt(hwS)}<small>個</small></b><em>${fm(sum(hwS))}</em></div>
