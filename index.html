@@ -683,7 +683,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v85</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v86</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -768,11 +768,11 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
   <div class="eyebrow">これまでの成績の振返り</div>
   <div class="fchips" id="rvSubj"></div>
   <div class="fchips" id="rvMode"></div>
-  <section class="rvcard" id="rvPending" hidden style="border-color:var(--crit)"><h3>点数・平均点の入力待ち</h3>
-    <div class="note" style="margin-bottom:4px">テストおつかれさま！ 点数と平均点を入れよう。入れるまで、アプリを開くとここが最初に出ます。わからないときは「忘れた」を押せば大丈夫。</div><div id="rvPendList"></div></section>
   <div class="tiles" id="rvTiles" style="margin-bottom:14px"></div>
   <section class="rvcard"><h3>復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
   <section class="rvcard" id="rvMonth" hidden><h3>月の成績個人票</h3><div id="rvMonthBody"></div></section>
+  <section class="rvcard" id="rvPending" hidden style="border-color:var(--crit)"><h3>点数・平均点の入力待ち</h3>
+    <div class="note" style="margin-bottom:4px">テストおつかれさま！ 点数と平均点を入れよう。入れるまで、アプリを開くと振返りタブが最初に出ます。わからないときは「忘れた」を押せば大丈夫。</div><div id="rvPendList"></div></section>
   <section class="rvcard"><h3>復習テストの記録（ここで入力・修正できます）</h3><div class="note" style="margin-bottom:4px">いつのテストでも、点数・平均点を入れたり直したりできます。空にすると記録が消えます。</div><div id="rvTable"></div><button class="btn ghost sm" id="rvTMore" type="button" hidden>もっと前のテストを見る</button></section>
   <section class="rvcard"><h3>間違えた理由</h3><div id="rvReasons"></div></section>
   <section class="rvcard"><h3>丸つけの振返り（コメントつき）</h3>
@@ -3147,14 +3147,12 @@ function renderReview(){
   const mm = SCORES.month || {}, mk2 = Object.keys(mm).sort().reverse();
   document.getElementById("rvMonth").hidden = !mk2.length;
   const rbar = (rank, n) => `<span class="rkbar" title="${rank}位／${n}人以上"><i style="left:${n > 1 ? Math.min(100, (rank - 1) / (n - 1) * 100) : 0}%"></i></span>`;
-  /* 月の成績個人票：4教科の復習テスト平均だけ見せる（3教科の総計・順位、教科ごとの順位は出さない） */
-  document.getElementById("rvMonthBody").innerHTML = mk2.map(k => { const m = mm[k], [y, mo] = k.split("-"), all = RV_SUBJ === "全部";
-    const sj4 = ["算数","国語","理科","社会"].filter(sj => m.subj && m.subj[sj] && (all || sj === RV_SUBJ));
-    const avg4 = sj4.length ? Math.round(sj4.reduce((a, sj) => a + m.subj[sj].avg, 0) / sj4.length * 10) / 10 : null;
-    if (!sj4.length) return "";
+  document.getElementById("rvMonthBody").innerHTML = mk2.map(k => { const m = mm[k], [y, mo] = k.split("-"), all = RV_SUBJ === "全部", N = MONTH_N[k] || {};
+    const subjRows = ["算数","国語","理科","社会"].filter(sj => m.subj && m.subj[sj] && (all || sj === RV_SUBJ)).map(sj => { const n = N[sj] || N.all || 0;
+      return `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td><td class="n">${m.subj[sj].rank != null ? `${m.subj[sj].rank}位${n ? `<span class="note">／${n}人以上</span>` : ""}${n ? rbar(m.subj[sj].rank, n) : ""}` : "<span class=\"note\">順位なし</span>"}</td></tr>`; }).join("");
     return `<div style="margin-bottom:12px"><b>${y}年${+mo}月度　${esc(m.course || "")}</b>
-      ${all && sj4.length === 4 ? `<div class="tiles" style="margin:8px 0"><div class="tile"><b>${avg4}</b><span>4教科の復習テスト平均（点）</span></div></div>` : ""}
-      <table class="rtable" style="margin-top:8px"><thead><tr><th>教科</th><th class="n">復習テスト平均</th></tr></thead><tbody>${sj4.map(sj => `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td></tr>`).join("")}</tbody></table></div>`; }).join("");
+      <table class="rtable" style="margin-top:8px"><thead><tr><th>教科</th><th class="n">復習テスト平均</th><th class="n">教科の順位</th></tr></thead><tbody>${subjRows}</tbody></table>${
+        m.soc && (all || RV_SUBJ === "社会") ? `<div class="note" style="margin-top:6px">社会（別の個人票）：総合順位 ${m.soc.rank != null ? m.soc.rank + "位／" + (N.soc || "?") + "人以上" : "なし"}　総計 ${m.soc.total}／${m.outOf}点（復習テスト平均 ${m.soc.fuku}＋公開テスト ${m.soc.kokai}）${N.soc ? rbar(m.soc.rank, N.soc) : ""}</div>` : ""}</div>`; }).join("");
   // 記録（入力・修正）
   if (!RV_KEEP){
     const all = REVUNITS.filter(u => u.test <= TODAY && on(u) && !(NO_TEST.has(u.key) && !(SCORES.review[u.key] && SCORES.review[u.key].score != null))).sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
