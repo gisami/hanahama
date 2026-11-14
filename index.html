@@ -683,7 +683,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v83</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v84</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -752,6 +752,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <div class="zm-head">弱点克服<small>宿題が全部終わって、時間があるときに。点数の悪かった単元から、4教科それぞれのおすすめです。やらなくてもOK・記録には入りません。</small></div>
     <div class="zm-body" id="moreBox"></div>
   </section>
+  <section class="rvcard" id="rvWeekend" style="margin-top:18px"><details><summary style="cursor:pointer;font-weight:800">週末の復習に出る単元</summary><div id="rvWeekendBody" style="margin-top:8px"></div></details></section>
 </main>
 
 <main class="wrap view" id="view-review" hidden>
@@ -769,16 +770,6 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
   <div class="fchips" id="rvMode"></div>
   <section class="rvcard" id="rvPending" hidden style="border-color:var(--crit)"><h3>点数・平均点の入力待ち</h3>
     <div class="note" style="margin-bottom:4px">テストおつかれさま！ 点数と平均点を入れよう。入れるまで、アプリを開くとここが最初に出ます。わからないときは「忘れた」を押せば大丈夫。</div><div id="rvPendList"></div></section>
-  <section class="rvcard" id="rvImport"><details id="rvImportD"><summary id="rvImportS" style="cursor:pointer;font-weight:800"></summary>
-    <div class="note" style="margin:8px 0">毎月の月初（1〜10日）に、お家の人が前月の成績をまとめて取り込みます。取り込むと、点数とクラス平均が上書きされます（クラス順位もいっしょに記録します）。</div>
-    <ol class="note" style="margin:0 0 10px 18px;padding:0;line-height:1.9">
-      <li>浜学園のマイページで、復習テストの成績の一覧を開く</li>
-      <li>表を最初の行から最後の行まで選んで、コピーする</li>
-      <li>下のボタンで「お家の人モード」を開き、「成績の取り込み」に貼り付ける</li>
-      <li>内容を確認して「この内容で上書きする」を押す</li>
-    </ol>
-    <button class="btn primary sm" id="rvImportGo" type="button">お家の人：成績を取り込む</button></details></section>
-  <section class="rvcard" id="rvWeekend"><h3>週末の復習（悪かった単元）</h3><div id="rvWeekendBody"></div></section>
   <div class="tiles" id="rvTiles" style="margin-bottom:14px"></div>
   <section class="rvcard"><h3>復習テストの点数</h3><div class="chart" id="rvChart1"></div><div class="legend" id="rvLeg1"></div></section>
   <section class="rvcard" id="rvMonth" hidden><h3>月の成績個人票</h3><div id="rvMonthBody"></div></section>
@@ -799,13 +790,6 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <div id="skipList" class="stack"></div>
   </section>
 
-  <section id="impSec" style="margin-bottom:24px"><details class="fold" id="impFold"><summary>成績の取り込み（月初に前月分・貼り付けで上書き）</summary>
-    <div class="fold-body">
-      <div class="note" style="margin-bottom:8px">浜学園マイページの成績一覧の表をコピーして、下に貼り付けます（表の見出し行から最後の行まで）。同じテストは、点数とクラス平均が上書きされます。</div>
-      <textarea id="impText" rows="6" placeholder="ここに貼り付け" style="width:100%;border:1.5px solid var(--line-2);border-radius:10px;padding:9px 11px;font:inherit;font-size:13px;background:var(--paper);color:var(--ink)"></textarea>
-      <div class="judge-row"><button class="btn sm" id="impCheck" type="button">内容を確認</button><button class="btn primary sm" id="impApply" type="button" hidden>この内容で上書きする</button></div>
-      <div id="impPreview" style="margin-top:10px"></div>
-    </div></details></section>
 
   <div class="eyebrow" id="waitHead" style="margin-top:6px">丸つけ待ち（娘が「できた」を押したもの）</div>
   <div class="sortbar" id="waitSort">
@@ -1288,6 +1272,7 @@ function parseResults(text){
 }
 let IMP_ROWS = [];
 function initImport(){
+  if (!document.getElementById("impCheck")) return;   // 成績の取り込み画面は無くした（成績はClaudeがマイページから取り込む）
   const chk = document.getElementById("impCheck"), ap = document.getElementById("impApply"), pv = document.getElementById("impPreview");
   chk.onclick = () => {
     IMP_ROWS = parseResults(document.getElementById("impText").value);
@@ -1321,6 +1306,7 @@ function initImport(){
   };
 }
 function renderImportCard(){
+  if (!document.getElementById("rvImport")) return;
   const ym = TODAY.slice(0, 7), day = +TODAY.slice(8, 10);
   const due = day <= 10 && (SCORES.lastImport || "") < ym + "-01";
   const pm = new Date(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 2, 1).getMonth() + 1;
@@ -1744,6 +1730,8 @@ const RESULTS_1028 = {"国031":[78,66.1],"社031":[57,84.7],"理031":[82,81.2],"
   "算022":[35,55.0],"社021":[61,79.9],"理021":[62,81.3],"算021":[39,51.2],"国020":[84,67.7]};
 const RESULTS_ID3 = "results-2026-11-14-all";
 const RESULTS_ALL = {"理034":[93,86.1],"社034":[41,73.5],"算032":[35,58.4],"国032":[52,52.1],"理033":[56,88.5],"社033":[76,80.8],"社032":[85,80.8],"理032":[51,66.4],"算031":[80,81.3],"国031":[78,66.1],"社031":[57,84.7],"理031":[82,81.2],"算030":[60,77.6],"国030":[42,58.9],"社030":[90,84.1],"理030":[76,86.4],"国029":[50,63.3],"社029":[78,74.6],"理029":[90,83.4],"算029":[80,79.4],"国028":[42,44.7],"国026":[40,57.1],"社026":[82,78.0],"理026":[61,80.9],"算027":[60,73.8],"国025":[34,69.4],"社025":[81,80.6],"理025":[85,77.4],"算026":[70,71.5],"算025":[68,80.3],"社024":[74,77.4],"理024":[81,83.1],"算024":[60,79.0],"国023":[56,59.8],"社023":[71,75.0],"理023":[71,82.5],"算023":[48,67.0],"国022":[62,71.6],"理022":[76,74.0],"社022":[68,79.2],"算022":[35,55.0],"社021":[61,79.9],"理021":[62,81.3],"算021":[39,51.2],"国020":[84,67.7],"社020":[74,80.0],"理020":[91,78.8],"国019":[60,60.6],"社019":[82,82.6],"理019":[92,88.4],"算019":[55,65.4],"国018":[56,64.2],"社018":[79,77.9],"理018":[90,81.0],"算018":[80,71.7],"国017":[66,71.7],"社017":[71,77.0],"理017":[59,73.8],"算017":[50,65.8],"国016":[54,51.9],"算016":[80,80.0],"国015":[54,57.4],"社016":[76,81.6],"理016":[63,65.1],"算015":[70,77.4],"国014":[52,48.3],"社015":[88,73.3],"理015":[38,62.9],"算014":[60,75.0],"国013":[60,67.5],"社014":[78,76.6],"理014":[57,72.3],"算013":[65,64.3],"国012":[62,67.7],"理013":[37,80.6],"社013":[79,75.9],"算012":[76,70.3],"算011":[75,79.8],"国011":[61,61.1],"社012":[82,80.9],"理012":[39,77.9],"算010":[60,66.7],"国010":[90,84.1],"理011":[83,80.3],"社011":[47,81.7],"国009":[48,62.7],"社010":[57,74.0],"理010":[78,90.4],"算009":[84,84.0],"国008":[68,70.6],"社009":[53,79.4],"理009":[76,87.0],"算008":[72,75.2],"国007":[68,73.7],"算007":[70,82.2],"算006":[65,73.5],"国005":[70,74.0],"社006":[91,78.6],"理006":[91,90.7],"算005":[84,76.8],"国004":[86,72.4],"社005":[83,79.4],"理005":[90,73.9],"算004":[85,82.6],"国003":[80,75.1],"理004":[70,78.9],"社004":[77,78.1],"算003":[80,86.3],"社003":[80,81.5],"理003":[95,87.3],"算002":[80,82.3],"国002":[44,66.3],"社002":[83,82.8],"理002":[90,81.8],"算001":[75,89.2],"国001":[34,55.6],"理001":[64,83.1],"社001":[100,94.0]};   // 浜学園マイページ「結果一覧」1〜7ページ（118回分）の得点・クラス平均
+/* 浜学園のマイページに結果がない回（休みの週などでテストがなかった）。記録の一覧から外す */
+const NO_TEST = new Set(["理027","社027","国027","算028","理028","社028"]);
 function importPast(){
   let changed = false;
   const batch = (id, tests, month) => {
@@ -1801,7 +1789,7 @@ function importPast(){
 function pendingUnits(){
   const hr = new Date().getHours();
   return REVUNITS.filter(u => u.test >= START && (u.test < TODAY || (u.test === TODAY && (OFFSET !== 0 || hr >= 18)))
-    && !(SCORES.skip && SCORES.skip[u.key])
+    && !NO_TEST.has(u.key) && !(SCORES.skip && SCORES.skip[u.key])
     && !(SCORES.review[u.key] && SCORES.review[u.key].score != null && SCORES.review[u.key].avg != null))
     .sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
 }
@@ -2355,6 +2343,7 @@ function overdueAfterTest(){
   }).sort((a, b) => (isRedo(a.k) ? 0 : 1) - (isRedo(b.k) ? 0 : 1) || unitOf(a.u).test.localeCompare(unitOf(b.u).test) || sortTasks(a, b));
 }
 function renderMore(){
+  renderWeekendReview();
   const box = document.getElementById("moreBox");
   const csec = document.getElementById("catchSec"), cbox = document.getElementById("catchBox");
   if (!box || !csec) return;
@@ -2964,7 +2953,7 @@ function unitStats(key){
 function scoreRow(u, kid){
     const s = SCORES.review[u.key] || {}, st = unitStats(u.key);
     const row = el("div","score-row v2");
-    const diffTxt = o => (o.score != null && o.avg != null) ? `平均点より ${o.score - o.avg >= 0 ? "+" : ""}${o.score - o.avg} 点` : "";
+    const diffTxt = o => (o.score != null && o.avg != null) ? `平均点より ${o.score - o.avg >= 0 ? "+" : ""}${Math.round((o.score - o.avg) * 10) / 10} 点` : "";
     row.innerHTML = `<div style="min-width:0">
         <div class="row" style="gap:6px;flex-wrap:wrap"><span class="mini s-${u.subject}" style="color:var(--s);background:var(--s-bg)">${u.subject}</span>
         <b style="font-size:13.5px">No.${u.lec} ${esc(uname(u))}</b>${s.src === "本人" ? `<span class="chip">本人が入力（未確認）</span>` : ""}${SCORES.skip && SCORES.skip[u.key] && (s.score == null || s.avg == null) ? `<span class="chip redo">本人が忘れた・あとで入力</span>` : ""}</div>
@@ -3078,7 +3067,7 @@ function renderWeekendReview(){
   const done = Object.keys(PROG).filter(k => RV_RE.test(k) && PROG[k]?.done).map(k => ({...fmt(k), st: PROG[k]})).sort((a, b) => b.date.localeCompare(a.date));
   const next = []; Object.keys(RV_PLAN).sort().filter(d => d >= TODAY).forEach(d => (RV_PLAN[d] || []).forEach(t => next.push(t)));
   const row = (t, tail) => `<div class="row" style="gap:8px;margin:6px 0"><span class="subj s-${t.s}">${esc(t.s)}</span><span style="flex:1;min-width:0;font-size:13.5px">No.${t.u?.lec ?? ""}${t.u && t.u.name && t.u.name !== "復習テスト" ? " " + esc(t.u.name) : ""}<br><span class="note">${tail}</span></span></div>`;
-  box.innerHTML = `<p class="note" style="margin:0 0 6px">土日の「2単元」は、これまでの復習テストで平均点より悪かった単元から、アプリが割りふります。やった単元は、次の週は選ばれません。</p>`
+  box.innerHTML = `<p class="note" style="margin:0 0 6px">土日の「2単元」に出る単元です。これまでの復習テストで平均点より悪かった単元から、アプリが割りふります。やった単元は、次の週は選ばれません。</p>`
     + `<div class="eyebrow">これからの予定</div>` + (next.length ? next.slice(0, 8).map(t => { const ru = REVUNITS.find(v => v.key === t.ru);
         return row({s: t.s, u: ru}, `${fmtMD(t.k.match(RV_RE)[2])}　${esc(t.why)}`); }).join("") : `<div class="note">いまは割りふれる単元がありません（点数が入った単元が増えると出ます）。</div>`)
     + `<div class="eyebrow" style="margin-top:12px">やった記録</div>` + (done.length ? done.slice(0, 12).map(d => row({s: d.u?.subject || "", u: d.u},
@@ -3166,10 +3155,12 @@ function renderReview(){
         m.soc && (all || RV_SUBJ === "社会") ? `<div class="note" style="margin-top:6px">社会（別の個人票）：総合順位 ${m.soc.rank != null ? m.soc.rank + "位／" + (N.soc || "?") + "人以上" : "なし"}　総計 ${m.soc.total}／${m.outOf}点（復習テスト平均 ${m.soc.fuku}＋公開テスト ${m.soc.kokai}）${N.soc ? rbar(m.soc.rank, N.soc) : ""}</div>` : ""}</div>`; }).join("");
   // 記録（入力・修正）
   if (!RV_KEEP){
-    const all = REVUNITS.filter(u => u.test <= TODAY && on(u)).sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
+    const all = REVUNITS.filter(u => u.test <= TODAY && on(u) && !(NO_TEST.has(u.key) && !(SCORES.review[u.key] && SCORES.review[u.key].score != null))).sort((a,b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject]-SUBJ_ORDER[b.subject]);
     const tb = document.getElementById("rvTable"); tb.innerHTML = "";
     all.slice(0, RV_T).forEach(u => tb.appendChild(scoreRow(u)));
     if (!all.length) tb.innerHTML = '<div class="note">まだテストが終わった単元はありません。</div>';
+    { const nn = REVUNITS.filter(u => NO_TEST.has(u.key) && on(u) && !(SCORES.review[u.key] && SCORES.review[u.key].score != null)).sort((a, b) => a.test.localeCompare(b.test));
+      if (nn.length) tb.insertAdjacentHTML("beforeend", `<div class="note" style="margin-top:8px">テストがなかった回（マイページにも結果がありません）：${nn.map(u => esc(u.subject.slice(0, 1) + " No." + u.lec)).join("、")}</div>`); }
     const tm = document.getElementById("rvTMore"); tm.hidden = all.length <= RV_T;
     tm.onclick = () => { RV_T += 15; renderReview(); };
   }
@@ -3302,11 +3293,11 @@ function renderDayLog(){
       return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ntBar.map(o => { const b = pos(o.at), a = pos(o.at - o.est * 1000);
       return `<i class="s-${o.ts[0].s} est" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}${ticks.map((h, i) => `<span class="dl-tk${i === 0 ? " f" : i === ticks.length - 1 ? " l" : ""}" style="left:${pos(dayStart + h * 3600e3)}%">${h}時</span>`).join("")}</div>` : "";
   const ntRow = o => `<details class="dl-row nt s-${o.ts[0].s}"><summary><div class="dl-t num">${o.at ? `${hmOf(o.at)}<small>できた</small>` : `<small>時刻なし</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}</div>
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}</div>
       <div class="dl-foot"><span class="dl-dur nm">計測なし</span><span><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></span></div></summary>
       <div class="dl-det"><div class="note">タイマーを使わずに「できた」を押しました${o.at ? `（${hmsOf(o.at)}）` : "（押した時刻は残っていません）"}。${o.at ? `上の帯の色の薄い部分は、この教材の平均時間＋5分（${mins(o.est)}）で、およそやっていた時間帯の目安です。` : ""}</div></div></details>`;
   const row = o => `<details class="dl-row s-${o.ts[0].s}"><summary><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(sessEnd(o))}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
-      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}${o.redo ? ` <span class="chip redo">やり直し</span>` : ""}${o.ts[0].prep ? ` <span class="chip must">テスト対策</span>` : ""}
         ${(o.np || o.auto || forgot(o)) ? `<div class="note">${(o.np || 0) ? `一時中断 ${o.np}回` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : forgot(o) ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分）</b>` : ""}</div>` : ""}</div>
       <div class="dl-foot"><span class="dl-dur">${fmtSec(o.sec)}</span><span><span class="dl-open">▼ 詳しく</span><span class="dl-close">▲ とじる</span></span></div></summary>
       <div class="dl-det">${sessEvents(o)}</div></details>`;
