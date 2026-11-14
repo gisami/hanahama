@@ -486,6 +486,15 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .cu-ring .cr-n b{font-size:34px; font-weight:900; color:var(--crit)} .cu-ring.zero .cr-n b{color:var(--good)} .cu-ring .cr-n small{font-size:12px; font-weight:800}
 .cu-ring .cr-t{display:flex; flex-direction:column; gap:3px} .cu-ring .cr-t b{font-size:17px; font-weight:900} .cu-ring .cr-t span{font-size:15px; font-weight:800} .cu-ring .cr-t em{font-style:normal; font-size:12px; color:var(--ink-3)}
 .cu-ring + .zone-cu{margin-top:10px}
+.dl-sum{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; margin:8px 0}
+.dl-sum b{font-size:18px; font-weight:900} .dl-sum span{font-size:12.5px; color:var(--ink-2)}
+.dl-strip{position:relative; height:26px; margin:4px 0 22px; background:var(--track); border-radius:7px}
+.dl-strip i{position:absolute; top:0; bottom:0; background:var(--s); border-radius:3px; opacity:.9}
+.dl-tk{position:absolute; top:28px; font-size:10px; color:var(--ink-3); transform:translateX(-50%)}
+.dl-list{display:flex; flex-direction:column; gap:7px}
+.dl-row{display:grid; grid-template-columns:76px 1fr; gap:10px; padding:8px 10px; border-left:5px solid var(--s); background:var(--s-bg); border-radius:8px}
+.dl-t{font-weight:900; font-size:16px; line-height:1.2} .dl-t small{display:block; font-size:12px; font-weight:700; color:var(--ink-2)}
+.dl-m .subj{margin-right:4px}
 .cu-chip{border:0; cursor:pointer; font:inherit; font-weight:800}
 .zone-cu{margin-top:34px; border:3px solid var(--crit); border-radius:16px; background:#FFF1F0; overflow:hidden}
 .zone-cu .zonehead{background:var(--crit); border-radius:0; margin:0}
@@ -650,7 +659,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v77</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span>小4 ／ 浜学園　<em style="font-style:normal;opacity:.6">v78</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -726,6 +735,10 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <div class="wknav"><button class="btn ghost sm" id="wkPrev" type="button">◀ 前の週</button><b id="wkLabel" style="font-size:13px"></b><button class="btn ghost sm" id="wkNext" type="button">次の週 ▶</button></div>
     <div id="wkBody"></div>
     <div class="judge-row" style="margin-top:10px"><button class="btn ghost sm" id="wkCopy" type="button">文章でコピー（LINEなどに貼る用）</button></div>
+  </section>
+  <section class="rvcard" id="dayLog"><h3>日ごとの勉強の記録（何時から何時まで、何をやったか）</h3>
+    <div class="wknav"><button class="btn ghost sm" id="dlPrev" type="button">◀ 前の日</button><b id="dlLabel" style="font-size:13px"></b><button class="btn ghost sm" id="dlNext" type="button">次の日 ▶</button></div>
+    <div id="dlBody"></div>
   </section>
   <div class="eyebrow">これまでの振返り</div>
   <div class="fchips" id="rvSubj"></div>
@@ -2874,6 +2887,7 @@ function renderCheck(plan){
   renderScores();
   renderWeekReview();
   renderWeekSummary();
+  renderDayLog();
   renderSunBanner();
   renderTimeAudit();
 }
@@ -2896,7 +2910,7 @@ function unitStats(key){
   const ts = TASKS.filter(t => t.u === key);
   return {
     wrong: ts.reduce((a,t) => a + (wrongOf(t.k) || 0), 0),
-    sec: ts.reduce((a,t) => a + (taskState(t.k)?.secLog || []).reduce((b,x) => b + x.sec, 0), 0),
+    sec: ts.reduce((a,t) => a + (taskState(t.k)?.secLog || []).reduce((b,x) => b + secOf(x), 0), 0),
     done: ts.filter(t => isDone(t.k)).length, total: ts.length
   };
 }
@@ -3124,7 +3138,7 @@ function renderReview(){
   // 履歴
   document.getElementById("rvCmtOnly").setAttribute("aria-pressed", String(RV_CMT));
   const hist = items.filter(x => !RV_CMT || x.s.comment).sort((a,b) => (b.s.judgeAt || "").localeCompare(a.s.judgeAt || "") || a.t.k.localeCompare(b.t.k));
-  const sec = k => (PROG[k]?.secLog || []).reduce((a,x) => a + x.sec, 0);
+  const sec = k => (PROG[k]?.secLog || []).reduce((a,x) => a + secOf(x), 0);
   document.getElementById("rvHist").innerHTML = hist.length
     ? hist.slice(0, RV_N).map(({t, s}) => `<div class="hitem s-${t.s}"><div class="row" style="gap:6px;flex-wrap:wrap"><span class="mini" style="color:var(--s);background:var(--s-bg)">${t.s}</span><b style="font-size:13.5px">${taskTitle(t)}</b></div>
         <div class="note">${fmtMD(s.judgeAt)}　<span class="chip ${s.judge === "合格" ? "good" : "redo"}">${esc(s.judge)}${s.reason ? "：" + esc(s.reason) : ""}</span>${s.wrong ? `　間違え ${s.wrong}問` : ""}${sec(t.k) ? `　${fmtSec(sec(t.k))}` : ""}</div>${commentBand(s)}</div>`).join("")
@@ -3142,7 +3156,7 @@ function weekStats(from){
   TASKS.forEach(t => {
     const s = taskState(t.k); if (!s) return;
     if (inW(s.done)){ done++; plan += t.min; bySubj[t.s]++; }
-    (s.secLog || []).forEach(x => { if (inW(x.d)){ timed++; sec += x.sec; } });
+    (s.secLog || []).forEach(x => { if (inW(x.d)){ timed++; sec += secOf(x); } });
     if (inW(s.judgeAt)){ wrong += s.wrong || 0; if (s.judge === "お直し") redo++; }
   });
   const sc = DATA.units.filter(u => inW(u.test) && SCORES.review[u.key] && SCORES.review[u.key].score != null).map(u => SCORES.review[u.key].score);
@@ -3185,17 +3199,46 @@ function timeSessions(from, to){
   TASKS.forEach(t => (PROG[t.k]?.secLog || []).forEach(x => {
     if (!x.d || x.d < from || x.d > to) return;
     const key = x.t0 ? `${x.t0}|${x.d}` : null;
-    if (key && idx[key] != null){ const o = out[idx[key]]; o.sec += x.sec; o.ts.push(t); return; }
+    if (key && idx[key] != null){ const o = out[idx[key]]; o.sec += secOf(x); o.raw += x.sec || 0; o.ts.push(t); return; }
     const g = rev[t.k], gt = g && TASKMAP[g];
-    const o = {...x, ts: [t], title: taskTitle(gt || t)};
+    const o = {...x, sec: secOf(x), raw: x.sec || 0, ts: [t], title: taskTitle(gt || t)};
     if (key) idx[key] = out.length;
     out.push(o);
   }));
   return out.sort((a, b) => (b.t1 || 0) - (a.t1 || 0) || b.d.localeCompare(a.d));
 }
+/* ---------- 日ごとの記録：何時から何時まで、何をやったか（今日も含む） ---------- */
+let DL_OFF = 0;
+const forgot = o => o.raw > MAX_SEC && !o.auto;   // 30分を超えて止め忘れた古い記録
+const hmOf = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
+function renderDayLog(){
+  const body = document.getElementById("dlBody"); if (!body) return;
+  const D = addDays(REAL_TODAY, -DL_OFF);
+  document.getElementById("dlLabel").textContent = `${fmtMD(D)}（${wdOf(D)}）${DL_OFF === 0 ? " 今日" : ""}`;
+  document.getElementById("dlPrev").onclick = () => { DL_OFF++; renderDayLog(); };
+  const nx = document.getElementById("dlNext"); nx.disabled = DL_OFF === 0; nx.onclick = () => { if (DL_OFF > 0){ DL_OFF--; renderDayLog(); } };
+  const ss = timeSessions(D, D).sort((a, b) => (a.t0 || a.t1 || 9e15) - (b.t0 || b.t1 || 9e15));
+  const nt = doneNoTimer(D, D), cn = cancelsIn(D, D);
+  if (!ss.length && !nt.length && !cn.length){ body.innerHTML = `<div class="note">この日は、計った記録がありません。</div>`; return; }
+  const timed = ss.filter(o => o.t0), first = timed[0], last = timed.reduce((a, o) => Math.max(a, forgot(o) ? o.t0 + MAX_SEC * 1000 : (o.t1 || o.t0)), 0);
+  const tot = ss.reduce((a, o) => a + o.sec, 0);
+  const S = 5 * 3600e3, W = 19 * 3600e3, dayStart = parse(D).getTime();   // 帯グラフは 5:00〜24:00
+  const pos = t => Math.max(0, Math.min(100, (t - dayStart - S) / W * 100));
+  const strip = timed.length ? `<div class="dl-strip" aria-hidden="true">${timed.map(o => { const a = pos(o.t0), b = pos(forgot(o) ? o.t0 + MAX_SEC * 1000 : (o.t1 || o.t0 + o.sec * 1000));
+      return `<i class="s-${o.ts[0].s}" style="left:${a}%;width:${Math.max(.8, b - a)}%"></i>`; }).join("")}<span class="dl-tk" style="left:0">5時</span><span class="dl-tk" style="left:${pos(dayStart + 12 * 3600e3)}%">12時</span><span class="dl-tk" style="left:${pos(dayStart + 18 * 3600e3)}%">18時</span><span class="dl-tk" style="right:0">24時</span></div>` : "";
+  const row = o => `<div class="dl-row s-${o.ts[0].s}"><div class="dl-t num">${o.t0 ? `${hmOf(o.t0)}<small>${forgot(o) ? "→ 止め忘れ" : `→ ${hmOf(o.t1 || o.t0 + (o.sec + (o.pz || 0)) * 1000)}`}</small>` : `<small>時刻なし<br>（旧記録）</small>`}</div>
+      <div class="dl-m"><span class="subj">${o.ts[0].s}</span> ${o.title}
+        <div class="note">計った時間 ${fmtSec(o.sec)}${o.pz > 30 ? `　一時中断 ${mins(o.pz)}（${o.np || 1}回）` : ""}${o.auto ? `　<b style="color:var(--redo-ink)">⏰ ${MAX_MIN}分で自動終了</b>` : o.raw > MAX_SEC ? `　<b style="color:var(--redo-ink)">止め忘れ？（${mins(o.raw)}→${MAX_MIN}分として数えています）</b>` : ""}</div></div></div>`;
+  body.innerHTML = `<div class="dl-sum"><b>${first ? `${hmOf(first.t0)} 〜 ${hmOf(last)}` : "時刻つきの記録なし"}</b><span>計った勉強時間 合計 ${fmtMin(Math.round(tot / 60))}（${ss.length}件）</span></div>${strip}
+    <div class="dl-list">${ss.map(row).join("")}</div>
+    ${nt.length ? `<div class="note" style="margin-top:8px">時間を計らずに「できた」にした宿題：${nt.map(t => esc(t.s + " " + t.mat + (t.part && t.part !== "（なし）" ? " " + partLabel(t.part) : ""))).join("、")}</div>` : ""}
+    ${cn.length ? `<div class="note">記録せずにやめた回：${cn.map(c => `${hmOf(c.t)}ごろ ${mins(c.sec)}`).join("、")}</div>` : ""}`;
+}
 const wallSec = o => o.t0 && o.t1 ? Math.round((o.t1 - o.t0) / 1000) : (o.sec + (o.pz || 0));
 function sessFlags(o){
   const f = [], pz = o.pz || 0;
+  if (o.auto) f.push(`${MAX_MIN}分で自動終了`);
+  else if (o.raw > MAX_SEC) f.push(`止め忘れ？（${mins(o.raw)}→${MAX_MIN}分として数えています）`);
   if (longPause(o)) f.push(`中断が長い（合計${mins(pz)}）`);
   if ((o.np || 0) >= 3) f.push(`中断${o.np}回`);
   const a = avgSecOf({group: o.ts});
@@ -3237,8 +3280,8 @@ function renderWeekSummary(){
     }
     (s.secLog || []).forEach(x => {
       if (!inW(x.d)) return;
-      days[diffDays(mon, x.d)].sec += x.sec; subj[t.s].sec += x.sec;
-      const o = (week[catKey(t)] ||= {s: t.s, n: 0, sec: 0}); o.n++; o.sec += x.sec;
+      days[diffDays(mon, x.d)].sec += secOf(x); subj[t.s].sec += secOf(x);
+      const o = (week[catKey(t)] ||= {s: t.s, n: 0, sec: 0}); o.n++; o.sec += secOf(x);
     });
   });
   const totSec = days.reduce((a, d) => a + d.sec, 0), maxSec = Math.max(1, ...days.map(d => d.sec));
@@ -3341,6 +3384,7 @@ function closeFocus(fromNav){
 const pausedRun = r => ({...r, start: null, acc: elapsed(r), pa: Date.now(), np: (r.np || 0) + 1});
 const resumedRun = r => { const now = Date.now(); return {...r, start: now, pa: null, pz: (r.pz || 0) + (r.pa ? (now - r.pa) / 1000 : 0), pl: r.pa ? [...(r.pl || []), {a: r.pa, b: now}].slice(-20) : (r.pl || [])}; };
 async function startTimer(k){
+  unlockSound(); delete ANN[k];
   const other = runningKey();
   if (other && other !== k){
     const ot = TASKMAP[other];
@@ -3353,7 +3397,7 @@ async function startTimer(k){
   saveTask(k, patch);
 }
 const pauseTimer = k => saveTask(k, {run: pausedRun(runOf(k))});
-const resumeTimer = k => saveTask(k, {run: resumedRun(runOf(k))});
+const resumeTimer = k => { unlockSound(); return saveTask(k, {run: resumedRun(runOf(k))}); };
 function endTimer(k){
   const r = runOf(k), now = Date.now();
   const sec = Math.round(elapsed(r));
@@ -3429,6 +3473,8 @@ const HG = (() => {
     topLevel: remain => at(T, remain, true),      // 上に残っている砂（体積の割合）の表面の高さ
     botLevel: fall => at(B, fall, true) };        // 下にたまった砂の表面の高さ（下から数える）
 })();
+const MAX_MIN = 30, MAX_SEC = MAX_MIN * 60;   // どんな宿題も30分で自動終了。それを超えた古い記録は「止め忘れ」とみなし、30分として数える
+const secOf = x => Math.min(x.sec || 0, MAX_SEC);
 const HG_DEF = 8, HG_OFFSET = 1, AVG_MIN_N = 3, CALC_MIN = 6;   // 計算テキストは平均を使わず、いつも6分から始める
 /* 教材ごとの平均時間。一時中断が長かった記録は、平均に入れない（時計を止めて短くなった分で平均が下がらないように） */
 const catKey = t => `${t.s}｜${t.mat}${t.part ? " " + partLabel(t.part) : ""}${t.retry ? "（解き直し）" : ""}`;
@@ -3438,8 +3484,8 @@ function catAvg(){
   if (AVG_MEMO.m && Date.now() - AVG_MEMO.at < 4000) return AVG_MEMO.m;
   const m = {};
   TASKS.forEach(t => (PROG[t.k]?.secLog || []).forEach(x => {
-    if (!(x.sec > 0) || longPause(x)) return;
-    const o = (m[catKey(t)] ||= {n: 0, sec: 0}); o.n++; o.sec += x.sec;
+    if (!(x.sec > 0) || x.sec > MAX_SEC || longPause(x)) return;
+    const o = (m[catKey(t)] ||= {n: 0, sec: 0}); o.n++; o.sec += secOf(x);
   }));
   AVG_MEMO = {at: Date.now(), m};
   return m;
@@ -3474,12 +3520,27 @@ function paintSand(t, e, running){
   st.setAttribute("y2", String(f <= 0 ? 132 : Math.max(70, lvl - Math.min(7, 2 + f * 9)))); st.setAttribute("visibility", running && f > 0 && f < 1 ? "visible" : "hidden");
 }
 const ALARMED = {};
-function timerAlarm(){   // タイマーが0になったときに、ひと鳴り＋バイブ（鳴らない端末では何もしない）
-  try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch {}
-  try { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; const c = new C(), o = c.createOscillator(), g = c.createGain();
-    o.type = "sine"; o.frequency.value = 880; g.gain.setValueAtTime(.2, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .8);
-    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .8); } catch {}
+/* ---- 音：笛・5分ごとの声 ---- */
+let SOUND_ON = (() => { try { return localStorage.getItem("hh_sound") !== "0"; } catch { return true; } })();
+let AC = null;
+function audioCtx(){ try { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = AC || new C(); if (AC.state === "suspended") AC.resume(); return AC; } catch { return null; } }
+function whistle(n){   // ピーッ（笛）。ホイッスルのように高い音を細かくふるわせる
+  try { navigator.vibrate && navigator.vibrate([300, 100, 300]); } catch {}
+  if (!SOUND_ON) return;
+  const c = audioCtx(); if (!c) return;
+  for (let i = 0; i < n; i++){
+    const t0 = c.currentTime + i * .75, o = c.createOscillator(), lfo = c.createOscillator(), lg = c.createGain(), g = c.createGain();
+    o.type = "sine"; o.frequency.value = 2900; lfo.frequency.value = 36; lg.gain.value = 140; lfo.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.4, t0 + .03); g.gain.setValueAtTime(.4, t0 + .5); g.gain.exponentialRampToValueAtTime(.0001, t0 + .6);
+    o.connect(g); g.connect(c.destination); o.start(t0); lfo.start(t0); o.stop(t0 + .65); lfo.stop(t0 + .65);
+  }
 }
+function speak(text){
+  if (!SOUND_ON) return;
+  try { const ss = window.speechSynthesis; if (!ss) return; ss.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "ja-JP"; ss.speak(u); } catch {}
+}
+function unlockSound(){ audioCtx(); try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis && speechSynthesis.speak(u); } catch {} }   // 「始める」を押したときに、音を鳴らせる状態にしておく
+function timerAlarm(){ whistle(2); speak("時間です！"); }
 function paintClock(t, e, running){
   if (!document.getElementById("hg")) return;
   const total = setMinOf(t) * 60, over = e > total;
@@ -3537,11 +3598,12 @@ function renderFocus(){
           <div class="fx-left" id="fxLeft"></div>
           <div class="fx-state" id="fxState">${label}</div></div></div>
       <div class="beads" id="beads"></div>
-      <div class="bead-legend">1コマ＝30秒</div></div>`;
+      <div class="bead-legend">1コマ＝30秒　／　どの宿題も ${MAX_MIN}分で自動的に終わります</div>
+      <button type="button" class="fx-link" id="fxSnd">${SOUND_ON ? "🔔 音（笛・5分ごとの声）：ON" : "🔕 音：OFF"}</button></div>`;
   let main;
   if (FOCUS_END && FOCUS_END.k === t.k){
     const setM = FOCUS_END.set || setMinOf(t), over = FOCUS_END.sec > setM * 60;
-    main = `<div class="fx-done"><b>おつかれさま！</b>
+    main = `<div class="fx-done"><b>${FOCUS_END.auto ? `⏰ この宿題にかけられる時間（${MAX_MIN}分）は終わりです` : "おつかれさま！"}</b>
         <div style="font-size:15px;margin-top:6px">かかった時間 <b style="display:inline;font-size:20px">${fmtSec(FOCUS_END.sec)}</b>（セット ${setM}分）</div>
         <div class="note" style="margin-top:6px">${over ? "じっくりできたね。" : "いいペース！"}お家の人に丸つけしてもらおう。<br><b>合格をもらうまでは、まだ「完了」じゃないよ。</b></div></div>
       <button class="fx-btn resume" id="fxOk" type="button">閉じる</button>`;
@@ -3567,6 +3629,7 @@ function renderFocus(){
   const adj = d => { const m = Math.max(1, Math.min(60, setMinOf(t) + d)); saveTask(t.k, {setMin: m}); };
   on("fxUp", () => adj(1)); on("fxDn", () => adj(-1));
   on("fxStart", () => startTimer(t.k));
+  on("fxSnd", () => { SOUND_ON = !SOUND_ON; try { localStorage.setItem("hh_sound", SOUND_ON ? "1" : "0"); } catch {} if (SOUND_ON) unlockSound(); renderFocus(); });
   on("fxPause", () => pauseTimer(t.k));
   on("fxResume", () => resumeTimer(t.k));
   on("fxEnd", () => endTimer(t.k));
@@ -3577,7 +3640,31 @@ function renderFocus(){
   on("fxNoTimer", async () => { if (await ask("時間を計らずに「できた」にしますか？", "できたにする")){
     saveTask(t.k, {done: TODAY, doneAt: Date.now(), skip: null, judge: null, reason: null, run: null, aud: [...(PROG[t.k]?.aud || []), {t: Date.now(), e: "notimer"}].slice(-30)}); closeFocus(); } });
 }
+const ANN = {}, AUTOING = new Set();
+function autoEnd(k, live){
+  if (AUTOING.has(k)) return;
+  const r = runOf(k); if (!r || !r.start) return;
+  AUTOING.add(k);
+  const over = elapsed(r) - MAX_SEC, tEnd = Date.now() - over * 1000, dEnd = iso(new Date(tEnd));   // 30分になった時刻
+  const st = taskState(k) || {}, set = setMinOf(TASKMAP[k] || {k});
+  const rec = {d: dEnd, sec: MAX_SEC, set, t0: r.t0 || null, t1: tEnd, pz: Math.round(r.pz || 0), np: r.np || 0, pl: r.pl || [], auto: true};
+  if (FOCUS_K === k) FOCUS_END = {k, sec: MAX_SEC, set, auto: true};
+  saveTask(k, {done: dEnd, doneAt: tEnd, skip: null, judge: null, reason: null, sec: MAX_SEC, secLog: [...(st.secLog || []), rec], run: null})
+    .finally(() => AUTOING.delete(k));
+  if (live){ whistle(3); speak(`この宿題にかけられる時間は終わりです。${MAX_MIN}分たったので、止めました。`); }
+  else toast(`${TASKMAP[k]?.mat || "宿題"}は ${MAX_MIN}分たっていたので、自動で終わりにしました`);
+}
 function tick(){
+  const rk = runningKey(), rr = rk && runOf(rk);
+  if (rr && rr.start){
+    const e = elapsed(rr);
+    if (e >= MAX_SEC) autoEnd(rk, e - MAX_SEC < 15);
+    else {   // 5分ごとに声で知らせる（25分のときだけ「あと5分」）
+      const n = Math.floor(e / 300);
+      if (ANN[rk] === undefined) ANN[rk] = n;
+      else if (n > ANN[rk]){ ANN[rk] = n; if (e - n * 300 < 15) speak(n * 5 >= MAX_MIN - 5 ? `${n * 5}分経過！ あと${MAX_MIN - n * 5}分で終わりです` : `${n * 5}分経過！`); }
+    }
+  }
   if (FOCUS_K && !document.getElementById("focus").hidden){
     const r = runOf(FOCUS_K), t = TASKMAP[FOCUS_K];
     if (r && r.start && t) paintClock(t, elapsed(r), true);
@@ -3619,7 +3706,7 @@ function renderPlan(plan){
   const grp = {};
   TASKS.forEach(t => (taskState(t.k)?.secLog || []).forEach(x => {
     const key = `${t.s}｜${t.mat}${t.part ? " " + partLabel(t.part) : ""}${t.retry ? "（解き直し）" : ""}`;
-    (grp[key] ||= {s: t.s, n: 0, sec: 0, plan: t.min, set: 0, ns: 0}).n++; grp[key].sec += x.sec; if (x.set){ grp[key].set += x.set; grp[key].ns++; }
+    (grp[key] ||= {s: t.s, n: 0, sec: 0, plan: t.min, set: 0, ns: 0}).n++; grp[key].sec += secOf(x); if (x.set){ grp[key].set += x.set; grp[key].ns++; }
   }));
   const keys = Object.keys(grp).sort((a,b) => SUBJ_ORDER[grp[a].s]-SUBJ_ORDER[grp[b].s] || a.localeCompare(b));
   document.getElementById("timeStats").innerHTML = keys.length
