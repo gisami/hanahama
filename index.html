@@ -609,6 +609,26 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .rbar>div>span{display:block; height:100%; background:var(--accent); border-radius:6px}
 .hitem{border-top:1px solid var(--line); padding:10px 0}
 .hitem:first-of-type{border-top:0}
+/* v97 がんばりと点数／使い方チェック／順位の差 */
+.efc{border:1px solid var(--line); border-left:6px solid var(--s,#888); border-radius:12px; padding:10px 12px; margin:10px 0; background:var(--card)}
+.efc .ef-h{display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:13px}
+.efc .ef-sc{font-family:var(--font-round); font-weight:900; font-size:28px; line-height:1.1; margin-top:4px}
+.efc .ef-sc small{font-size:12.5px; font-weight:800; color:var(--ink-3); margin-left:6px}
+.efc .ef-sc .up{color:var(--good-ink)} .efc .ef-sc .dn{color:var(--crit-ink)}
+.ef-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px}
+.ef-grid div{background:var(--track); border-radius:8px; padding:6px 4px; text-align:center}
+.ef-grid b{display:block; font-family:var(--font-round); font-weight:900; font-size:16px}
+.ef-grid span{font-size:10.5px; color:var(--ink-3); font-weight:700}
+.ef-grid .warn b{color:var(--redo-ink)} .ef-grid .bad b{color:var(--crit-ink)}
+.ef-sum{background:var(--accent-soft); border-radius:12px; padding:10px 12px; font-size:13.5px; line-height:1.7; margin-bottom:6px}
+.chk{display:grid; grid-template-columns:28px 1fr auto; gap:8px; align-items:center; padding:9px 4px; border-bottom:1px solid var(--line)}
+.chk .ic{font-size:19px; text-align:center}
+.chk b{font-size:13.5px; display:block}
+.chk .sub{font-size:11.5px; color:var(--ink-3); font-weight:700}
+.chk .val{font-family:var(--font-round); font-weight:900; font-size:15px; text-align:right; white-space:nowrap}
+.chk.ok .val{color:var(--good-ink)} .chk.warn .val{color:var(--redo-ink)} .chk.bad .val{color:var(--crit-ink)}
+.rkgap{margin:8px 0; background:var(--accent-soft); border-radius:10px; padding:8px 10px; font-size:13px; line-height:1.8}
+.rkgap b{font-family:var(--font-round); font-weight:900}
 .rtable{width:100%; border-collapse:collapse; font-size:12.5px}
 .rtable th,.rtable td{padding:5px 4px; border-bottom:1px solid var(--line); text-align:left}
 .rtable .n{text-align:right; font-variant-numeric:tabular-nums}
@@ -709,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v96</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v97</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -788,6 +808,8 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <div id="wkBody"></div>
     <div class="judge-row" style="margin-top:10px"><button class="btn ghost sm" id="wkCopy" type="button">文章でコピー（LINEなどに貼る用）</button></div>
   </details></section>
+  <section class="rvcard" id="effortCard"><h3>がんばりと点数のつながり</h3><div id="effortBody"></div></section>
+  <section class="rvcard" id="usageCard"><h3>アプリの使い方チェック（この週）</h3><div id="usageBody"></div></section>
   <section class="rvcard" id="dayLog"><h3>日ごとの勉強の記録</h3>
     <div class="wknav"><button class="btn ghost sm" id="dlPrev" type="button">◀ 前の日</button><b id="dlLabel" style="font-size:13px"></b><button class="btn ghost sm" id="dlNext" type="button">次の日 ▶</button></div>
     <div id="dlBody"></div>
@@ -2970,6 +2992,7 @@ function renderCheck(plan){
   renderDayLog();
   renderSunBanner();
   renderTimeAudit();
+  renderEffort();
 }
 
 /* ---------- 続けている日数 ---------- */
@@ -3248,7 +3271,7 @@ function renderReview(){
   document.getElementById("rvMonthBody").innerHTML = mk2.map(k => { const m = mm[k], [y, mo] = k.split("-"), all = RV_SUBJ === "全部", N = MONTH_N[k] || {};
     const subjRows = ["算数","国語","理科","社会"].filter(sj => m.subj && m.subj[sj] && (all || sj === RV_SUBJ)).map(sj => { const n = N[sj] || N.all || 0;
       return `<tr><td><b style="color:var(${SUBJ_VAR[sj]})">${sj}</b></td><td class="n">${m.subj[sj].avg}</td><td class="n">${m.subj[sj].rank != null ? `${m.subj[sj].rank}位${n ? `<span class="note">／${n}人以上</span>` : ""}${n ? rbar(m.subj[sj].rank, n) : ""}` : "<span class=\"note\">順位なし</span>"}</td></tr>`; }).join("");
-    return `<div style="margin-bottom:12px"><b>${y}年${+mo}月度　${esc(m.course || "")}</b>
+    return `<div style="margin-bottom:12px"><b>${y}年${+mo}月度　${esc(m.course || "")}</b>${rankGapHTML(m, all ? "all" : RV_SUBJ)}
       <table class="rtable" style="margin-top:8px"><thead><tr><th>教科</th><th class="n">復習テスト平均</th><th class="n">教科の順位</th></tr></thead><tbody>${subjRows}</tbody></table>${
         m.soc && (all || RV_SUBJ === "社会") ? `<div class="note" style="margin-top:6px">社会（別の個人票）：総合順位 ${m.soc.rank != null ? m.soc.rank + "位／" + (N.soc || "?") + "人以上" : "なし"}　総計 ${m.soc.total}／${m.outOf}点（復習テスト平均 ${m.soc.fuku}＋公開テスト ${m.soc.kokai}）${N.soc ? rbar(m.soc.rank, N.soc) : ""}</div>` : ""}</div>`; }).join("");
   // 記録（入力・修正）
@@ -3515,15 +3538,24 @@ function renderWeekSummary(){
       <tr><td>気になる記録（中断が長い・平均より極端に短い）</td><td class="n"><b class="${flagged ? "ft" : ""}">${flagged}件</b></td></tr>
     </tbody></table><div class="note">一覧は「丸つけ」タブの「時間の記録チェック」で見られます。</div>`;
 
-  const wk = Object.entries(week).sort((a, b) => SUBJ_ORDER[a[1].s] - SUBJ_ORDER[b[1].s] || a[0].localeCompare(b[0]));
+  /* 一週間の振返りでは、「テスト対策」は通常の教材に、「解き直し」はやり直し元の教材に、まとめて数える */
+  const mergedWk = {};
+  Object.entries(week).forEach(([k, o]) => {
+    const mk = k.replace("（解き直し）", "").replace(/\s*テスト対策$/, "");
+    const m = (mergedWk[mk] ||= {s: o.s, n: 0, sec: 0, t: o.t, keys: []});
+    m.n += o.n; m.sec += o.sec; m.keys.push(k); if (k === mk) m.t = o.t;
+  });
+  const wk = Object.entries(mergedWk).sort((a, b) => SUBJ_ORDER[a[1].s] - SUBJ_ORDER[b[1].s] || a[0].localeCompare(b[0]));
+  const allOf = o => { const a = o.keys.map(x => catAvg()[x]).filter(Boolean); return a.length ? {n: a.reduce((p, q) => p + q.n, 0), sec: a.reduce((p, q) => p + q.sec, 0)} : null; };
+  const labT = o => ({...o.t, retry: false, part: o.t.part === "テスト対策" ? "" : o.t.part});
   const initOf = (k, all) => k.includes("｜計算テキスト") ? `${CALC_MIN}分` : (all && all.n >= AVG_MIN_N) ? `${Math.max(1, Math.round(all.sec / all.n / 60) - HG_OFFSET)}分` : `${HG_DEF}分`;
   const catLabel = t => `<span class="s-${t.s}"><i class="subj">${t.s}</i></span> <span class="mt" style="--m:${(MAT_COL[t.mat]||MAT_COL["_"])[0]};--mi:${(MAT_COL[t.mat]||MAT_COL["_"])[1]}">${esc(t.mat)}</span>${t.part && t.part !== "（なし）" ? `<span class="pt">${esc(partLabel(t.part))}</span>` : ""}${t.retry ? `<span class="chip redo">解き直し</span>` : ""}`;
   if (wk.length) h += `<div class="wkh">教材ごとの平均時間</div>` + wk.map(([k, o]) => {
-    const all = catAvg()[k];
-    return `<div class="mrow"><div class="mname">${catLabel(o.t)}</div><div class="mstats">
+    const all = allOf(o), base = catAvg()[k];
+    return `<div class="mrow"><div class="mname">${catLabel(labT(o))}</div><div class="mstats">
       <div><small>この週</small><b>${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回）</b></div>
       <div><small>全体の平均</small><b>${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"}</b></div>
-      <div><small>タイマーの初期値</small><b>${initOf(k, all)}${k.includes("｜計算テキスト") ? "（固定）" : (all && all.n >= AVG_MIN_N) ? "" : "（記録待ち）"}</b></div></div></div>`; }).join("")
+      <div><small>タイマーの初期値</small><b>${initOf(k, base)}${k.includes("｜計算テキスト") ? "（固定）" : (base && base.n >= AVG_MIN_N) ? "" : "（記録待ち）"}</b></div></div></div>`; }).join("")
     + `<div class="note">タイマーの初期値は「全体の平均 − ${HG_OFFSET}分」（計算テキストだけは ${CALC_MIN}分 固定）。中断が長かった記録や30分を超えた記録は平均に入れていません。</div>`;
 
   if (top.length) h += `<div class="wkh">間違えた理由（多い順）</div><div class="note" style="color:var(--ink)">${top.map(([r, n]) => `${esc(r)} ${n}回`).join("　")}</div>`;
@@ -3550,11 +3582,12 @@ function renderWeekSummary(){
     L.push(`・計らずに「できた」にした宿題：${nt}個 ／ 記録せずやめた：${cn}回`);
     L.push(`・気になる記録：${flagged}件`);
     if (wk.length){ L.push("", "■ 教材ごとの平均時間（今週 ／ 全体の平均 ／ タイマー初期値）");
-      wk.forEach(([k, o]) => { const all = catAvg()[k]; L.push(`・${k.replace("｜", " ")}：${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回） ／ ${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"} ／ ${initOf(k, all)}`); }); }
+      wk.forEach(([k, o]) => { const all = allOf(o), base = catAvg()[k]; L.push(`・${k.replace("｜", " ")}：${(o.sec / o.n / 60).toFixed(1)}分（${o.n}回） ／ ${all ? (all.sec / all.n / 60).toFixed(1) + "分" : "—"} ／ ${initOf(k, base)}`); }); }
     if (top.length) L.push("", "■ 間違えた理由（多い順）", ...top.map(([r, n]) => `・${r}：${n}回`));
     if (cmts.length){ L.push("", "■ お家の人からのコメント"); cmts.slice(0, 8).forEach(({t, s}) => L.push(`・${fmtMD(s.judgeAt)} ${t.s} ${t.mat}：${s.comment}`)); }
     WK_TEXT = L.join("\n");
   }
+  renderUsage(mon, sun, {done, pass});
   document.getElementById("wkCopy").onclick = async () => {
     try { await navigator.clipboard.writeText(WK_TEXT); toast("コピーしました"); } catch { toast("コピーできませんでした"); }
   };
@@ -3586,6 +3619,94 @@ function renderTimeAudit(){
   if (nt.length) h += `<div class="wkh">計らずに「できた」にした宿題</div><div class="note" style="color:var(--ink)">${nt.map(t => `${fmtMD(PROG[t.k].done)} ${taskTitle(t)}`).join("<br>")}</div>`;
   if (cn.length) h += `<div class="wkh">記録せずにやめた（1分以上計ったあと）</div><div class="note" style="color:var(--ink)">${cn.map(a => { const t = TASKMAP[a.k]; return `${fmtMD(a.d)} ${hm(a.t)} ${t ? taskTitle(t) : esc(a.k)}（${fmtSec(a.sec)}計ったところで消した）`; }).join("<br>")}</div>`;
   box.innerHTML = h;
+}
+
+/* ---------- がんばりと点数のつながり（単元ごと：宿題の量→復習テストの点数） ---------- */
+function unitEffort(u){
+  const ts = TASKS.filter(t => t.u === u.key && !t.retry && !t.review);
+  if (!ts.length) return null;
+  let done = 0, before = 0, sec = 0, nt = 0, wrong = 0;
+  ts.forEach(t => { const s = PROG[t.k] || {};
+    if (s.done){ done++; if (s.done <= u.test) before++; if (!(s.secLog || []).length) nt++; }
+    sec += (s.secLog || []).reduce((a, x) => a + secOf(x), 0); wrong += s.wrong || 0; });
+  return {total: ts.length, done, before, sec, nt, wrong};
+}
+function renderEffort(){
+  const box = document.getElementById("effortBody"); if (!box) return;
+  const on = u => RV_SUBJ === "全部" || u.subject === RV_SUBJ;
+  const all = REVUNITS.filter(u => u.test <= TODAY && SCORES.review[u.key] && SCORES.review[u.key].score != null)
+    .sort((a, b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject] - SUBJ_ORDER[b.subject]);
+  const rows = all.map(u => ({u, r: SCORES.review[u.key], e: unitEffort(u)}));
+  const withE = rows.filter(x => x.e && x.r.avg != null);
+  const rate = x => x.e.before / x.e.total, df = x => x.r.score - x.r.avg;
+  const hi = withE.filter(x => rate(x) >= 0.8), lo = withE.filter(x => rate(x) < 0.8);
+  const mean = a => Math.round(a.reduce((p, q) => p + q, 0) / a.length * 10) / 10, sg = v => `${v >= 0 ? "+" : "−"}${Math.abs(v)}`;
+  let sum = "";
+  if (withE.length){
+    const part = (lab, a) => a.length ? `<b>${lab}</b>（${a.length}回）：平均より <b>${sg(mean(a.map(df)))}点</b>` : "";
+    sum = `<div class="ef-sum">${[part("テスト前に宿題を8割以上できた単元", hi), part("できていない単元", lo)].filter(Boolean).join("<br>")}
+      <div class="note" style="margin-top:4px">${fmtMD(START)}に記録を始めてからのテストだけで数えています（${withE.length}回分）。回数が少ないので目安です。</div></div>`;
+  } else sum = `<div class="note">記録を始めてから受けたテストの点数と平均点がそろうと、ここに「宿題をやった単元は平均より何点上だったか」が出ます。</div>`;
+  const list = rows.filter(x => on(x.u)).slice(0, 6).map(({u, r, e}) => {
+    const d = r.avg != null ? Math.round((r.score - r.avg) * 10) / 10 : null, c = r.rank && r.rank.c;
+    const cell = (b, l, cls = "") => `<div class="${cls}"><b>${b}</b><span>${l}</span></div>`;
+    let body;
+    if (!e) body = `<div class="note" style="margin-top:6px">この単元は、記録を始める前の宿題なので、がんばりの記録がありません。</div>`;
+    else {
+      const notDone = e.total - e.before, ntW = e.done && e.nt / e.done >= 0.3;
+      body = `<div class="ef-grid">${cell(`${e.before}/${e.total}`, "テスト前にできた宿題（個）", notDone >= 2 ? "bad" : notDone ? "warn" : "")}
+        ${cell(`${Math.round(e.sec / 60)}分`, "計った時間")}
+        ${cell(`${e.nt}個`, "計らずに「できた」", ntW ? "warn" : "")}
+        ${cell(`${e.wrong}問`, "宿題で間違えた問題")}</div>
+        <div class="note" style="margin-top:6px;color:var(--ink)">${notDone > 0 ? `テストの日までに終わっていない宿題が ${notDone} 個ありました。` : "宿題は、テストの日までに全部終わっていました。"}${ntW ? "計らずに「できた」にした宿題が多いので、実際にやった時間はもっと長いかもしれません。" : ""}</div>`;
+    }
+    return `<div class="efc s-${u.subject}"><div class="ef-h"><span class="subj">${u.subject}</span><b>No.${u.lec}　${esc(uname(u))}</b><span class="note">${fmtMD(u.test)}のテスト</span></div>
+      <div class="ef-sc">${r.score}点${d != null ? `<small class="${d >= 0 ? "up" : "dn"}">平均 ${r.avg}点　${sg(d)}点</small>` : ""}${c ? `<small>クラス ${c[0]}位／${c[1]}人</small>` : ""}</div>${body}</div>`;
+  }).join("");
+  box.innerHTML = `<div class="note" style="margin-bottom:6px">「どれだけやったか」と「テストの点数」を、単元ごとに1枚で見ます。点数は教科のフィルタ（下の「教科」）に合わせて出ます。</div>${sum}${list || `<div class="note">まだ点数が入ったテストがありません。</div>`}`;
+}
+
+/* ---------- アプリの使い方チェック（娘に正しい使い方を意識してもらう／丸つけをする人が先に見るところ） ---------- */
+function renderUsage(mon, sun, wk){
+  const box = document.getElementById("usageBody"); if (!box) return;
+  const ss = timeSessions(mon, sun), nt = doneNoTimer(mon, sun), cn = cancelsIn(mon, sun);
+  const done = wk.done, ntRate = done ? nt.length / done : 0;
+  const auto = ss.filter(o => o.auto || forgot(o)), longP = ss.filter(o => longPause(o));
+  const short = ss.filter(o => { const a = avgSecOf({group: o.ts}); return a != null && o.sec < a * 0.5; });
+  const inW = d => d && d >= mon && d <= sun;
+  let judged = 0, redo = 0;
+  TASKS.forEach(t => { const s = PROG[t.k]; if (s && inW(s.judgeAt)){ judged++; if (s.judge === "お直し") redo++; } });
+  const lv = (n, ok, warn) => n <= ok ? "ok" : n <= warn ? "warn" : "bad", IC = {ok: "✅", warn: "🟡", bad: "❗"};
+  const rules = [
+    {t: "宿題は「始める」を押してからやる", sub: "計らずに「できた」にしない。やった時間が記録に残ります", v: `${nt.length}個／${done}個`, l: !done ? "ok" : lv(ntRate, 0.1, 0.3)},
+    {t: "終わったら「終わり！」まで押す", sub: "記録せずにやめた回・止め忘れ・30分での自動終了", v: `${cn.length + auto.length}回`, l: lv(cn.length + auto.length, 0, 2)},
+    {t: "休むときは「休憩」か「一時中断」", sub: "中断が長い記録（5分以上など）。タイマーを動かしたまま離れない", v: `${longP.length}回`, l: lv(longP.length, 0, 2)},
+    {t: "ていねいに解く", sub: "その宿題の平均時間の半分より短くおわった回。急ぎすぎていないかな？", v: `${short.length}回`, l: lv(short.length, 1, 3)},
+    {t: "お直しを減らす", sub: "丸つけでお直しになった割合（見直しをしてから「できた」を押す）", v: judged ? `${redo}／${judged}個` : "—", l: !judged ? "ok" : lv(redo / judged, 0.15, 0.35)}];
+  const n = {ok: 0, warn: 0, bad: 0}; rules.forEach(r => n[r.l]++);
+  const head = `<div class="ef-sum">${n.bad ? `気をつけたいことが <b>${n.bad}つ</b>` : n.warn ? `あと少しのところが <b>${n.warn}つ</b>` : "<b>ぜんぶOK！</b>"}${n.ok ? `（できていること ${n.ok}つ）` : ""}。
+    <div class="note" style="margin-top:4px">責めるためではなく、「ふつうの使い方」に近づくための目安です。丸つけをする人が、先に見るところもわかります。</div></div>`;
+  const list = rules.map(r => `<div class="chk ${r.l}"><div class="ic">${IC[r.l]}</div><div><b>${r.t}</b><span class="sub">${r.sub}</span></div><div class="val">${r.v}</div></div>`).join("");
+  const nm = o => `${fmtMD(o.d)} ${o.title}`;
+  const look = [
+    ...nt.slice(0, 8).map(t => `<div class="note" style="color:var(--ink)">・${fmtMD(PROG[t.k].done)} ${taskTitle(t)}：<b>計らずに「できた」</b>（中身の確認を）</div>`),
+    ...ss.filter(o => sessFlags(o).length).slice(0, 8).map(o => `<div class="note" style="color:var(--ink)">・${nm(o)}：${sessFlags(o).join("・")}</div>`)];
+  const more = look.length ? `<details class="fold" style="margin-top:8px"><summary>丸つけの前に、先に確認したいもの（${nt.length + ss.filter(o => sessFlags(o).length).length}件）</summary><div class="fold-body">${look.join("")}</div></details>` : "";
+  box.innerHTML = head + list + more;
+}
+
+/* ---------- 順位：あと何点で1つ上／10人上／1位（月の個人票の「順位表の点数」m.board があるとき） ---------- */
+function rankGapHTML(m, which){
+  const sj = which === "all" ? null : which;
+  const rank = sj ? (m.subj && m.subj[sj] && m.subj[sj].rank) : m.rank, mine = sj ? (m.subj && m.subj[sj] && m.subj[sj].avg) : m.total;
+  const arr = m.board && m.board[which];
+  if (!rank || mine == null || !arr || !arr.length) return "";
+  const gap = r => { const g = Math.round((arr[r - 1] - mine) * 10) / 10; return g > 0 ? `あと <b>${g}点</b>` : "<b>同点</b>"; };
+  const L = [];
+  if (rank > 1) L.push(`1つ上（${rank - 1}位）まで ${gap(rank - 1)}`);
+  if (rank > 10) L.push(`10人上（${rank - 10}位）まで ${gap(rank - 10)}`);
+  if (rank > 2) L.push(`1位まで ${gap(1)}`);
+  return L.length ? `<div class="rkgap"><b>${sj || "総合"}（${rank}位）</b>：${L.join("　／　")}</div>` : "";
 }
 
 /* ---------- 取り組み画面（タイマー） ---------- */
