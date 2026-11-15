@@ -709,7 +709,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v95</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v96</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -3719,10 +3719,10 @@ const defaultSetMin = t => {
   if (isCalcT(t)) return CALC_MIN;
   const ms = t.group || [t], calc = ms.filter(x => x.mat === "計算テキスト"), rest = ms.filter(x => x.mat !== "計算テキスト");
   if (calc.length){   // 計算テキストを含むまとめカード：計算テキスト分は6分＋残りは平均（なければ8分）
-    const a = avgSecOf({group: rest}); return Math.max(1, Math.min(60, CALC_MIN + (a == null ? HG_DEF : Math.round(a / 60) - HG_OFFSET)));
+    const a = avgSecOf({group: rest}); return Math.max(1, Math.min(MAX_MIN, CALC_MIN + (a == null ? HG_DEF : Math.round(a / 60) - HG_OFFSET)));
   }
-  const a = avgSecOf(t); return a == null ? HG_DEF : Math.max(1, Math.min(60, Math.round(a / 60) - HG_OFFSET)); };
-const setMinOf = t => { const m = PROG[t.k]?.setMin; return typeof m === "number" && m >= 1 ? m : defaultSetMin(t); };
+  const a = avgSecOf(t); return a == null ? HG_DEF : Math.max(1, Math.min(MAX_MIN, Math.round(a / 60) - HG_OFFSET)); };
+const setMinOf = t => { const m = PROG[t.k]?.setMin; return Math.min(MAX_MIN, typeof m === "number" && m >= 1 ? m : defaultSetMin(t)); };   // どんな宿題でも、タイマーは30分まで
 const avgNote = t => { const a = avgSecOf(t);
   if (isCalcT(t)) return `<div class="note fx-avg">計算テキストは、いつも ${CALC_MIN}分 から始めます</div>`;
   return a == null ? `<div class="note fx-avg">この宿題の平均時間：記録が${AVG_MIN_N}回たまると出ます</div>`
@@ -3946,7 +3946,7 @@ function renderFocus(){
   if (document.getElementById("hg")) paintClock(t, r ? elapsed(r) : 0, !!(r && r.start));
   const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
   on("fxClose", closeFocus); on("fxOk", closeFocus);
-  const adj = d => { const m = Math.max(1, Math.min(60, setMinOf(t) + d)); saveTask(t.k, {setMin: m}); };
+  const adj = d => { const m = Math.max(1, Math.min(MAX_MIN, setMinOf(t) + d)); saveTask(t.k, {setMin: m}); };
   on("fxUp", () => adj(1)); on("fxDn", () => adj(-1));
   on("fxStart", () => startTimer(t.k));
   on("fxSnd", () => { SOUND_ON = !SOUND_ON; try { localStorage.setItem("hh_sound", SOUND_ON ? "1" : "0"); } catch {} if (SOUND_ON) unlockSound(); renderFocus(); });
