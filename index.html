@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v97</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v98</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -806,10 +806,10 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
   <section class="rvcard wk-green" id="wkSum"><details id="wkDet"><summary><h3 style="display:inline">日曜の家族ふり返り（週のまとめ）</h3></summary>
     <div class="wknav" style="margin-top:10px"><button class="btn ghost sm" id="wkPrev" type="button">◀ 前の週</button><b id="wkLabel" style="font-size:13px"></b><button class="btn ghost sm" id="wkNext" type="button">次の週 ▶</button></div>
     <div id="wkBody"></div>
+    <div id="effortCard" style="margin-top:16px"><div class="wkh">がんばりと点数のつながり</div><div id="effortBody"></div></div>
+    <div id="usageCard" style="margin-top:16px"><div class="wkh">アプリの使い方チェック（この週）</div><div id="usageBody"></div></div>
     <div class="judge-row" style="margin-top:10px"><button class="btn ghost sm" id="wkCopy" type="button">文章でコピー（LINEなどに貼る用）</button></div>
   </details></section>
-  <section class="rvcard" id="effortCard"><h3>がんばりと点数のつながり</h3><div id="effortBody"></div></section>
-  <section class="rvcard" id="usageCard"><h3>アプリの使い方チェック（この週）</h3><div id="usageBody"></div></section>
   <section class="rvcard" id="dayLog"><h3>日ごとの勉強の記録</h3>
     <div class="wknav"><button class="btn ghost sm" id="dlPrev" type="button">◀ 前の日</button><b id="dlLabel" style="font-size:13px"></b><button class="btn ghost sm" id="dlNext" type="button">次の日 ▶</button></div>
     <div id="dlBody"></div>
@@ -3638,15 +3638,8 @@ function renderEffort(){
     .sort((a, b) => b.test.localeCompare(a.test) || SUBJ_ORDER[a.subject] - SUBJ_ORDER[b.subject]);
   const rows = all.map(u => ({u, r: SCORES.review[u.key], e: unitEffort(u)}));
   const withE = rows.filter(x => x.e && x.r.avg != null);
-  const rate = x => x.e.before / x.e.total, df = x => x.r.score - x.r.avg;
-  const hi = withE.filter(x => rate(x) >= 0.8), lo = withE.filter(x => rate(x) < 0.8);
-  const mean = a => Math.round(a.reduce((p, q) => p + q, 0) / a.length * 10) / 10, sg = v => `${v >= 0 ? "+" : "−"}${Math.abs(v)}`;
-  let sum = "";
-  if (withE.length){
-    const part = (lab, a) => a.length ? `<b>${lab}</b>（${a.length}回）：平均より <b>${sg(mean(a.map(df)))}点</b>` : "";
-    sum = `<div class="ef-sum">${[part("テスト前に宿題を8割以上できた単元", hi), part("できていない単元", lo)].filter(Boolean).join("<br>")}
-      <div class="note" style="margin-top:4px">${fmtMD(START)}に記録を始めてからのテストだけで数えています（${withE.length}回分）。回数が少ないので目安です。</div></div>`;
-  } else sum = `<div class="note">記録を始めてから受けたテストの点数と平均点がそろうと、ここに「宿題をやった単元は平均より何点上だったか」が出ます。</div>`;
+  const sg = v => `${v >= 0 ? "+" : "−"}${Math.abs(v)}`;
+  const sum = `<div class="ef-sum">点数は、宿題の<b>個数</b>だけでは決まりません。個数より、1個ずつの<b>中身</b>（時間・見直し）と、<b>取りこぼした点</b>を見ていこう。<div class="note" style="margin-top:4px">${fmtMD(START)}に記録を始めてからのテストで見ています。回数が少ないので、はっきりした関係はまだ出ていません。</div></div>`;
   const list = rows.filter(x => on(x.u)).slice(0, 6).map(({u, r, e}) => {
     const d = r.avg != null ? Math.round((r.score - r.avg) * 10) / 10 : null, c = r.rank && r.rank.c;
     const cell = (b, l, cls = "") => `<div class="${cls}"><b>${b}</b><span>${l}</span></div>`;
@@ -3654,11 +3647,12 @@ function renderEffort(){
     if (!e) body = `<div class="note" style="margin-top:6px">この単元は、記録を始める前の宿題なので、がんばりの記録がありません。</div>`;
     else {
       const notDone = e.total - e.before, ntW = e.done && e.nt / e.done >= 0.3;
+      const ms = r.miss ? `<div class="note" style="margin-top:6px;color:var(--ink)">${r.miss.p70 > 0 ? `クラスの7割以上が正解した問題で落とした点：<b>${r.miss.p70}点</b>（${r.miss.n70}問）→ 取れていれば <b>${r.score + r.miss.p70}点</b>${r.avg != null ? `（平均 ${r.avg}点）` : ""}。` : "クラスの7割以上が正解した問題は、ほぼ取れていました。"}　半分以上が正解した問題では <b>${r.miss.p50}点</b> 落としています。</div>` : "";
       body = `<div class="ef-grid">${cell(`${e.before}/${e.total}`, "テスト前にできた宿題（個）", notDone >= 2 ? "bad" : notDone ? "warn" : "")}
-        ${cell(`${Math.round(e.sec / 60)}分`, "計った時間")}
+        ${cell(`${Math.round(e.sec / 60)}分`, `計った時間（${Math.max(0, e.done - e.nt)}個分）`)}
         ${cell(`${e.nt}個`, "計らずに「できた」", ntW ? "warn" : "")}
         ${cell(`${e.wrong}問`, "宿題で間違えた問題")}</div>
-        <div class="note" style="margin-top:6px;color:var(--ink)">${notDone > 0 ? `テストの日までに終わっていない宿題が ${notDone} 個ありました。` : "宿題は、テストの日までに全部終わっていました。"}${ntW ? "計らずに「できた」にした宿題が多いので、実際にやった時間はもっと長いかもしれません。" : ""}</div>`;
+        <div class="note" style="margin-top:6px;color:var(--ink)">${notDone > 0 ? `テストの日までに終わっていない宿題が ${notDone} 個ありました。` : "宿題は、テストの日までに全部終わっていました。"}${ntW ? "計らずに「できた」にした宿題が多いので、実際にやった時間はもっと長いかもしれません。" : ""}</div>${ms}`;
     }
     return `<div class="efc s-${u.subject}"><div class="ef-h"><span class="subj">${u.subject}</span><b>No.${u.lec}　${esc(uname(u))}</b><span class="note">${fmtMD(u.test)}のテスト</span></div>
       <div class="ef-sc">${r.score}点${d != null ? `<small class="${d >= 0 ? "up" : "dn"}">平均 ${r.avg}点　${sg(d)}点</small>` : ""}${c ? `<small>クラス ${c[0]}位／${c[1]}人</small>` : ""}</div>${body}</div>`;
