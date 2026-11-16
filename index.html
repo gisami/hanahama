@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v103</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v104</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -833,12 +833,12 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 <!-- ============ 丸つけ ============ -->
 <main class="wrap view" id="view-check" hidden>
   <div class="parentbar"><span>お家の人モード</span><button class="btn ghost sm" data-lock type="button">終わって鍵をかける</button></div>
-  <div class="tiles" id="checkTiles" style="margin-bottom:18px"></div>
-
   <section id="skipSec" hidden style="margin-bottom:24px">
     <div class="eyebrow">「やらない」の相談（お家の人が決めます）</div>
     <div id="skipList" class="stack"></div>
   </section>
+
+  <div class="tiles" id="checkTiles" style="margin-bottom:18px"></div>
 
 
   <div class="eyebrow" id="waitHead" style="margin-top:6px">丸つけ待ち（娘が「できた」を押したもの）</div>
@@ -1725,6 +1725,7 @@ function buildPlan(){
     groups.forEach(g => g.tasks.filter(t => t.review && !t.note && isDone(t.k)).forEach(t => {
       const n = mkNoteRedo(t, date), st = taskState(n.k);
       if (st?.done && st.done !== date) return;
+      if (st?.skip?.ok) return;   // 見送りが承認されたら出さない
       TASKMAP[n.k] = n; put(g, n);
     }));
     groups.forEach(g => { g.tasks.sort((a,b) => {
@@ -2640,7 +2641,7 @@ function renderToday(plan){
   }
 
   // ===== 見送りにした宿題 =====
-  const skipped = ALLTASKS.filter(t => { const k = skipOf(t.k); return k && k.ok && k.ok >= addDays(TODAY, -7); }).sort(sortTasks);
+  const skipped = skipPool().filter(t => { const k = skipOf(t.k); return k && k.ok && k.ok >= addDays(TODAY, -7); }).sort(sortTasks);
   if (skipped.length){
     const det = el("details", "fold");
     det.innerHTML = `<summary>見送りにした宿題 ${skipped.length}個（おうちの人が「いいよ」と言ったもの）</summary>`;
@@ -2742,8 +2743,8 @@ function renderToday(plan){
 
 /* ---------- 丸つけ ---------- */
 function renderSkips(){
-  const pend = ALLTASKS.filter(t => { const k = skipOf(t.k); return k && !k.ok; });
-  const appr = ALLTASKS.filter(t => { const k = skipOf(t.k); return k && k.ok && k.ok >= addDays(TODAY, -14); });
+  const pend = skipPool().filter(t => { const k = skipOf(t.k); return k && !k.ok; });
+  const appr = skipPool().filter(t => { const k = skipOf(t.k); return k && k.ok && k.ok >= addDays(TODAY, -14); });
   const sec = document.getElementById("skipSec"), list = document.getElementById("skipList");
   sec.hidden = !pend.length && !appr.length;
   list.innerHTML = "";
@@ -2810,7 +2811,7 @@ function renderCatchupAdmin(plan){
 }
 function updateBadge(){
   const n = TASKS.filter(t => { const s = taskState(t.k); return s && s.done && !s.judge; }).length
-          + ALLTASKS.filter(t => { const k = skipOf(t.k); return k && !k.ok; }).length;
+          + skipPool().filter(t => { const k = skipOf(t.k); return k && !k.ok; }).length;
   const b = document.getElementById("badgeCheck");
   b.textContent = n > 99 ? "99+" : String(n); b.hidden = n === 0;
   b.setAttribute("aria-label", `丸つけ・相談の待ち ${n}件`);
@@ -3762,6 +3763,8 @@ function bindAdv(root){
 
 /* ---- やらない相談 ---- */
 const skipOf = k => PROG[k]?.skip || null;
+/* 「やらない相談」の対象：ふつうの宿題に加えて、復習のあとに出る「解き直し（ノート）」カードも含める */
+const skipPool = () => { const m = new Map(); ALLTASKS.forEach(t => m.set(t.k, t)); Object.keys(PROG).forEach(k => { const x = PROG[k]?.skip && k.match(/^(.+?)-解直-(\d{4}-\d\d-\d\d)$/); if (x && !m.has(k)){ const r = mkReview(x[1], x[2]); if (r) m.set(k, mkNoteRedo(r, x[2])); } }); return [...m.values()]; };
 function openSkip(k){
   const m = document.getElementById("skipModal"), box = document.getElementById("skipReasons");
   box.innerHTML = "";
