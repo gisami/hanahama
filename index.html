@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v100</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v101</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -4027,8 +4027,8 @@ function renderFocus(){
         <div class="sub">特にていねいに。間違えたところは、後で「解き直し」に出てきます。${u.focus ? `<br>この単元でテストに出るところ：<b>${esc(u.focus)}</b>` : ""}</div></div></div>`
     : (u && u.focus ? `<div class="fx-notest">この宿題そのものは「テストに出る」指定ではありません。${fmtMD(u.test)}の復習テストに出るのは <b>${esc(u.focus)}</b> です。</div>` : "");
   const redo = ((isRedo(t.k) || t.retry) ? redoBanner(t, "間違えたところをもう一度") : "") + commentBand(cmtSrc(t, st));
-  const clockCard = (running, label) => `<div class="fx-clock">
-      <div class="fx-goal"><button type="button" class="fx-ar" id="fxDn" aria-label="1分へらす">▼</button><span>タイマー <b>${setMinOf(t)}</b>分</span><button type="button" class="fx-ar" id="fxUp" aria-label="1分ふやす">▲</button></div>
+  const clockCard = (running, label, locked) => `<div class="fx-clock">
+      <div class="fx-goal">${locked ? "" : `<button type="button" class="fx-ar" id="fxDn" aria-label="1分へらす">▼</button>`}<span>タイマー <b>${setMinOf(t)}</b>分</span>${locked ? "" : `<button type="button" class="fx-ar" id="fxUp" aria-label="1分ふやす">▲</button>`}</div>
       ${avgNote(t)}
       <div class="glass-row">${glassSVG()}
         <div class="fx-readout"><div class="fx-timerow"><div class="fx-time num${running ? "" : " paused"}" id="fxTime">0:00</div><span class="fx-unitlab" id="fxUnit">残り</span></div>
@@ -4050,7 +4050,7 @@ function renderFocus(){
       ${st.skip && !st.skip.ok ? `<div class="note" style="text-align:center">「やらない」を相談中です（お家の人の返事待ち）</div>`
         : `<button class="fx-link" id="fxSkip" type="button">この宿題は「やらない」と相談する</button>`}`;
   } else {
-    main = clockCard(!!r.start, r.start ? "計っています" : "一時中断中（時計は止まっています）") + `
+    main = clockCard(!!r.start, r.start ? "計っています" : "一時中断中（時計は止まっています）", true) + `
       <div class="fx-btns">
         ${r.start ? `<button class="fx-btn pause" id="fxPause" type="button">一時中断</button>`
                   : `<button class="fx-btn resume" id="fxResume" type="button">再開 ▶</button>`}
