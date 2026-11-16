@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v106</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v107</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1298,7 +1298,7 @@ async function saveTask(k, patch){
   const ms = GROUPS[k];
   if (ms && !patch.clear){
     const own = {}, rest = {};
-    Object.keys(patch).forEach(x => ((x === "run" || x === "setMin" || x === "aud") ? own : rest)[x] = patch[x]);
+    Object.keys(patch).forEach(x => ((x === "run" || x === "setMin" || x === "setFor" || x === "aud") ? own : rest)[x] = patch[x]);
     if (Object.keys(own).length) PROG[k] = {...(PROG[k] || {}), ...own};
     if (Object.keys(rest).length){
       const notDone = ms.filter(m => !(PROG[m.k]?.done));
@@ -3731,7 +3731,7 @@ async function startTimer(k){
   }
   const now = Date.now();
   const patch = {run: {start: now, acc: 0, day: TODAY, t0: now, pz: 0, np: 0, pa: null, pl: []}};
-  if (typeof PROG[k]?.setMin !== "number") patch.setMin = setMinOf(TASKMAP[k] || {k});   // 始めた時点の砂時計の分数を固定する
+  patch.setMin = setMinOf(TASKMAP[k] || {k}); patch.setFor = redoN(k) || 0;   // 始めた時点の砂時計の分数を固定する（どの回のやり直しの分かも覚える）
   saveTask(k, patch); speak("スタート！ がんばろう！");
 }
 const pauseTimer = k => { speak("ちゅうだん。ひとやすみ、ひとやすみ"); return saveTask(k, {run: pausedRun(runOf(k))}); };
@@ -3746,7 +3746,7 @@ function endTimer(k){
   const rec = {d: TODAY, sec, set, t0: (r && r.t0) || null, t1: now, pz: Math.round(pz), np: (r && r.np) || 0, pl};
   { const tk = TASKMAP[k], w = tk ? redoWrongs(tk) : 0; if (w > 0) rec.w = w; }   // 差し戻し・解き直しのときは、間違えた問題数も記録（1問あたりの時間の実績に使う）
   FOCUS_END = {k, sec, set}; speak("できたー！ おつかれさま！");
-  saveTask(k, {done: TODAY, doneAt: now, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), rec], run: null});
+  saveTask(k, {done: TODAY, doneAt: now, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), rec], run: null, setMin: null, setFor: null});   // 次のやり直しは、また決め直す
 }
 /* ---- 先生のポイント（折りたたみ）---- */
 let ADV_OPEN = false;
@@ -3873,7 +3873,10 @@ const defaultSetMin = t => {
     const a = avgSecOf({group: rest}); return Math.max(1, Math.min(MAX_MIN, CALC_MIN + (a == null ? HG_DEF : Math.round(a / 60) - HG_OFFSET)));
   }
   const a = avgSecOf(t); return a == null ? HG_DEF : Math.max(1, Math.min(MAX_MIN, Math.round(a / 60) - HG_OFFSET)); };
-const setMinOf = t => { const m = PROG[t.k]?.setMin; return Math.min(MAX_MIN, typeof m === "number" && m >= 1 ? m : defaultSetMin(t)); };   // どんな宿題でも、タイマーは30分まで
+/* 保存してある分数は、同じ回（最初／差し戻し◯回目）のものだけ使う。差し戻しは毎回、実績から決め直す */
+const setMinOf = t => { const P = PROG[t.k]; let m = P?.setMin;
+  if (typeof m === "number" && redoWrongs(t) > 0 && P.setFor !== (redoN(t.k) || 0)) m = undefined;
+  return Math.min(MAX_MIN, typeof m === "number" && m >= 1 ? m : defaultSetMin(t)); };   // どんな宿題でも、タイマーは30分まで
 const avgNote = t => { const a = avgSecOf(t);
   { const w = redoWrongs(t); if (w > 0){ const o = perProb()[baseCat(t.group ? t.group[0] : t)];
     return o && o.n >= 2 ? `<div class="note fx-avg">差し戻しの目安：この教材は 1問あたり約${Math.round(o.sec / o.w)}秒 × ${w}問（これまでの実績 ${o.n}回）</div>`
@@ -4100,7 +4103,7 @@ function renderFocus(){
   if (document.getElementById("hg")) paintClock(t, r ? elapsed(r) : 0, !!(r && r.start));
   const on = (id, f) => { const b = document.getElementById(id); if (b) b.onclick = f; };
   on("fxClose", closeFocus); on("fxOk", closeFocus);
-  const adj = d => { const m = Math.max(1, Math.min(MAX_MIN, setMinOf(t) + d)); saveTask(t.k, {setMin: m}); };
+  const adj = d => { const m = Math.max(1, Math.min(MAX_MIN, setMinOf(t) + d)); saveTask(t.k, {setMin: m, setFor: redoN(t.k) || 0}); };
   on("fxUp", () => adj(1)); on("fxDn", () => adj(-1));
   on("fxStart", () => startTimer(t.k));
   on("fxPause", () => pauseTimer(t.k));
@@ -4135,7 +4138,7 @@ function autoEnd(k, live){
   const rec = {d: dEnd, sec: MAX_SEC, set, t0: r.t0 || null, t1: tEnd, pz: Math.round(r.pz || 0), np: r.np || 0, pl: r.pl || [], auto: true};
   { const tk = TASKMAP[k], w = tk ? redoWrongs(tk) : 0; if (w > 0) rec.w = w; }
   if (FOCUS_K === k) FOCUS_END = {k, sec: MAX_SEC, set, auto: true};
-  saveTask(k, {done: dEnd, doneAt: tEnd, skip: null, judge: null, reason: null, sec: MAX_SEC, secLog: [...(st.secLog || []), rec], run: null})
+  saveTask(k, {done: dEnd, doneAt: tEnd, skip: null, judge: null, reason: null, sec: MAX_SEC, secLog: [...(st.secLog || []), rec], run: null, setMin: null, setFor: null})
     .finally(() => AUTOING.delete(k));
   if (live){ whistle(3); speak(`この宿題にかけられる時間は終わりです。${MAX_MIN}分たったので、止めました。`); }
   else toast(`${TASKMAP[k]?.mat || "宿題"}は ${MAX_MIN}分たっていたので、自動で終わりにしました`);
