@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v101</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v102</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1284,8 +1284,8 @@ function evOf(patch){
   const out = [];
   if (patch.done === null) out.push({e: "undo"});
   else if (patch.done && !patch.judge) out.push({e: "done"});
-  if (patch.judge === "合格") out.push(patch.byParent ? {e: "pass", by: "親"} : {e: "pass"});
-  if (patch.judge === "お直し"){ const o = {e: "redo", n: patch.redo}; if (patch.wrongNo) o.no = patch.wrongNo; if (patch.reason) o.why = patch.reason; out.push(o); }
+  if (patch.judge === "合格"){ const o = patch.byParent ? {e: "pass", by: "親"} : {e: "pass"}; if (patch.comment) o.c = patch.comment; out.push(o); }
+  if (patch.judge === "お直し"){ const o = {e: "redo", n: patch.redo}; if (patch.wrongNo) o.no = patch.wrongNo; if (patch.reason) o.why = patch.reason; if (patch.comment) o.c = patch.comment; out.push(o); }
   if (patch.judge === null && patch.judgeAt === null && !("done" in patch)) out.push({e: "unjudge"});
   return out;
 }
@@ -2020,7 +2020,8 @@ function histOf(k){
   ev.forEach(x => { const l = merged[merged.length - 1];
     if (l && l.e === x.e && (l.n ?? 0) === (x.n ?? 0) && x.at - l.at < 30 * 60 * 1000){
       if (x.no && !(l.no || "").includes(x.no)) l.no = (l.no ? l.no + "／" : "") + x.no;
-      if (x.why && !(l.why || "").includes(x.why)) l.why = (l.why ? l.why + "／" : "") + x.why; }
+      if (x.why && !(l.why || "").includes(x.why)) l.why = (l.why ? l.why + "／" : "") + x.why;
+      if (x.c && !(l.c || "").includes(x.c)) l.c = (l.c ? l.c + " ／ " : "") + x.c; }
     else merged.push({...x}); });
   ev = merged;
   // この機能より前の分：回数と日付だけから、分かる範囲でつくる
@@ -2044,8 +2045,8 @@ function redoHistFold(k){
     if (x.e === "redo") r = x.n || r + 1;
     let lab, cls = x.e, sub = "";
     if (x.e === "done"){ d++; lab = r === 0 ? "最初に「できた」" : `${redoLabel(r)}をやって「できた」`; }
-    else if (x.e === "redo"){ lab = `差し戻し ${x.n || r}回目`; sub = [x.no ? `間違えた問題：${esc(x.no)}` : "", x.why ? `理由：${esc(x.why)}` : ""].filter(Boolean).join("　"); }
-    else if (x.e === "pass") lab = "合格" + (x.by ? "（お家の人が記録）" : "");
+    else if (x.e === "redo"){ lab = `差し戻し ${x.n || r}回目`; sub = [x.no ? `間違えた問題：${esc(x.no)}` : "", x.why ? `理由：${esc(x.why)}` : "", x.c ? `おうちの人から：${esc(x.c)}` : ""].filter(Boolean).join("　"); }
+    else if (x.e === "pass"){ lab = "合格" + (x.by ? "（お家の人が記録）" : ""); sub = x.c ? `おうちの人から：${esc(x.c)}` : ""; }
     else if (x.e === "undo") lab = "「できた」を取り消し";
     else lab = "丸つけを取り消し";
     return {html: `<li class="hv-${cls}"><span class="hv-dot"></span><div><b>${lab}</b><span class="hv-t">${fmtDT(x.at, x.d)}</span>${sub ? `<div class="hv-sub">${sub}</div>` : ""}</div></li>`};
