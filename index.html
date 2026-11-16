@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v105</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v106</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1293,6 +1293,7 @@ const withHist = (key, p, evs, now) => evs.length ? {...p, hist: [...(PROG[key]?
 async function saveTask(k, patch){
   const unit = unitKeyOf(k);
   AVG_MEMO.m = null;   // 平均時間を計算し直す
+  PP_MEMO.m = null;
   const EVS = evOf(patch), NOW = Date.now();
   const ms = GROUPS[k];
   if (ms && !patch.clear){
@@ -3743,6 +3744,7 @@ function endTimer(k){
   let pz = (r && r.pz) || 0, pl = (r && r.pl) || [];
   if (r && !r.start && r.pa){ pz += (now - r.pa) / 1000; pl = [...pl, {a: r.pa, b: now}].slice(-20); }   // 中断したまま「終わり」を押した
   const rec = {d: TODAY, sec, set, t0: (r && r.t0) || null, t1: now, pz: Math.round(pz), np: (r && r.np) || 0, pl};
+  { const tk = TASKMAP[k], w = tk ? redoWrongs(tk) : 0; if (w > 0) rec.w = w; }   // 差し戻し・解き直しのときは、間違えた問題数も記録（1問あたりの時間の実績に使う）
   FOCUS_END = {k, sec, set}; speak("できたー！ おつかれさま！");
   saveTask(k, {done: TODAY, doneAt: now, skip: null, judge: null, reason: null, sec, secLog: [...(st.secLog || []), rec], run: null});
 }
@@ -3823,7 +3825,7 @@ function catAvg(){
   if (AVG_MEMO.m && Date.now() - AVG_MEMO.at < 4000) return AVG_MEMO.m;
   const m = {};
   TASKS.forEach(t => (PROG[t.k]?.secLog || []).forEach(x => {
-    if (!(x.sec > 0) || x.sec > MAX_SEC || longPause(x)) return;
+    if (!(x.sec > 0) || x.sec > MAX_SEC || longPause(x) || x.w) return;   // 差し戻しのやり直しは、ふつうの平均に入れない
     const o = (m[catKey(t)] ||= {n: 0, sec: 0}); o.n++; o.sec += secOf(x);
   }));
   AVG_MEMO = {at: Date.now(), m};
@@ -3835,7 +3837,36 @@ function avgSecOf(t){   // 平均（秒）。まとめカードは中身の合�
   return sum;
 }
 const isCalcT = t => (t.group || [t]).every(x => x.mat === "計算テキスト");
+/* 差し戻し・解き直しの目安時間：教材ごとの「1問あたりの実績」×間違えた問題数 */
+const baseCat = t => `${t.s}｜${t.mat}${t.part ? " " + partLabel(t.part) : ""}`;
+const redoWrongs = t => { const ms = t.group || [t]; let w = 0;
+  for (const x of ms){ w += x.retry ? (PROG[x.retryOf]?.wrong || 0) : (isRedo(x.k) ? (PROG[x.k]?.wrong || 0) : 0); }
+  return w; };
+let PP_MEMO = {at: 0, m: null};
+function perProb(){   // 教材ごとの、間違えた1問あたりの秒数
+  if (PP_MEMO.m && Date.now() - PP_MEMO.at < 4000) return PP_MEMO.m;
+  const m = {};
+  ALLTASKS.forEach(t => (PROG[t.k]?.secLog || []).forEach(x => {
+    const w = x.w || (t.retry ? PROG[t.retryOf]?.wrong : 0);
+    if (!(w > 0) || !(x.sec > 0) || x.sec >= MAX_SEC || longPause(x)) return;
+    const o = (m[baseCat(t)] ||= {n: 0, sec: 0, w: 0}); o.n++; o.sec += secOf(x); o.w += w;
+  }));
+  PP_MEMO = {at: Date.now(), m};
+  return m;
+}
+const REDO_DEF = 5;   // 実績がたまるまで（教材ごとに2回分）の目安
+function redoSetMin(t){   // 差し戻し・解き直しなら分を返す。そうでなければ null
+  const w = redoWrongs(t); if (!(w > 0)) return null;
+  const ms = t.group || [t]; let sec = 0;
+  for (const x of ms){
+    const wx = redoWrongs(x); if (!(wx > 0)) continue;
+    const o = perProb()[baseCat(x)]; if (!o || o.n < 2) return REDO_DEF;
+    sec += (o.sec / o.w) * wx;
+  }
+  return Math.max(2, Math.min(MAX_MIN, Math.round(sec / 60)));
+}
 const defaultSetMin = t => {
+  const rm = redoSetMin(t); if (rm != null) return rm;
   if (isCalcT(t)) return CALC_MIN;
   const ms = t.group || [t], calc = ms.filter(x => x.mat === "計算テキスト"), rest = ms.filter(x => x.mat !== "計算テキスト");
   if (calc.length){   // 計算テキストを含むまとめカード：計算テキスト分は6分＋残りは平均（なければ8分）
@@ -3844,6 +3875,9 @@ const defaultSetMin = t => {
   const a = avgSecOf(t); return a == null ? HG_DEF : Math.max(1, Math.min(MAX_MIN, Math.round(a / 60) - HG_OFFSET)); };
 const setMinOf = t => { const m = PROG[t.k]?.setMin; return Math.min(MAX_MIN, typeof m === "number" && m >= 1 ? m : defaultSetMin(t)); };   // どんな宿題でも、タイマーは30分まで
 const avgNote = t => { const a = avgSecOf(t);
+  { const w = redoWrongs(t); if (w > 0){ const o = perProb()[baseCat(t.group ? t.group[0] : t)];
+    return o && o.n >= 2 ? `<div class="note fx-avg">差し戻しの目安：この教材は 1問あたり約${Math.round(o.sec / o.w)}秒 × ${w}問（これまでの実績 ${o.n}回）</div>`
+      : `<div class="note fx-avg">差し戻しの目安：実績がまだ少ないので、${REDO_DEF}分から始めます（${w}問）</div>`; } }
   if (isCalcT(t)) return `<div class="note fx-avg">計算テキストは、いつも ${CALC_MIN}分 から始めます</div>`;
   return a == null ? `<div class="note fx-avg">この宿題の平均時間：記録が${AVG_MIN_N}回たまると出ます</div>`
     : `<div class="note fx-avg">この宿題の平均 <b>${(a / 60).toFixed(1)}分</b>　（タイマーの初めは 平均−${HG_OFFSET}分）</div>`; };
@@ -4099,6 +4133,7 @@ function autoEnd(k, live){
   const over = elapsed(r) - MAX_SEC, tEnd = Date.now() - over * 1000, dEnd = iso(new Date(tEnd));   // 30分になった時刻
   const st = taskState(k) || {}, set = setMinOf(TASKMAP[k] || {k});
   const rec = {d: dEnd, sec: MAX_SEC, set, t0: r.t0 || null, t1: tEnd, pz: Math.round(r.pz || 0), np: r.np || 0, pl: r.pl || [], auto: true};
+  { const tk = TASKMAP[k], w = tk ? redoWrongs(tk) : 0; if (w > 0) rec.w = w; }
   if (FOCUS_K === k) FOCUS_END = {k, sec: MAX_SEC, set, auto: true};
   saveTask(k, {done: dEnd, doneAt: tEnd, skip: null, judge: null, reason: null, sec: MAX_SEC, secLog: [...(st.secLog || []), rec], run: null})
     .finally(() => AUTOING.delete(k));
