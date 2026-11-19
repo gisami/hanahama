@@ -454,7 +454,7 @@ table.tbl{width:100%; border-collapse:collapse; font-size:13px}
 .toast[hidden]{display:none}
 @media (prefers-reduced-motion: reduce){ .fx-meter i{transition:none} }
 /* v4 */
-#askModal,#pinModal{z-index:85}
+#askModal,#pinModal,#endModal{z-index:85}
 .datebar{display:grid; grid-template-columns:52px 1fr 52px; gap:10px; align-items:center; margin-bottom:14px}
 .datebar>button{border:1px solid var(--line-2); background:var(--card); color:var(--accent); height:52px; border-radius:14px;
   display:grid; place-items:center; box-shadow:var(--shadow)}
@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v109</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v110</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1050,6 +1050,17 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
     <div class="brk-clock" id="brkClock">5:00</div>
     <div class="brk-note" id="brkNote">お疲れ様！ ゆっくり一休みしよう</div>
     <button type="button" class="brk-back" id="brkBack">再開 ▶</button>
+  </div>
+</div>
+<div class="modal" id="endModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="endTitle" style="max-width:380px; text-align:center">
+    <p id="endTitle" style="margin:0 0 6px; font-size:18px; font-weight:800">ほんとうに終わった？</p>
+    <p style="margin:0 0 6px; font-size:14px; line-height:1.7">完了時刻を、ノートに書こう！</p>
+    <p id="endTime" style="margin:0 0 10px; font-size:26px; font-weight:800; letter-spacing:.02em"></p>
+    <label style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; font-weight:700; margin:0 0 14px"><input type="checkbox" id="endChk" style="width:22px; height:22px"> ノートに書いたよ</label>
+    <div class="row" style="justify-content:center; gap:10px">
+      <button class="btn sm" id="endNo" type="button">まだ やる</button>
+      <button class="btn primary sm" id="endYes" type="button" disabled>できた！</button></div>
   </div>
 </div>
 <div class="modal" id="askModal" hidden>
@@ -1405,6 +1416,20 @@ function ask(msg, yes = "はい"){
     const done = v => { m.hidden = true; y.onclick = n.onclick = null; res(v); };
     y.onclick = () => done(true); n.onclick = () => done(false);
     m.hidden = false; y.focus();
+  });
+}
+
+/* 「終わり！」のあとの確認：完了時刻をノートに書いて、チェックを入れて初めて「できた」になる */
+function askEnd(at){
+  return new Promise(res => {
+    const d = new Date(at), p = n => String(n).padStart(2, "0");
+    const m = document.getElementById("endModal"), y = document.getElementById("endYes"), n = document.getElementById("endNo"), c = document.getElementById("endChk");
+    document.getElementById("endTime").textContent = `【${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}】`;
+    c.checked = false; y.disabled = true;
+    c.onchange = () => { y.disabled = !c.checked; };
+    const done = v => { m.hidden = true; y.onclick = n.onclick = c.onchange = null; res(v); };
+    y.onclick = () => { if (c.checked) done(true); }; n.onclick = () => done(false);
+    m.hidden = false;
   });
 }
 
@@ -2086,9 +2111,8 @@ const commentBand = st => (st && st.comment) ? `<div class="cmtband"><b>おう�
 /* 直前に「お直し」にしたときの、間違えた番号・理由・コメント（娘さんがやり直して出し直したとき、丸つけの入力欄に初期値として入れる） */
 function lastRedoInfo(k){
   const ms = GROUPS[k] ? GROUPS[k].map(m => m.k) : [k], no = [], why = [], c = [];
-  ms.forEach(mk => { const h = [...(PROG[mk]?.hist || [])].reverse().filter(e => e.e === "redo");   // 新しい順。その項目が入っている一番新しい回のものを使う（直近の回で空でも、前の回の指示を残す）
-    const f = key => h.find(e => e[key]);
-    if (f("no")) no.push(f("no").no); if (f("why")) why.push(...REASONS.filter(r => String(f("why").why).includes(r))); if (f("c")) c.push(f("c").c); });
+  ms.forEach(mk => { const h = [...(PROG[mk]?.hist || [])].reverse().find(e => e.e === "redo"); if (!h) return;   // 直近の「お直し」の内容（直近が空なら空のまま）
+    if (h.no) no.push(h.no); if (h.why) why.push(...REASONS.filter(r => String(h.why).includes(r))); if (h.c) c.push(h.c); });
   return {no: [...new Set(no)].join(" ／ "), why: [...new Set(why)], c: [...new Set(c)].join(" ／ ")};
 }
 function wrongOf(k){ const w = taskState(k)?.wrong; return typeof w === "number" ? w : null; }
@@ -2886,7 +2910,11 @@ function renderCheck(plan){
     const wnoWrap = el("div","cmtwrap",`<div class="note" style="font-weight:700">間違えた問題の番号（お直しのときに娘さんの画面に出ます）</div>`); wnoWrap.appendChild(wno);
 
     const ok = el("button","btn primary sm","合格にする");
-    ok.onclick = () => saveTask(t.k, {judge:"合格", judgeAt:TODAY, wrong: wrong ?? 0, wrongNo: wno.value.trim() || null, comment: cmt()});
+    let busy = false;   // 押したあと確認が出ている間・保存中は、もう押せない
+    const guard = async (msg, yes, run) => { if (busy) return; busy = true; try { if (await ask(msg, yes)) run(); } finally { busy = false; } };
+    const nm = `${t.s}　${taskTitle(t).replace(/<[^>]+>/g, "")}`;
+    ok.onclick = () => guard(`${nm}\n\n${(wrong ?? 0) > 0 ? "間違えた数は " + (wrong === 5 ? "5問以上" : wrong + "問") + " です。" : ""}合格にしますか？`, "合格にする",
+      () => saveTask(t.k, {judge:"合格", judgeAt:TODAY, wrong: wrong ?? 0, wrongNo: wno.value.trim() || null, comment: cmt()}));
 
     let wrong = wrongOf(t.k);
     const wrap = el("div","wrongrow", `<span style="font-size:12.5px;font-weight:700;color:var(--ink-3)">間違えた数</span>`);
@@ -2911,11 +2939,12 @@ function renderCheck(plan){
     }
     ng.onclick = () => {
       if (reasons.hidden){ showReasons(); return; }
-      saveTask(t.k, {judge:"お直し", judgeAt:TODAY, reason:[...picked].join("・"), comment: cmt(), wrongNo: wno.value.trim() || null,
-                     wrong: wrong ?? null, redo:(taskState(t.k)?.redo||0)+1});
+      guard(`${nm}\n\nお直しにして、娘さんに返しますか？${cmt() ? "\nコメント：" + cmt() : ""}`, "お直しにする",
+        () => saveTask(t.k, {judge:"お直し", judgeAt:TODAY, reason:[...picked].join("・"), comment: cmt(), wrongNo: wno.value.trim() || null,
+                     wrong: wrong ?? null, redo:(taskState(t.k)?.redo||0)+1}));
     };
     const undo = el("button","btn ghost sm","「できた」を取り消す");
-    undo.onclick = () => saveTask(t.k, {done:null, judge:null});
+    undo.onclick = () => guard(`${nm}\n\n「できた」を取り消して、まだの状態にもどしますか？`, "取り消す", () => saveTask(t.k, {done:null, judge:null}));
     const row = el("div","judge-row");
     row.append(ok, ng, undo);
     card.append(wrap, wnoWrap, reasons, cmWrap, row);
@@ -3750,9 +3779,10 @@ async function startTimer(k){
 }
 const pauseTimer = k => { speak("ちゅうだん。ひとやすみ、ひとやすみ"); return saveTask(k, {run: pausedRun(runOf(k))}); };
 const resumeTimer = k => { unlockSound(); speak("さいかい！ いくよー！"); return saveTask(k, {run: resumedRun(runOf(k))}); };
-function endTimer(k){
-  const r = runOf(k), now = Date.now();
-  const sec = Math.round(elapsed(r));
+function endTimer(k, at){
+  const r = runOf(k), now = at || Date.now();
+  if (!r) return;   // もう終わっている（30分で自動終了した直後など）
+  const sec = Math.round((r.acc || 0) + (r.start ? (now - r.start) / 1000 : 0));
   const st = taskState(k) || {};
   const set = setMinOf(TASKMAP[k] || {k});
   let pz = (r && r.pz) || 0, pl = (r && r.pl) || [];
@@ -4122,7 +4152,7 @@ function renderFocus(){
   on("fxStart", () => startTimer(t.k));
   on("fxPause", () => pauseTimer(t.k));
   on("fxResume", () => resumeTimer(t.k));
-  on("fxEnd", () => endTimer(t.k));
+  on("fxEnd", async () => { const at = Date.now(); if (await askEnd(at)) endTimer(t.k, at); });   // 押した時刻を完了時刻にする
   on("fxSkip", () => openSkip(t.k));
   on("fxCancel", async () => { if (await ask("時間の記録を消して、やめますか？", "消してやめる")){
     const rr = runOf(t.k);
