@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v108</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v109</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -2086,8 +2086,9 @@ const commentBand = st => (st && st.comment) ? `<div class="cmtband"><b>おう�
 /* 直前に「お直し」にしたときの、間違えた番号・理由・コメント（娘さんがやり直して出し直したとき、丸つけの入力欄に初期値として入れる） */
 function lastRedoInfo(k){
   const ms = GROUPS[k] ? GROUPS[k].map(m => m.k) : [k], no = [], why = [], c = [];
-  ms.forEach(mk => { const h = [...(PROG[mk]?.hist || [])].reverse().find(e => e.e === "redo"); if (!h) return;
-    if (h.no) no.push(h.no); if (h.why) why.push(...REASONS.filter(r => String(h.why).includes(r))); /* 「漢字・用語」のように「・」を含む理由があるので、区切らずに当てはめる */ if (h.c) c.push(h.c); });
+  ms.forEach(mk => { const h = [...(PROG[mk]?.hist || [])].reverse().filter(e => e.e === "redo");   // 新しい順。その項目が入っている一番新しい回のものを使う（直近の回で空でも、前の回の指示を残す）
+    const f = key => h.find(e => e[key]);
+    if (f("no")) no.push(f("no").no); if (f("why")) why.push(...REASONS.filter(r => String(f("why").why).includes(r))); if (f("c")) c.push(f("c").c); });
   return {no: [...new Set(no)].join(" ／ "), why: [...new Set(why)], c: [...new Set(c)].join(" ／ ")};
 }
 function wrongOf(k){ const w = taskState(k)?.wrong; return typeof w === "number" ? w : null; }
