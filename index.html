@@ -729,7 +729,7 @@ ol.hv .hv-sub{font-size:12.5px; color:var(--redo-ink); margin-top:2px}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v111</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
+    <div class="brand"><b>中学受験の相棒</b><span><i class="bs" style="font-style:normal">小4 ／ 浜学園　</i><em style="font-style:normal;opacity:.75;font-weight:800">v112</em></span><button class="refresh" id="btnRefresh" type="button" aria-label="最新の状態に更新">↻ 更新</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true">宿題<span class="badge" id="badgeToday" hidden></span></button>
       <button role="tab" id="tab-test" aria-selected="false">テスト範囲</button>
@@ -1620,7 +1620,7 @@ function clusterTasks(list, extra = () => ""){
   const out = [], idx = {};
   for (const t of list){
     if (t.review || t.retry || t.group || t.spill){ out.push(t); continue; }
-    const key = [t.u, t.mat, t.rep, t.prep ? 1 : 0, t.pin || "", extra(t)].join("|");
+    const key = [t.u, t.mat, t.rep, t.prep ? 1 : 0, t.pin || "", extra(t), (t.mat === "算数のとも" && t.part === "テ") ? "テ" : ""].join("|");   // 算数のとも：テーマは練習問題と別カード（「できた」「丸付け」を別々に）
     if (idx[key] == null){ idx[key] = out.length; out.push([t]); } else out[idx[key]].push(t);
   }
   return out.map(x => !Array.isArray(x) ? x : x.length > 1 ? mkGroup(x) : x[0]);
